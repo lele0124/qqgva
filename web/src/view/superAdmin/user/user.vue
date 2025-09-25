@@ -490,7 +490,7 @@
       { required: true, message: '请输入用户密码', trigger: 'blur' },
       { min: 6, message: '最低6位字符', trigger: 'blur' }
     ],
-    nickName: [{ required: true, message: '请输入用户昵称', trigger: 'blur' }],
+    nickName: [{ required: false, message: '请输入用户昵称', trigger: 'blur' }],
     phone: [
       {
         pattern: /^1([38][0-9]|4[014-9]|[59][0-35-9]|6[2567]|7[0-8])\d{8}$/,
