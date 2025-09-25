@@ -237,6 +237,20 @@ func (userService *UserService) DeleteUser(id int) (err error) {
 func (userService *UserService) SetUserInfo(req system.SysUser) error {
 	// 使用事务处理，确保数据一致性
 	return global.GVA_DB.Transaction(func(tx *gorm.DB) error {
+		// 检查用户名是否已被其他用户使用
+		if req.Username != "" {
+			var existingUser system.SysUser
+			err := tx.Where("username = ? AND id != ?", req.Username, req.ID).First(&existingUser).Error
+			if err == nil {
+				// 找到了使用相同用户名的其他用户
+				return errors.New("用户名已被其他用户使用")
+			}
+			// 如果err不是记录不存在的错误，则返回该错误
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				return err
+			}
+		}
+
 		// 检查手机号是否已被其他用户使用
 		if req.Phone != "" {
 			var existingUser system.SysUser
@@ -250,13 +264,14 @@ func (userService *UserService) SetUserInfo(req system.SysUser) error {
 				return err
 			}
 		}
-		
+
 		// 执行更新操作
 		return tx.Model(&system.SysUser{}).
-			Select("updated_at", "nick_name", "name", "header_img", "phone", "email", "enable").
+			Select("updated_at", "username", "nick_name", "name", "header_img", "phone", "email", "enable").
 			Where("id=?", req.ID).
 			Updates(map[string]interface{}{
 				"updated_at": time.Now(),
+				"username":   req.Username,
 				"nick_name":  req.NickName,
 				"name":       req.Name,
 				"header_img": req.HeaderImg,
@@ -276,6 +291,20 @@ func (userService *UserService) SetUserInfo(req system.SysUser) error {
 func (userService *UserService) SetSelfInfo(req system.SysUser) error {
 	// 使用事务处理，确保数据一致性
 	return global.GVA_DB.Transaction(func(tx *gorm.DB) error {
+		// 检查用户名是否已被其他用户使用
+		if req.Username != "" {
+			var existingUser system.SysUser
+			err := tx.Where("username = ? AND id != ?", req.Username, req.ID).First(&existingUser).Error
+			if err == nil {
+				// 找到了使用相同用户名的其他用户
+				return errors.New("用户名已被其他用户使用")
+			}
+			// 如果err不是记录不存在的错误，则返回该错误
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				return err
+			}
+		}
+
 		// 检查手机号是否已被其他用户使用
 		if req.Phone != "" {
 			var existingUser system.SysUser
@@ -289,7 +318,7 @@ func (userService *UserService) SetSelfInfo(req system.SysUser) error {
 				return err
 			}
 		}
-		
+
 		// 执行更新操作
 		return tx.Model(&system.SysUser{}).
 			Where("id=?", req.ID).

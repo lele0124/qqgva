@@ -44,12 +44,6 @@
         />
         <el-table-column
           align="left"
-          label="昵称"
-          min-width="150"
-          prop="nickName"
-        />
-        <el-table-column
-          align="left"
           label="姓名"
           min-width="150"
           prop="name"
@@ -59,6 +53,12 @@
           label="手机号"
           min-width="180"
           prop="phone"
+        />
+        <el-table-column
+          align="left"
+          label="昵称"
+          min-width="150"
+          prop="nickName"
         />
         <el-table-column
           align="left"
@@ -206,28 +206,51 @@
         :model="userInfo"
         label-width="80px"
       >
-        <el-form-item
-          v-if="dialogFlag === 'add'"
-          label="用户名"
-          prop="userName"
-        >
-          <el-input v-model="userInfo.userName" />
-        </el-form-item>
-        <el-form-item v-if="dialogFlag === 'add'" label="密码" prop="password">
+        <!-- 统一显示ID和UUID字段 -->
+        <div style="display: flex; align-items: center; margin-bottom: 20px;">
+          <div style="width: 80px; text-align: right; margin-right: 12px;">ID</div>
+          <el-input v-model="userInfo.ID" disabled style="width: 200px; margin-right: 20px;" />
+          <div style="width: 80px; text-align: right; margin-right: 12px;">UUID</div>
+          <el-input v-model="userInfo.uuid" disabled style="flex: 1;" />
+        </div>
+        
+        <!-- 可编辑字段 -->
+        <div class="form-row">
+          <el-form-item
+            label="用户名"
+            prop="userName"
+            class="form-half"
+          >
+            <el-input v-model="userInfo.userName" />
+          </el-form-item>
+          <el-form-item label="昵称" prop="nickName" class="form-half">
+            <el-input v-model="userInfo.nickName" />
+          </el-form-item>
+        </div>
+        <el-form-item v-if="dialogFlag === 'add'" label="密码" prop="password" class="form-row">
           <el-input v-model="userInfo.password" />
         </el-form-item>
-        <el-form-item label="昵称" prop="nickName">
-          <el-input v-model="userInfo.nickName" />
-        </el-form-item>
-        <el-form-item label="姓名" prop="name">
-          <el-input v-model="userInfo.name" />
-        </el-form-item>
-        <el-form-item label="手机号" prop="phone">
-          <el-input v-model="userInfo.phone" />
-        </el-form-item>
-        <el-form-item label="邮箱" prop="email">
-          <el-input v-model="userInfo.email" />
-        </el-form-item>
+        <div class="form-row">
+          <el-form-item label="姓名" prop="name" class="form-half">
+            <el-input v-model="userInfo.name" />
+          </el-form-item>
+          <el-form-item label="邮箱" prop="email" class="form-half">
+            <el-input v-model="userInfo.email" />
+          </el-form-item>
+        </div>
+        <div class="form-row">
+          <el-form-item label="手机号" prop="phone" class="form-half">
+            <el-input v-model="userInfo.phone" />
+          </el-form-item>
+          <el-form-item label="启用" prop="disabled" class="form-half">
+            <el-switch
+              v-model="userInfo.enable"
+              inline-prompt
+              :active-value="1"
+              :inactive-value="2"
+            />
+          </el-form-item>
+        </div>
         <el-form-item label="用户角色" prop="authorityId">
           <el-cascader
             v-model="userInfo.authorityIds"
@@ -245,16 +268,31 @@
             :clearable="false"
           />
         </el-form-item>
-        <el-form-item label="启用" prop="disabled">
-          <el-switch
-            v-model="userInfo.enable"
-            inline-prompt
-            :active-value="1"
-            :inactive-value="2"
-          />
-        </el-form-item>
-        <el-form-item label="头像" label-width="80px">
-          <SelectImage v-model="userInfo.headerImg" />
+        <div class="form-row">
+          <el-form-item label="头像" label-width="80px" class="form-half">
+            <SelectImage v-model="userInfo.headerImg" />
+          </el-form-item>
+          <el-form-item label="配置" prop="originSetting" class="form-half">
+            <el-input
+              v-model="userInfo.originSetting"
+              type="textarea"
+              placeholder="JSON格式的配置信息"
+              :rows="4"
+            />
+          </el-form-item>
+        </div>
+        
+        <!-- 将时间相关的只读字段移到表单最下方，并统一显示方式 -->
+        <div v-if="dialogFlag === 'edit'" class="form-row">
+          <el-form-item label="创建时间" prop="CreatedAt" class="form-half">
+            <el-input v-model="userInfo.CreatedAt" disabled />
+          </el-form-item>
+          <el-form-item label="修改时间" prop="UpdatedAt" class="form-half">
+            <el-input v-model="userInfo.UpdatedAt" disabled />
+          </el-form-item>
+        </div>
+        <el-form-item v-if="dialogFlag === 'edit'" label="删除时间" prop="DeletedAt">
+          <el-input v-model="userInfo.DeletedAt" disabled />
         </el-form-item>
       </el-form>
     </el-drawer>
@@ -481,6 +519,11 @@
 
   // 弹窗相关
   const userInfo = ref({
+    ID: '',
+    uuid: '',
+    CreatedAt: '',
+    UpdatedAt: '',
+    DeletedAt: '',
     userName: '',
     password: '',
     nickName: '',
@@ -488,7 +531,8 @@
     headerImg: '',
     authorityId: '',
     authorityIds: [],
-    enable: 1
+    enable: 1,
+    originSetting: ''
   })
 
   const rules = ref({
@@ -561,6 +605,23 @@
 
   const addUser = () => {
     dialogFlag.value = 'add'
+    // 清除所有默认值
+    userInfo.value = {
+      ID: '',
+      uuid: '',
+      CreatedAt: '',
+      UpdatedAt: '',
+      DeletedAt: '',
+      userName: '',
+      password: '',
+      nickName: '',
+      name: '',
+      headerImg: '',
+      authorityId: '',
+      authorityIds: [],
+      enable: 1, // 默认启用
+      originSetting: ''
+    }
     addUserDialog.value = true
   }
 
@@ -592,6 +653,10 @@
   const openEdit = (row) => {
     dialogFlag.value = 'edit'
     userInfo.value = JSON.parse(JSON.stringify(row))
+    // 处理originSetting字段，如果是对象则转换为格式化的JSON字符串
+    if (userInfo.value.originSetting && typeof userInfo.value.originSetting === 'object') {
+      userInfo.value.originSetting = JSON.stringify(userInfo.value.originSetting, null, 2)
+    }
     addUserDialog.value = true
   }
 
@@ -617,5 +682,11 @@
 <style lang="scss">
   .header-img-box {
     @apply w-52 h-52 border border-solid border-gray-300 rounded-xl flex justify-center items-center cursor-pointer;
+  }
+  .form-row {
+    @apply flex flex-wrap;
+  }
+  .form-half {
+    @apply w-[48%] mr-2 mb-4;
   }
 </style>

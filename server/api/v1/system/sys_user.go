@@ -153,7 +153,19 @@ func (b *BaseApi) Register(c *gin.Context) {
 			AuthorityId: v,
 		})
 	}
-	user := &system.SysUser{Username: r.Username, NickName: r.NickName, Name: r.Name, Password: r.Password, HeaderImg: r.HeaderImg, AuthorityId: r.AuthorityId, Authorities: authorities, Enable: r.Enable, Phone: r.Phone, Email: r.Email}
+	// 处理Enable字段类型转换
+	var enable int
+	if r.Enable != "" {
+		enable, err = strconv.Atoi(r.Enable)
+		if err != nil {
+			response.FailWithMessage("Enable参数格式错误", c)
+			return
+		}
+	} else {
+		// 如果未提供Enable参数，默认为启用状态
+		enable = 1
+	}
+	user := &system.SysUser{Username: r.Username, NickName: r.NickName, Name: r.Name, Password: r.Password, HeaderImg: r.HeaderImg, AuthorityId: r.AuthorityId, Authorities: authorities, Enable: enable, Phone: r.Phone, Email: r.Email}
 	userReturn, err := userService.Register(*user)
 	if err != nil {
 		global.GVA_LOG.Error("注册失败!", zap.Error(err))
@@ -371,6 +383,7 @@ func (b *BaseApi) SetUserInfo(c *gin.Context) {
 		},
 		NickName:  user.NickName,
 		Name:      user.Name,
+		Username:  user.UserName,
 		HeaderImg: user.HeaderImg,
 		Phone:     user.Phone,
 		Email:     user.Email,
@@ -378,7 +391,9 @@ func (b *BaseApi) SetUserInfo(c *gin.Context) {
 	})
 	if err != nil {
 		global.GVA_LOG.Error("设置失败!", zap.Error(err))
-		if strings.Contains(err.Error(), "手机号") {
+		if strings.Contains(err.Error(), "用户名") {
+			response.FailWithMessage("设置失败，用户名不允许重复", c)
+		} else if strings.Contains(err.Error(), "手机号") {
 			response.FailWithMessage("设置失败，手机号码不允许重复", c)
 		} else {
 			response.FailWithMessage("设置失败", c)
@@ -418,7 +433,9 @@ func (b *BaseApi) SetSelfInfo(c *gin.Context) {
 	})
 	if err != nil {
 		global.GVA_LOG.Error("设置失败!", zap.Error(err))
-		if strings.Contains(err.Error(), "手机号") {
+		if strings.Contains(err.Error(), "用户名") {
+			response.FailWithMessage("设置失败，用户名不允许重复", c)
+		} else if strings.Contains(err.Error(), "手机号") {
 			response.FailWithMessage("设置失败，手机号码不允许重复", c)
 		} else {
 			response.FailWithMessage("设置失败", c)
