@@ -30,6 +30,12 @@ func (userService *UserService) Register(u system.SysUser) (userInter system.Sys
 	if !errors.Is(global.GVA_DB.Where("username = ?", u.Username).First(&user).Error, gorm.ErrRecordNotFound) { // 判断用户名是否注册
 		return userInter, errors.New("用户名已注册")
 	}
+	// 检查手机号是否已被注册
+	if u.Phone != "" {
+		if !errors.Is(global.GVA_DB.Where("phone = ?", u.Phone).First(&user).Error, gorm.ErrRecordNotFound) {
+			return userInter, errors.New("手机号已被注册")
+		}
+	}
 	// 否则 附加uuid 密码hash加密 注册
 	u.Password = utils.BcryptHash(u.Password)
 	u.UUID = uuid.New()
@@ -228,17 +234,35 @@ func (userService *UserService) DeleteUser(id int) (err error) {
 //@return: err error, user model.SysUser
 
 func (userService *UserService) SetUserInfo(req system.SysUser) error {
-	return global.GVA_DB.Model(&system.SysUser{}).
-		Select("updated_at", "nick_name", "header_img", "phone", "email", "enable").
-		Where("id=?", req.ID).
-		Updates(map[string]interface{}{
-			"updated_at": time.Now(),
-			"nick_name":  req.NickName,
-			"header_img": req.HeaderImg,
-			"phone":      req.Phone,
-			"email":      req.Email,
-			"enable":     req.Enable,
-		}).Error
+	// 使用事务处理，确保数据一致性
+	return global.GVA_DB.Transaction(func(tx *gorm.DB) error {
+		// 检查手机号是否已被其他用户使用
+		if req.Phone != "" {
+			var existingUser system.SysUser
+			err := tx.Where("phone = ? AND id != ?", req.Phone, req.ID).First(&existingUser).Error
+			if err == nil {
+				// 找到了使用相同手机号的其他用户
+				return errors.New("手机号已被其他用户使用")
+			}
+			// 如果err不是记录不存在的错误，则返回该错误
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				return err
+			}
+		}
+		
+		// 执行更新操作
+		return tx.Model(&system.SysUser{}).
+			Select("updated_at", "nick_name", "header_img", "phone", "email", "enable").
+			Where("id=?", req.ID).
+			Updates(map[string]interface{}{
+				"updated_at": time.Now(),
+				"nick_name":  req.NickName,
+				"header_img": req.HeaderImg,
+				"phone":      req.Phone,
+				"email":      req.Email,
+				"enable":     req.Enable,
+			}).Error
+	})
 }
 
 //@author: [piexlmax](https://github.com/piexlmax)
@@ -248,9 +272,27 @@ func (userService *UserService) SetUserInfo(req system.SysUser) error {
 //@return: err error, user model.SysUser
 
 func (userService *UserService) SetSelfInfo(req system.SysUser) error {
-	return global.GVA_DB.Model(&system.SysUser{}).
-		Where("id=?", req.ID).
-		Updates(req).Error
+	// 使用事务处理，确保数据一致性
+	return global.GVA_DB.Transaction(func(tx *gorm.DB) error {
+		// 检查手机号是否已被其他用户使用
+		if req.Phone != "" {
+			var existingUser system.SysUser
+			err := tx.Where("phone = ? AND id != ?", req.Phone, req.ID).First(&existingUser).Error
+			if err == nil {
+				// 找到了使用相同手机号的其他用户
+				return errors.New("手机号已被其他用户使用")
+			}
+			// 如果err不是记录不存在的错误，则返回该错误
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				return err
+			}
+		}
+		
+		// 执行更新操作
+		return tx.Model(&system.SysUser{}).
+			Where("id=?", req.ID).
+			Updates(req).Error
+	})
 }
 
 //@author: [piexlmax](https://github.com/piexlmax)

@@ -492,6 +492,7 @@
     ],
     nickName: [{ required: false, message: '请输入用户昵称', trigger: 'blur' }],
     phone: [
+      { required: true, message: '请输入手机号', trigger: 'blur' },
       {
         pattern: /^1([38][0-9]|4[014-9]|[59][0-35-9]|6[2567]|7[0-8])\d{8}$/,
         message: '请输入合法手机号',
