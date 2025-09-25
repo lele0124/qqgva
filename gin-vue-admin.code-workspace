@@ -1,49 +1,35 @@
 {
   "folders": [
     {
-      "path": "server",
-      "name": "backend"
+      "name": "🔧 Server (Go)",
+      "path": "./server"
     },
     {
-      "path": "web",
-      "name": "frontend"
+      "name": "🎨 Web (Vue)",
+      "path": "./web"
     },
     {
-      "path": ".",
-      "name": "root"
+      "name": "📚 Docs",
+      "path": "./docs"
     }
   ],
   "settings": {
-    "go.toolsEnvVars": {
-      "GOPROXY": "https://goproxy.cn,direct",
-      "GONOPROXY": "none;"
+    "go.gopath": "",
+    "go.goroot": "",
+    "go.toolsManagement.autoUpdate": true,
+    "typescript.preferences.importModuleSpecifier": "relative",
+    "eslint.workingDirectories": ["web"],
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
     }
   },
-  "launch": {
-    "version": "0.2.0",
-    "configurations": [
-      {
-        "type": "go",
-        "request": "launch",
-        "name": "Backend",
-        "cwd": "${workspaceFolder:backend}",
-        "program": "${workspaceFolder:backend}/"
-      },
-      {
-        "type": "node",
-        "request": "launch",
-        "cwd": "${workspaceFolder:frontend}",
-        "name": "Frontend",
-        "runtimeExecutable": "npm",
-        "runtimeArgs": ["run-script", "serve"]
-      }
-    ],
-    "compounds": [
-      {
-        "name": "Both (Backend & Frontend)",
-        "configurations": ["Backend", "Frontend"],
-        "stopAll": true
-      }
+  "extensions": {
+    "recommendations": [
+      "golang.go",
+      "vue.volar",
+      "bradlc.vscode-tailwindcss",
+      "esbenp.prettier-vscode",
+      "ms-vscode.vscode-typescript-next"
     ]
   }
 }
