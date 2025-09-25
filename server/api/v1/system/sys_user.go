@@ -1,6 +1,7 @@
 package system
 
 import (
+	"strings"
 	"strconv"
 	"time"
 
@@ -54,6 +55,7 @@ func (b *BaseApi) Login(c *gin.Context) {
 		return
 	}
 
+	// 支持用户名或手机号登录，统一使用username字段
 	u := &system.SysUser{Username: l.Username, Password: l.Password}
 	user, err := userService.Login(u)
 	if err != nil {
@@ -155,7 +157,11 @@ func (b *BaseApi) Register(c *gin.Context) {
 	userReturn, err := userService.Register(*user)
 	if err != nil {
 		global.GVA_LOG.Error("注册失败!", zap.Error(err))
-		response.FailWithDetailed(systemRes.SysUserResponse{User: userReturn}, "注册失败", c)
+		if strings.Contains(err.Error(), "手机号") {
+			response.FailWithDetailed(systemRes.SysUserResponse{User: userReturn}, "设置失败，手机号码不允许重复", c)
+		} else {
+			response.FailWithDetailed(systemRes.SysUserResponse{User: userReturn}, "注册失败", c)
+		}
 		return
 	}
 	response.OkWithDetailed(systemRes.SysUserResponse{User: userReturn}, "注册成功", c)
@@ -371,7 +377,11 @@ func (b *BaseApi) SetUserInfo(c *gin.Context) {
 	})
 	if err != nil {
 		global.GVA_LOG.Error("设置失败!", zap.Error(err))
-		response.FailWithMessage("设置失败", c)
+		if strings.Contains(err.Error(), "手机号") {
+			response.FailWithMessage("设置失败，手机号码不允许重复", c)
+		} else {
+			response.FailWithMessage("设置失败", c)
+		}
 		return
 	}
 	response.OkWithMessage("设置成功", c)
@@ -406,7 +416,11 @@ func (b *BaseApi) SetSelfInfo(c *gin.Context) {
 	})
 	if err != nil {
 		global.GVA_LOG.Error("设置失败!", zap.Error(err))
-		response.FailWithMessage("设置失败", c)
+		if strings.Contains(err.Error(), "手机号") {
+			response.FailWithMessage("设置失败，手机号码不允许重复", c)
+		} else {
+			response.FailWithMessage("设置失败", c)
+		}
 		return
 	}
 	response.OkWithMessage("设置成功", c)
