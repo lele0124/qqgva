@@ -153,7 +153,7 @@ func (b *BaseApi) Register(c *gin.Context) {
 			AuthorityId: v,
 		})
 	}
-	user := &system.SysUser{Username: r.Username, NickName: r.NickName, Password: r.Password, HeaderImg: r.HeaderImg, AuthorityId: r.AuthorityId, Authorities: authorities, Enable: r.Enable, Phone: r.Phone, Email: r.Email}
+	user := &system.SysUser{Username: r.Username, NickName: r.NickName, Name: r.Name, Password: r.Password, HeaderImg: r.HeaderImg, AuthorityId: r.AuthorityId, Authorities: authorities, Enable: r.Enable, Phone: r.Phone, Email: r.Email}
 	userReturn, err := userService.Register(*user)
 	if err != nil {
 		global.GVA_LOG.Error("注册失败!", zap.Error(err))
@@ -370,6 +370,7 @@ func (b *BaseApi) SetUserInfo(c *gin.Context) {
 			ID: user.ID,
 		},
 		NickName:  user.NickName,
+		Name:      user.Name,
 		HeaderImg: user.HeaderImg,
 		Phone:     user.Phone,
 		Email:     user.Email,
@@ -409,6 +410,7 @@ func (b *BaseApi) SetSelfInfo(c *gin.Context) {
 			ID: user.ID,
 		},
 		NickName:  user.NickName,
+		Name:      user.Name,
 		HeaderImg: user.HeaderImg,
 		Phone:     user.Phone,
 		Email:     user.Email,

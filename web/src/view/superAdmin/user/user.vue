@@ -50,6 +50,12 @@
         />
         <el-table-column
           align="left"
+          label="姓名"
+          min-width="150"
+          prop="name"
+        />
+        <el-table-column
+          align="left"
           label="手机号"
           min-width="180"
           prop="phone"
@@ -212,6 +218,9 @@
         </el-form-item>
         <el-form-item label="昵称" prop="nickName">
           <el-input v-model="userInfo.nickName" />
+        </el-form-item>
+        <el-form-item label="姓名" prop="name">
+          <el-input v-model="userInfo.name" />
         </el-form-item>
         <el-form-item label="手机号" prop="phone">
           <el-input v-model="userInfo.phone" />
@@ -475,6 +484,7 @@
     userName: '',
     password: '',
     nickName: '',
+    name: '',
     headerImg: '',
     authorityId: '',
     authorityIds: [],
@@ -491,6 +501,7 @@
       { min: 6, message: '最低6位字符', trigger: 'blur' }
     ],
     nickName: [{ required: false, message: '请输入用户昵称', trigger: 'blur' }],
+    name: [{ required: true, message: '请输入用户姓名', trigger: 'blur' }],
     phone: [
       { required: true, message: '请输入手机号', trigger: 'blur' },
       {

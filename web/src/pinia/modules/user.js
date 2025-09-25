@@ -17,8 +17,9 @@ export const useUserStore = defineStore('user', () => {
   const userInfo = ref({
     uuid: '',
     nickName: '',
+    name: '',
     headerImg: '',
-    authority: {}
+    authority: []
   })
   const token = useStorage('token', '')
   const xToken = useCookies('x-token')

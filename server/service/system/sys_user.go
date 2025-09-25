@@ -253,11 +253,12 @@ func (userService *UserService) SetUserInfo(req system.SysUser) error {
 		
 		// 执行更新操作
 		return tx.Model(&system.SysUser{}).
-			Select("updated_at", "nick_name", "header_img", "phone", "email", "enable").
+			Select("updated_at", "nick_name", "name", "header_img", "phone", "email", "enable").
 			Where("id=?", req.ID).
 			Updates(map[string]interface{}{
 				"updated_at": time.Now(),
 				"nick_name":  req.NickName,
+				"name":       req.Name,
 				"header_img": req.HeaderImg,
 				"phone":      req.Phone,
 				"email":      req.Email,

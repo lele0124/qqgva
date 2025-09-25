@@ -10,6 +10,7 @@ type Register struct {
 	Username     string `json:"userName" example:"用户名"`
 	Password     string `json:"passWord" example:"密码"`
 	NickName     string `json:"nickName" example:"昵称"`
+	Name         string `json:"name" example:"姓名"`
 	HeaderImg    string `json:"headerImg" example:"头像链接"`
 	AuthorityId  uint   `json:"authorityId" swaggertype:"string" example:"int 角色id"`
 	Enable       int    `json:"enable" swaggertype:"string" example:"int 是否启用"`
@@ -52,6 +53,7 @@ type SetUserAuthorities struct {
 type ChangeUserInfo struct {
 	ID           uint                  `gorm:"primarykey"`                                                                           // 主键ID
 	NickName     string                `json:"nickName" gorm:"default:系统用户;comment:用户昵称"`                                            // 用户昵称
+	Name         string                `json:"name" gorm:"not null;comment:用户姓名"`                                                          // 用户姓名
 	Phone        string                `json:"phone"  gorm:"comment:用户手机号"`                                                          // 用户手机号
 	AuthorityIds []uint                `json:"authorityIds" gorm:"-"`                                                                // 角色ID
 	Email        string                `json:"email"  gorm:"comment:用户邮箱"`                                                           // 用户邮箱

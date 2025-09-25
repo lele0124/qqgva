@@ -34,7 +34,7 @@
                 <el-input
                   v-model="loginFormData.username"
                   size="large"
-                  placeholder="请输入用户名"
+                  placeholder="请输入用户名或手机"
                   suffix-icon="user"
                 />
               </el-form-item>
@@ -140,7 +140,7 @@
   // 验证函数
   const checkUsername = (rule, value, callback) => {
     if (value.length < 5) {
-      return callback(new Error('请输入正确的用户名'))
+      return callback(new Error('请输入正确的用户名或手机'))
     } else {
       callback()
     }

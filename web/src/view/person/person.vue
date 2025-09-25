@@ -28,18 +28,29 @@
                 <div class="flex items-center gap-4 mb-4">
                   <div
                     v-if="!editFlag"
-                    class="text-2xl font-bold flex items-center gap-3 text-gray-800 dark:text-gray-100"
+                    class="space-y-2"
                   >
-                    {{ userStore.userInfo.nickName }}
-                    <el-icon
-                      class="cursor-pointer text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors duration-200"
-                      @click="openEdit"
-                    >
-                      <edit />
-                    </el-icon>
+                    <div class="text-2xl font-bold flex items-center gap-3 text-gray-800 dark:text-gray-100">
+                      {{ userStore.userInfo.nickName }}
+                      <el-icon
+                        class="cursor-pointer text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors duration-200"
+                        @click="openEdit('nickName')"
+                      >
+                        <edit />
+                      </el-icon>
+                    </div>
+                    <div class="text-lg flex items-center gap-3 text-gray-600 dark:text-gray-300">
+                      {{ userStore.userInfo.name || '未设置' }}
+                      <el-icon
+                        class="cursor-pointer text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors duration-200"
+                        @click="openEdit('name')"
+                      >
+                        <edit />
+                      </el-icon>
+                    </div>
                   </div>
                   <div v-else class="flex items-center">
-                    <el-input v-model="nickName" class="w-48 mr-4" />
+                    <el-input v-model="editValue" class="w-48 mr-4" />
                     <el-button type="primary" plain @click="enterEdit">
                       确认
                     </el-button>
@@ -371,7 +382,9 @@
   const showPassword = ref(false)
   const pwdModify = ref({})
   const nickName = ref('')
+  const editValue = ref('')
   const editFlag = ref(false)
+  const editField = ref('')
 
   const rules = reactive({
     password: [
@@ -423,25 +436,30 @@
     modifyPwdForm.value?.clearValidate()
   }
 
-  const openEdit = () => {
-    nickName.value = userStore.userInfo.nickName
+  const openEdit = (field) => {
+    editField.value = field
+    editValue.value = field === 'nickName' ? userStore.userInfo.nickName : userStore.userInfo.name
     editFlag.value = true
   }
 
   const closeEdit = () => {
-    nickName.value = ''
+    editValue.value = ''
+    editField.value = ''
     editFlag.value = false
   }
 
   const enterEdit = async () => {
-    const res = await setSelfInfo({
-      nickName: nickName.value
-    })
+    const updateData = editField.value === 'nickName' 
+      ? { nickName: editValue.value }
+      : { name: editValue.value }
+      
+    const res = await setSelfInfo(updateData)
     if (res.code === 0) {
-      userStore.ResetUserInfo({ nickName: nickName.value })
+      userStore.ResetUserInfo(updateData)
       ElMessage.success('修改成功')
     }
-    nickName.value = ''
+    editValue.value = ''
+    editField.value = ''
     editFlag.value = false
   }
 
