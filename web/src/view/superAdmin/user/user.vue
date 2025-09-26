@@ -250,30 +250,30 @@
           <el-form-item
             label="用户名"
             prop="userName"
-            class="form-half"
+            class="form-half bold-label"
           >
             <el-input v-model="userInfo.userName" />
           </el-form-item>
-          <el-form-item label="昵称" prop="nickName" class="form-half">
+          <el-form-item label="昵称" prop="nickName" class="form-half bold-label">
             <el-input v-model="userInfo.nickName" />
           </el-form-item>
         </div>
-        <el-form-item v-if="dialogFlag === 'add'" label="密码" prop="password" class="form-row">
+        <el-form-item v-if="dialogFlag === 'add'" label="密码" prop="password" class="form-row bold-label">
           <el-input v-model="userInfo.password" />
         </el-form-item>
         <div class="form-row">
-          <el-form-item label="姓名" prop="name" class="form-half">
+          <el-form-item label="姓名" prop="name" class="form-half bold-label">
             <el-input v-model="userInfo.name" />
           </el-form-item>
-          <el-form-item label="邮箱" prop="email" class="form-half">
+          <el-form-item label="邮箱" prop="email" class="form-half bold-label">
             <el-input v-model="userInfo.email" />
           </el-form-item>
         </div>
         <div class="form-row">
-          <el-form-item label="手机号" prop="phone" class="form-half">
+          <el-form-item label="手机号" prop="phone" class="form-half bold-label">
             <el-input v-model="userInfo.phone" />
           </el-form-item>
-          <el-form-item label="启用" prop="disabled" class="form-half">
+          <el-form-item label="状态" prop="disabled" class="form-half bold-label">
             <el-switch
               v-model="userInfo.enable"
               inline-prompt
@@ -282,7 +282,7 @@
             />
           </el-form-item>
         </div>
-        <el-form-item label="用户角色" prop="authorityId">
+        <el-form-item label="用户角色" prop="authorityId" class="bold-label">
           <el-cascader
             v-model="userInfo.authorityIds"
             style="width: 100%"
@@ -300,10 +300,10 @@
           />
         </el-form-item>
         <div class="form-row">
-          <el-form-item label="头像" label-width="80px" class="form-half">
+          <el-form-item label="头像" label-width="80px" class="form-half bold-label">
             <SelectImage v-model="userInfo.headerImg" />
           </el-form-item>
-          <el-form-item label="配置" prop="originSetting" class="form-half">
+          <el-form-item label="配置" prop="originSetting" class="form-half bold-label">
             <el-input
               v-model="userInfo.originSetting"
               type="textarea"
@@ -315,10 +315,10 @@
         
         <!-- 将时间相关的只读字段移到表单最下方，并统一显示方式 -->
         <div v-if="dialogFlag === 'edit'" class="form-row">
-          <el-form-item label="更新时间" prop="UpdatedAt" class="form-half">
+          <el-form-item label="更新时间" prop="UpdatedAt" class="form-half bold-label">
             <el-input v-model="userInfo.UpdatedAt" disabled />
           </el-form-item>
-          <el-form-item label="创建时间" prop="CreatedAt" class="form-half">
+          <el-form-item label="创建时间" prop="CreatedAt" class="form-half bold-label">
             <el-input v-model="userInfo.CreatedAt" disabled />
           </el-form-item>
         </div>
@@ -733,5 +733,8 @@
     @apply mb-4;
     width: calc(100% + 150px);
     flex: none;
+  }
+  .bold-label .el-form-item__label {
+    font-weight: bold;
   }
 </style>
