@@ -297,29 +297,31 @@ func (userService *UserService) SetUserInfo(req system.SysUser, operatorId uint,
 	return global.GVA_DB.Transaction(func(tx *gorm.DB) error {
 		// 检查用户名是否已被其他用户使用
 		if req.Username != "" {
-			var existingUser system.SysUser
-			err := tx.Where("username = ? AND id != ? AND deleted_at IS NULL", req.Username, req.ID).First(&existingUser).Error
-			if err == nil {
+			var count int64
+			err := tx.Model(&system.SysUser{}).
+				Where("username = ? AND id != ? AND deleted_at IS NULL", req.Username, req.ID).
+				Count(&count).Error
+			if err != nil {
+				return err
+			}
+			if count > 0 {
 				// 找到了使用相同用户名的其他用户
 			return errors.New("用户名已被其他用户使用")
-			}
-			// 如果err不是记录不存在的错误，则返回该错误
-			if !errors.Is(err, gorm.ErrRecordNotFound) {
-				return err
 			}
 		}
 
 		// 检查手机号是否已被其他用户使用（排除已软删除的用户）
 		if req.Phone != "" {
-			var existingUser system.SysUser
-			err := tx.Where("phone = ? AND id != ? AND deleted_at IS NULL", req.Phone, req.ID).First(&existingUser).Error
-			if err == nil {
+			var count int64
+			err := tx.Model(&system.SysUser{}).
+				Where("phone = ? AND id != ? AND deleted_at IS NULL", req.Phone, req.ID).
+				Count(&count).Error
+			if err != nil {
+				return err
+			}
+			if count > 0 {
 				// 找到了使用相同手机号的其他用户
 			return errors.New("手机号已被其他用户使用")
-			}
-			// 如果err不是记录不存在的错误，则返回该错误
-			if !errors.Is(err, gorm.ErrRecordNotFound) {
-				return err
 			}
 		}
 

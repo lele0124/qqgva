@@ -126,23 +126,44 @@ func GetUserName(c *gin.Context) string {
 		if cl, err := GetClaims(c); err != nil {
 			return ""
 		} else {
-			return cl.Username
+			return cl.Name
 		}
 	} else {
 		waitUse := claims.(*systemReq.CustomClaims)
-		return waitUse.Username
+		return waitUse.Name
 	}
 }
 
 func LoginToken(user system.Login) (token string, claims systemReq.CustomClaims, err error) {
 	j := NewJWT()
-	claims = j.CreateClaims(systemReq.BaseClaims{
+	name := ""
+	var sysUser *system.SysUser
+	var ok bool
+	// 使用类型断言获取用户的Name字段
+	if sysUser, ok = user.(*system.SysUser); ok {
+		name = sysUser.Name
+		// 如果Name为空，尝试使用NickName或Username
+		if name == "" {
+			name = sysUser.NickName
+			if name == "" {
+				name = sysUser.Username
+			}
+		}
+	} else {
+		// 即使不是SysUser类型，我们也尝试使用接口方法获取用户名信息
+		name = user.GetUsername()
+	}
+	
+	// 创建claims
+	baseClaims := systemReq.BaseClaims{
 		UUID:        user.GetUUID(),
 		ID:          user.GetUserId(),
 		NickName:    user.GetNickname(),
 		Username:    user.GetUsername(),
+		Name:        name,
 		AuthorityId: user.GetAuthorityId(),
-	})
+	}
+	claims = j.CreateClaims(baseClaims)
 	token, err = j.CreateToken(claims)
 	return
 }

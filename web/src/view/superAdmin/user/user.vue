@@ -50,7 +50,7 @@
         <el-table-column
           align="left"
           label="手机号/用户名"
-          min-width="250"
+          min-width="201"
         >
           <template #default="scope">
             <div>
@@ -101,7 +101,7 @@
             />
           </template>
         </el-table-column>
-        <el-table-column align="left" label="状态" min-width="80">
+        <el-table-column align="left" label="状态" min-width="100">
           <template #default="scope">
             <el-switch
               v-model="scope.row.enable"
@@ -319,6 +319,16 @@
               placeholder="JSON格式的配置信息"
               :rows="10"
             />
+          </el-form-item>
+        </div>
+        
+        <!-- 操作者相关信息 -->
+        <div v-if="dialogFlag === 'edit'" class="form-row">
+          <el-form-item label="操作者" prop="operatorName" class="form-half bold-label">
+            <el-input v-model="userInfo.operatorName" disabled />
+          </el-form-item>
+          <el-form-item label="操作者ID" prop="operatorId" class="form-half bold-label">
+            <el-input v-model="userInfo.operatorId" disabled />
           </el-form-item>
         </div>
         
@@ -593,7 +603,9 @@
     authorityId: '',
     authorityIds: [],
     enable: 1,
-    originSetting: ''
+    originSetting: '',
+    operatorName: '',
+    operatorId: '' // 修改为小写id，与后端保持一致
   })
 
   const rules = ref({
@@ -681,7 +693,9 @@
       authorityId: '',
       authorityIds: [],
       enable: 1, // 默认启用
-      originSetting: ''
+      originSetting: '',
+      operatorName: '',
+      operatorId: '' // 修改为小写id，与后端保持一致
     }
     addUserDialog.value = true
   }

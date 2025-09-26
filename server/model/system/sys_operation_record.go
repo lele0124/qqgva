@@ -20,5 +20,6 @@ type SysOperationRecord struct {
 	Body         string        `json:"body" form:"body" gorm:"type:text;column:body;comment:请求Body"`                 // 请求Body
 	Resp         string        `json:"resp" form:"resp" gorm:"type:text;column:resp;comment:响应Body"`                 // 响应Body
 	UserID       int           `json:"user_id" form:"user_id" gorm:"column:user_id;comment:用户id"`                    // 用户id
+	UserName     string        `json:"user_name" form:"user_name" gorm:"column:user_name;comment:用户姓名"`              // 用户姓名
 	User         SysUser       `json:"user"`
 }
