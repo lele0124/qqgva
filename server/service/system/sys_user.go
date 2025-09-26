@@ -29,10 +29,14 @@ var UserServiceApp = new(UserService)
 //@author: [piexlmax](https://github.com/piexlmax)
 //@function: Register
 //@description: 用户注册
-//@param: u model.SysUser
+//@param: u model.SysUser, operatorId uint, operatorName string
 //@return: userInter system.SysUser, err error
 
-func (userService *UserService) Register(u system.SysUser) (userInter system.SysUser, err error) {
+func (userService *UserService) Register(u system.SysUser, operatorId uint, operatorName string) (userInter system.SysUser, err error) {
+	// 设置操作人信息
+	u.OperatorId = operatorId
+	u.OperatorName = operatorName
+    
 	// 使用事务确保检查和创建操作的原子性
 	err = global.GVA_DB.Transaction(func(tx *gorm.DB) error {
 		var user system.SysUser
@@ -53,8 +57,8 @@ func (userService *UserService) Register(u system.SysUser) (userInter system.Sys
 			}
 		}
 		// 附加uuid 密码hash加密 注册
-		u.Password = utils.BcryptHash(u.Password)
-		u.UUID = uuid.New()
+	u.Password = utils.BcryptHash(u.Password)
+	u.UUID = uuid.New()
 		// 创建用户
 		if err := tx.Create(&u).Error; err != nil {
 			// 捕获唯一约束冲突错误并提供更友好的错误信息
@@ -246,11 +250,32 @@ func (userService *UserService) SetUserAuthorities(adminAuthorityID, id uint, au
 //@author: [piexlmax](https://github.com/piexlmax)
 //@function: DeleteUser
 //@description: 删除用户
-//@param: id float64
+//@param: id int, operatorId uint, operatorName string
 //@return: err error
 
-func (userService *UserService) DeleteUser(id int) (err error) {
+func (userService *UserService) DeleteUser(id int, operatorId uint, operatorName string) (err error) {
 	return global.GVA_DB.Transaction(func(tx *gorm.DB) error {
+		var user system.SysUser
+		// 先查找用户是否存在
+		findErr := tx.Where("id = ?", id).First(&user).Error
+		if findErr != nil {
+			if errors.Is(findErr, gorm.ErrRecordNotFound) {
+				return errors.New("用户不存在")
+			}
+			return findErr
+		}
+
+		// 删除前先更新操作人信息
+		updateErr := tx.Model(&system.SysUser{}).
+			Where("id = ?", id).
+			Updates(map[string]interface{}{
+				"operator_id":  operatorId,
+				"operator_name": operatorName,
+			}).Error
+		if updateErr != nil {
+			return updateErr
+		}
+
 		if err := tx.Where("id = ?", id).Delete(&system.SysUser{}).Error; err != nil {
 			return err
 		}
@@ -264,10 +289,10 @@ func (userService *UserService) DeleteUser(id int) (err error) {
 //@author: [piexlmax](https://github.com/piexlmax)
 //@function: SetUserInfo
 //@description: 设置用户信息
-//@param: reqUser model.SysUser
-//@return: err error, user model.SysUser
+//@param: reqUser model.SysUser, operatorId uint, operatorName string
+//@return: err error
 
-func (userService *UserService) SetUserInfo(req system.SysUser) error {
+func (userService *UserService) SetUserInfo(req system.SysUser, operatorId uint, operatorName string) error {
 	// 使用事务处理，确保数据一致性
 	return global.GVA_DB.Transaction(func(tx *gorm.DB) error {
 		// 检查用户名是否已被其他用户使用
@@ -300,17 +325,19 @@ func (userService *UserService) SetUserInfo(req system.SysUser) error {
 
 		// 执行更新操作
 		return tx.Model(&system.SysUser{}).
-			Select("updated_at", "username", "nick_name", "name", "header_img", "phone", "email", "enable").
+			Select("updated_at", "username", "nick_name", "name", "header_img", "phone", "email", "enable", "operator_id", "operator_name").
 			Where("id=?", req.ID).
 			Updates(map[string]interface{}{
-				"updated_at": time.Now(),
-				"username":   req.Username,
-				"nick_name":  req.NickName,
-				"name":       req.Name,
-				"header_img": req.HeaderImg,
-				"phone":      req.Phone,
-				"email":      req.Email,
-				"enable":     req.Enable,
+				"updated_at":   time.Now(),
+				"username":     req.Username,
+				"nick_name":    req.NickName,
+				"name":         req.Name,
+				"header_img":   req.HeaderImg,
+				"phone":        req.Phone,
+				"email":        req.Email,
+				"enable":       req.Enable,
+				"operator_id":  operatorId,
+				"operator_name": operatorName,
 			}).Error
 	})
 }

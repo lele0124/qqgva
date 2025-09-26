@@ -160,7 +160,10 @@ func (b *BaseApi) Register(c *gin.Context) {
 		enable = 1
 	}
 	user := &system.SysUser{Username: r.Username, NickName: r.NickName, Name: r.Name, Password: r.Password, HeaderImg: r.HeaderImg, AuthorityId: r.AuthorityId, Authorities: authorities, Enable: enable, Phone: r.Phone, Email: r.Email}
-	userReturn, err := userService.Register(*user)
+	// 获取当前登录用户的ID和姓名作为操作人
+	operatorId := utils.GetUserID(c)
+	operatorName := utils.GetUserName(c)
+	userReturn, err := userService.Register(*user, operatorId, operatorName)
 	if err != nil {
 		global.GVA_LOG.Error("注册失败!", zap.Error(err))
 		if strings.Contains(err.Error(), "手机号") {
@@ -336,7 +339,10 @@ func (b *BaseApi) DeleteUser(c *gin.Context) {
 		response.FailWithMessage("删除失败, 无法删除自己。", c)
 		return
 	}
-	err = userService.DeleteUser(reqId.ID)
+	// 获取当前登录用户的ID和姓名作为操作人
+	operatorId := jwtId
+	operatorName := utils.GetUserName(c)
+	err = userService.DeleteUser(reqId.ID, operatorId, operatorName)
 	if err != nil {
 		global.GVA_LOG.Error("删除失败!", zap.Error(err))
 		response.FailWithMessage("删除失败", c)
@@ -375,6 +381,9 @@ func (b *BaseApi) SetUserInfo(c *gin.Context) {
 			return
 		}
 	}
+	// 获取当前登录用户的ID和姓名作为操作人
+	operatorId := utils.GetUserID(c)
+	operatorName := utils.GetUserName(c)
 	err = userService.SetUserInfo(system.SysUser{
 		GVA_MODEL: global.GVA_MODEL{
 			ID: user.ID,
@@ -386,7 +395,7 @@ func (b *BaseApi) SetUserInfo(c *gin.Context) {
 		Phone:     user.Phone,
 		Email:     user.Email,
 		Enable:    user.Enable,
-	})
+	}, operatorId, operatorName)
 	if err != nil {
 		global.GVA_LOG.Error("设置失败!", zap.Error(err))
 		if strings.Contains(err.Error(), "用户名") {
