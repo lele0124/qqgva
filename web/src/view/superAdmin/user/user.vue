@@ -87,6 +87,7 @@
                 emitPath: false
               }"
               :clearable="false"
+              :disabled="true"
               @visible-change="
                 (flag) => {
                   changeAuthority(scope.row, flag, 0)
@@ -100,13 +101,14 @@
             />
           </template>
         </el-table-column>
-        <el-table-column align="left" label="启用" min-width="150">
+        <el-table-column align="left" label="状态" min-width="150">
           <template #default="scope">
             <el-switch
               v-model="scope.row.enable"
               inline-prompt
               :active-value="1"
               :inactive-value="2"
+              :disabled="true"
               @change="
                 () => {
                   switchEnable(scope.row)
@@ -213,12 +215,34 @@
       >
         <!-- 统一显示ID和UUID字段，仅在编辑模式下显示 -->
         <div v-if="dialogFlag === 'edit'" class="form-row">
-          <el-form-item label="ID" class="form-half id-field-small">
-            <el-input v-model="userInfo.ID" disabled />
-          </el-form-item>
-          <el-form-item label="UUID" class="uuid-field-full">
-            <el-input v-model="userInfo.uuid" disabled style="width: 100%;" />
-          </el-form-item>
+          <div class="flex items-start space-x-4">
+            <el-form-item label="ID" class="id-field-small flex-1">
+              <div class="flex items-center">
+                <el-input v-model="userInfo.ID" disabled style="margin-right: 8px; min-width: 150px;" />
+                <el-button 
+                  type="text" 
+                  size="small" 
+                  @click="copyToClipboard(userInfo.ID, 'ID已复制')"
+                  title="复制ID"
+                >
+                  <el-icon><copy-document /></el-icon>
+                </el-button>
+              </div>
+            </el-form-item>
+            <el-form-item label="UUID" class="uuid-field-full flex-1">
+              <div class="flex items-center">
+                <el-input v-model="userInfo.uuid" disabled style="margin-right: 8px; min-width: 350px;" />
+                <el-button 
+                  type="text" 
+                  size="small" 
+                  @click="copyToClipboard(userInfo.uuid, 'UUID已复制')"
+                  title="复制UUID"
+                >
+                  <el-icon><copy-document /></el-icon>
+                </el-button>
+              </div>
+            </el-form-item>
+          </div>
         </div>
         
         <!-- 可编辑字段 -->
@@ -524,6 +548,15 @@
     })
   }
 
+  // 复制文本到剪贴板
+  const copyToClipboard = (text, message = '复制成功') => {
+    navigator.clipboard.writeText(text).then(() => {
+      ElMessage.success(message)
+    }).catch(() => {
+      ElMessage.error('复制失败')
+    })
+  }
+
   // 弹窗相关
   const userInfo = ref({
     ID: '',
@@ -700,6 +733,8 @@
     @apply w-[30%] !important;
   }
   .uuid-field-full {
-    @apply flex-1 mb-4;
+    @apply mb-4;
+    width: calc(100% + 150px);
+    flex: none;
   }
 </style>
