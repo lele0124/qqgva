@@ -25,8 +25,8 @@ captcha:
     key-long: 6
     img-width: 240
     img-height: 80
-    open-captcha: 0
-    open-captcha-timeout: 3600
+    open-captcha: 3
+    open-captcha-timeout: 360
 cloudflare-r2:
     bucket: xxxx0bucket
     base-url: https://gin.vue.admin.com
