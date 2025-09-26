@@ -29,7 +29,7 @@
         >
       </div>
       <el-table :data="tableData" row-key="ID">
-        <el-table-column align="left" label="头像" min-width="75">
+        <el-table-column align="center" label="头像" min-width="75">
           <template #default="scope">
             <CustomPic style="margin-top: 8px" :pic-src="scope.row.headerImg" />
           </template>
@@ -211,12 +211,14 @@
         :model="userInfo"
         label-width="80px"
       >
-        <!-- 统一显示ID和UUID字段 -->
-        <div style="display: flex; align-items: center; margin-bottom: 20px;">
-          <div style="width: 80px; text-align: right; margin-right: 12px;">ID</div>
-          <el-input v-model="userInfo.ID" disabled style="width: 200px; margin-right: 20px;" />
-          <div style="width: 80px; text-align: right; margin-right: 12px;">UUID</div>
-          <el-input v-model="userInfo.uuid" disabled style="flex: 1;" />
+        <!-- 统一显示ID和UUID字段，仅在编辑模式下显示 -->
+        <div v-if="dialogFlag === 'edit'" class="form-row">
+          <el-form-item label="ID" class="form-half id-field-small">
+            <el-input v-model="userInfo.ID" disabled />
+          </el-form-item>
+          <el-form-item label="UUID" class="uuid-field-full">
+            <el-input v-model="userInfo.uuid" disabled style="width: 100%;" />
+          </el-form-item>
         </div>
         
         <!-- 可编辑字段 -->
@@ -693,5 +695,11 @@
   }
   .form-half {
     @apply w-[48%] mr-2 mb-4;
+  }
+  .id-field-small {
+    @apply w-[30%] !important;
+  }
+  .uuid-field-full {
+    @apply flex-1 mb-4;
   }
 </style>
