@@ -4,7 +4,7 @@
       <el-col :span="12">
         <el-card v-if="state.os" class="card_item">
           <template #header>
-            <div>运行时</div>
+            <div class="font-bold">系统信息</div>
           </template>
           <div>
             <el-row :gutter="10">
@@ -37,7 +37,7 @@
           :body-style="{ height: '180px', 'overflow-y': 'scroll' }"
         >
           <template #header>
-            <div>磁盘</div>
+            <div class="font-bold">磁盘</div>
           </template>
           <div>
             <el-row
@@ -88,7 +88,7 @@
           :body-style="{ height: '180px', 'overflow-y': 'scroll' }"
         >
           <template #header>
-            <div>处理器</div>
+            <div class="font-bold">处理器</div>
           </template>
           <div>
             <el-row :gutter="10">
@@ -115,7 +115,7 @@
       <el-col :span="12">
         <el-card v-if="state.ram" class="card_item">
           <template #header>
-            <div>内存</div>
+            <div class="font-bold">内存</div>
           </template>
           <div>
             <el-row :gutter="10">
