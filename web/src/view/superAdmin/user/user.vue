@@ -35,37 +35,43 @@
             <CustomPic style="margin-top: 8px" :pic-src="scope.row.headerImg" />
           </template>
         </el-table-column>
-        <el-table-column align="left" label="ID" min-width="50" prop="ID" />
+
         <el-table-column
           align="left"
-          label="用户名"
+          label="姓名/ID"
           min-width="150"
-          prop="userName"
-        />
+        >
+          <template #default="scope">
+            <div>
+              <div>{{ scope.row.name }}</div>
+              <div class="text-xs text-gray-400">ID: {{ scope.row.ID }}</div>
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column
           align="left"
-          label="姓名"
-          min-width="150"
-          prop="name"
-        />
+          label="手机号/用户名"
+          min-width="250"
+        >
+          <template #default="scope">
+            <div>
+              <div>{{ scope.row.phone }}</div>
+              <div class="text-xs text-gray-400">{{ scope.row.userName }}</div>
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column
           align="left"
-          label="手机号"
-          min-width="180"
-          prop="phone"
-        />
-        <el-table-column
-          align="left"
-          label="昵称"
-          min-width="150"
-          prop="nickName"
-        />
-        <el-table-column
-          align="left"
-          label="邮箱"
-          min-width="180"
-          prop="email"
-        />
+          label="昵称/邮箱"
+          min-width="250"
+        >
+          <template #default="scope">
+            <div>
+              <div>{{ scope.row.nickName }}</div>
+              <div class="text-xs text-gray-400">{{ scope.row.email }}</div>
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column align="left" label="用户角色" min-width="200">
           <template #default="scope">
             <el-cascader
