@@ -1,6 +1,6 @@
 <template>
   <div
-      class="w-40 h-40 relative rounded border border-dashed border-gray-300 cursor-pointer group"
+      class="w-56 h-56 relative rounded border border-dashed border-gray-300 cursor-pointer group"
       :class="rounded ? 'rounded-full' : ''"
   >
     <div class="w-full h-full overflow-hidden" :class="rounded ? 'rounded-full' : ''">

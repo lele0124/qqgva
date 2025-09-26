@@ -308,23 +308,20 @@
               v-model="userInfo.originSetting"
               type="textarea"
               placeholder="JSON格式的配置信息"
-              :rows="4"
+              :rows="10"
             />
           </el-form-item>
         </div>
         
         <!-- 将时间相关的只读字段移到表单最下方，并统一显示方式 -->
         <div v-if="dialogFlag === 'edit'" class="form-row">
+          <el-form-item label="更新时间" prop="UpdatedAt" class="form-half">
+            <el-input v-model="userInfo.UpdatedAt" disabled />
+          </el-form-item>
           <el-form-item label="创建时间" prop="CreatedAt" class="form-half">
             <el-input v-model="userInfo.CreatedAt" disabled />
           </el-form-item>
-          <el-form-item label="修改时间" prop="UpdatedAt" class="form-half">
-            <el-input v-model="userInfo.UpdatedAt" disabled />
-          </el-form-item>
         </div>
-        <el-form-item v-if="dialogFlag === 'edit'" label="删除时间" prop="DeletedAt">
-          <el-input v-model="userInfo.DeletedAt" disabled />
-        </el-form-item>
       </el-form>
     </el-drawer>
   </div>
