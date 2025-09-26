@@ -62,7 +62,7 @@
         <el-table-column
           align="left"
           label="昵称/邮箱"
-          min-width="250"
+          min-width="200"
         >
           <template #default="scope">
             <div>
@@ -101,7 +101,7 @@
             />
           </template>
         </el-table-column>
-        <el-table-column align="left" label="状态" min-width="150">
+        <el-table-column align="left" label="状态" min-width="80">
           <template #default="scope">
             <el-switch
               v-model="scope.row.enable"
@@ -115,6 +115,15 @@
                 }
               "
             />
+          </template>
+        </el-table-column>
+
+        <el-table-column align="left" label="操作者/时间" min-width="250">
+          <template #default="scope">
+            <div>
+              <div>{{ scope.row.operatorName || '-' }}</div>
+              <div class="text-xs text-gray-400">{{ formatDate(scope.row.UpdatedAt) }}</div>
+            </div>
           </template>
         </el-table-column>
 
@@ -344,6 +353,21 @@
   import { ElMessage, ElMessageBox } from 'element-plus'
   import SelectImage from '@/components/selectImage/selectImage.vue'
   import { useAppStore } from "@/pinia";
+  
+  // 日期格式化函数
+  const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '-';
+    return date.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    }).replace(/\//g, '-');
+  };
 
   defineOptions({
     name: 'User'
