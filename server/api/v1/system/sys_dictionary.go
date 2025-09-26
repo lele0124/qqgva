@@ -23,7 +23,8 @@ func (s *DictionaryApi) CreateSysDictionary(c *gin.Context) {
 	var dictionary system.SysDictionary
 	err := c.ShouldBindJSON(&dictionary)
 	if err != nil {
-		response.FailWithMessage(err.Error(), c)
+		// 将 JSON 解析错误转换为中文提示
+		response.FailWithMessage("请求参数格式不正确，请检查数据格式", c)
 		return
 	}
 	err = dictionaryService.CreateSysDictionary(dictionary)
@@ -73,7 +74,8 @@ func (s *DictionaryApi) UpdateSysDictionary(c *gin.Context) {
 	var dictionary system.SysDictionary
 	err := c.ShouldBindJSON(&dictionary)
 	if err != nil {
-		response.FailWithMessage(err.Error(), c)
+		// 将 JSON 解析错误转换为中文提示
+		response.FailWithMessage("请求参数格式不正确，请检查数据格式", c)
 		return
 	}
 	err = dictionaryService.UpdateSysDictionary(&dictionary)

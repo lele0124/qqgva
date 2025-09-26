@@ -110,7 +110,8 @@ func (autoApi *AutoCodeApi) LLMAuto(c *gin.Context) {
 	var llm common.JSONMap
 	err := c.ShouldBindJSON(&llm)
 	if err != nil {
-		response.FailWithMessage(err.Error(), c)
+		// 将 JSON 解析错误转换为中文提示
+		response.FailWithMessage("请求参数格式不正确，请检查数据格式", c)
 		return
 	}
 	if global.GVA_CONFIG.AutoCode.AiPath == "" {

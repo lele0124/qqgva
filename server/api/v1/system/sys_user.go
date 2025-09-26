@@ -139,7 +139,8 @@ func (b *BaseApi) Register(c *gin.Context) {
 	var r systemReq.Register
 	err := c.ShouldBindJSON(&r)
 	if err != nil {
-		response.FailWithMessage(err.Error(), c)
+		// 将 JSON 解析错误转换为中文提示
+		response.FailWithMessage("请求参数格式不正确，请检查数据格式", c)
 		return
 	}
 	err = utils.Verify(r, utils.RegisterVerify)

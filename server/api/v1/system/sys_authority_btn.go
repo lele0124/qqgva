@@ -48,7 +48,8 @@ func (a *AuthorityBtnApi) SetAuthorityBtn(c *gin.Context) {
 	var req request.SysAuthorityBtnReq
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
-		response.FailWithMessage(err.Error(), c)
+		// 将 JSON 解析错误转换为中文提示
+		response.FailWithMessage("请求参数格式不正确，请检查数据格式", c)
 		return
 	}
 	err = authorityBtnService.SetAuthorityBtn(req)

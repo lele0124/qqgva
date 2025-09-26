@@ -28,7 +28,8 @@ func (s *SystemApiApi) CreateApi(c *gin.Context) {
 	var api system.SysApi
 	err := c.ShouldBindJSON(&api)
 	if err != nil {
-		response.FailWithMessage(err.Error(), c)
+		// 将 JSON 解析错误转换为中文提示
+		response.FailWithMessage("请求参数格式不正确，请检查数据格式", c)
 		return
 	}
 	err = utils.Verify(api, utils.ApiVerify)
@@ -100,7 +101,8 @@ func (s *SystemApiApi) IgnoreApi(c *gin.Context) {
 	var ignoreApi system.SysIgnoreApi
 	err := c.ShouldBindJSON(&ignoreApi)
 	if err != nil {
-		response.FailWithMessage(err.Error(), c)
+		// 将 JSON 解析错误转换为中文提示
+		response.FailWithMessage("请求参数格式不正确，请检查数据格式", c)
 		return
 	}
 	err = apiService.IgnoreApi(ignoreApi)
@@ -124,7 +126,8 @@ func (s *SystemApiApi) EnterSyncApi(c *gin.Context) {
 	var syncApi systemRes.SysSyncApis
 	err := c.ShouldBindJSON(&syncApi)
 	if err != nil {
-		response.FailWithMessage(err.Error(), c)
+		// 将 JSON 解析错误转换为中文提示
+		response.FailWithMessage("请求参数格式不正确，请检查数据格式", c)
 		return
 	}
 	err = apiService.EnterSyncApi(syncApi)
@@ -244,7 +247,8 @@ func (s *SystemApiApi) UpdateApi(c *gin.Context) {
 	var api system.SysApi
 	err := c.ShouldBindJSON(&api)
 	if err != nil {
-		response.FailWithMessage(err.Error(), c)
+		// 将 JSON 解析错误转换为中文提示
+		response.FailWithMessage("请求参数格式不正确，请检查数据格式", c)
 		return
 	}
 	err = utils.Verify(api, utils.ApiVerify)

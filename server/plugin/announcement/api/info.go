@@ -26,7 +26,8 @@ func (a *info) CreateInfo(c *gin.Context) {
 	var info model.Info
 	err := c.ShouldBindJSON(&info)
 	if err != nil {
-		response.FailWithMessage(err.Error(), c)
+		// 将 JSON 解析错误转换为中文提示
+		response.FailWithMessage("请求参数格式不正确，请检查数据格式", c)
 		return
 	}
 	err = serviceInfo.CreateInfo(&info)
@@ -89,7 +90,8 @@ func (a *info) UpdateInfo(c *gin.Context) {
 	var info model.Info
 	err := c.ShouldBindJSON(&info)
 	if err != nil {
-		response.FailWithMessage(err.Error(), c)
+		// 将 JSON 解析错误转换为中文提示
+		response.FailWithMessage("请求参数格式不正确，请检查数据格式", c)
 		return
 	}
 	err = serviceInfo.UpdateInfo(info)
@@ -134,7 +136,8 @@ func (a *info) GetInfoList(c *gin.Context) {
 	var pageInfo request.InfoSearch
 	err := c.ShouldBindQuery(&pageInfo)
 	if err != nil {
-		response.FailWithMessage(err.Error(), c)
+		// 将查询参数解析错误转换为中文提示
+		response.FailWithMessage("请求参数格式不正确，请检查数据格式", c)
 		return
 	}
 	list, total, err := serviceInfo.GetInfoInfoList(pageInfo)

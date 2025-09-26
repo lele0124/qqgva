@@ -117,7 +117,7 @@ func (a *AutoCodeTemplateApi) MCPTest(c *gin.Context) {
 
 	_, err = testClient.Initialize(ctx, initRequest)
 	if err != nil {
-		response.FailWithMessage("初始化MCP连接失败:"+err.Error(), c)
+		response.FailWithMessage("初始化MCP连接失败", c)
 		return
 	}
 
@@ -129,7 +129,7 @@ func (a *AutoCodeTemplateApi) MCPTest(c *gin.Context) {
 	// 调用工具
 	result, err := testClient.CallTool(ctx, request)
 	if err != nil {
-		response.FailWithMessage("工具调用失败:"+err.Error(), c)
+		response.FailWithMessage("工具调用失败", c)
 		return
 	}
 

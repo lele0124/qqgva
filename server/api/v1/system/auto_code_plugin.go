@@ -82,7 +82,8 @@ func (a *AutoCodePluginApi) InitMenu(c *gin.Context) {
 	var menuInfo request.InitMenu
 	err := c.ShouldBindJSON(&menuInfo)
 	if err != nil {
-		response.FailWithMessage(err.Error(), c)
+		// 将 JSON 解析错误转换为中文提示
+		response.FailWithMessage("请求参数格式不正确，请检查数据格式", c)
 		return
 	}
 	err = autoCodePluginService.InitMenu(menuInfo)
@@ -106,7 +107,8 @@ func (a *AutoCodePluginApi) InitAPI(c *gin.Context) {
 	var apiInfo request.InitApi
 	err := c.ShouldBindJSON(&apiInfo)
 	if err != nil {
-		response.FailWithMessage(err.Error(), c)
+		// 将 JSON 解析错误转换为中文提示
+		response.FailWithMessage("请求参数格式不正确，请检查数据格式", c)
 		return
 	}
 	err = autoCodePluginService.InitAPI(apiInfo)

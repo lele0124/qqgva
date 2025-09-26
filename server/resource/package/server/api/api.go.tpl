@@ -39,7 +39,7 @@ func ({{.Abbreviation}}Api *{{.StructName}}Api) Create{{.StructName}}(c *gin.Con
 	var {{.Abbreviation}} {{.Package}}.{{.StructName}}
 	err := c.ShouldBindJSON(&{{.Abbreviation}})
 	if err != nil {
-		response.FailWithMessage(err.Error(), c)
+		response.FailWithMessage("请求参数格式不正确，请检查数据格式", c)
 		return
 	}
 	{{- if .AutoCreateResource }}
@@ -130,7 +130,7 @@ func ({{.Abbreviation}}Api *{{.StructName}}Api) Update{{.StructName}}(c *gin.Con
 	err = {{.Abbreviation}}Service.Update{{.StructName}}(ctx,{{.Abbreviation}})
 	if err != nil {
         global.GVA_LOG.Error("更新失败!", zap.Error(err))
-		response.FailWithMessage("更新失败:" + err.Error(), c)
+		response.FailWithMessage("更新失败", c)
 		return
 	}
 	response.OkWithMessage("更新成功", c)
@@ -153,7 +153,7 @@ func ({{.Abbreviation}}Api *{{.StructName}}Api) Find{{.StructName}}(c *gin.Conte
 	re{{.Abbreviation}}, err := {{.Abbreviation}}Service.Get{{.StructName}}(ctx,{{.PrimaryField.FieldJson}})
 	if err != nil {
         global.GVA_LOG.Error("查询失败!", zap.Error(err))
-		response.FailWithMessage("查询失败:" + err.Error(), c)
+		response.FailWithMessage("查询失败", c)
 		return
 	}
 	response.OkWithData(re{{.Abbreviation}}, c)
