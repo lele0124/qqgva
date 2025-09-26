@@ -164,9 +164,13 @@ func (b *BaseApi) Register(c *gin.Context) {
 	if err != nil {
 		global.GVA_LOG.Error("注册失败!", zap.Error(err))
 		if strings.Contains(err.Error(), "手机号") {
-			response.FailWithDetailed(systemRes.SysUserResponse{User: userReturn}, "设置失败，手机号码不允许重复", c)
+			response.FailWithDetailed(systemRes.SysUserResponse{User: userReturn}, "注册失败：该手机号码已被使用，请更换其他手机号码", c)
+		} else if strings.Contains(err.Error(), "用户名") {
+			response.FailWithDetailed(systemRes.SysUserResponse{User: userReturn}, "注册失败：该用户名已被占用，请更换其他用户名", c)
+		} else if strings.Contains(err.Error(), "邮箱") {
+			response.FailWithDetailed(systemRes.SysUserResponse{User: userReturn}, "注册失败：该邮箱已被使用，请更换其他邮箱", c)
 		} else {
-			response.FailWithDetailed(systemRes.SysUserResponse{User: userReturn}, "注册失败", c)
+			response.FailWithDetailed(systemRes.SysUserResponse{User: userReturn}, "注册失败：系统繁忙，请稍后重试或联系管理员", c)
 		}
 		return
 	}

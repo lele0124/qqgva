@@ -42,7 +42,7 @@ func OkWithDetailed(data interface{}, message string, c *gin.Context) {
 }
 
 func Fail(c *gin.Context) {
-	Result(ERROR, map[string]interface{}{}, "操作失败", c)
+	Result(ERROR, map[string]interface{}{}, "操作失败，请稍后重试或联系管理员", c)
 }
 
 func FailWithMessage(message string, c *gin.Context) {
@@ -51,7 +51,7 @@ func FailWithMessage(message string, c *gin.Context) {
 
 func NoAuth(message string, c *gin.Context) {
 	c.JSON(http.StatusUnauthorized, Response{
-		7,
+		ERROR,
 		nil,
 		message,
 	})
@@ -59,4 +59,14 @@ func NoAuth(message string, c *gin.Context) {
 
 func FailWithDetailed(data interface{}, message string, c *gin.Context) {
 	Result(ERROR, data, message, c)
+}
+
+// FailWithCode 使用自定义错误代码返回错误
+func FailWithCode(code int, message string, c *gin.Context) {
+	Result(code, map[string]interface{}{}, message, c)
+}
+
+// FailWithCodeAndData 使用自定义错误代码和数据返回错误
+func FailWithCodeAndData(code int, data interface{}, message string, c *gin.Context) {
+	Result(code, data, message, c)
 }

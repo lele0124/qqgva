@@ -3,6 +3,7 @@ package system
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common"
@@ -25,22 +26,53 @@ type UserService struct{}
 
 var UserServiceApp = new(UserService)
 
+//@author: [piexlmax](https://github.com/piexlmax)
+//@function: Register
+//@description: 用户注册
+//@param: u model.SysUser
+//@return: userInter system.SysUser, err error
+
 func (userService *UserService) Register(u system.SysUser) (userInter system.SysUser, err error) {
-	var user system.SysUser
-	if !errors.Is(global.GVA_DB.Where("username = ?", u.Username).First(&user).Error, gorm.ErrRecordNotFound) { // 判断用户名是否注册
-		return userInter, errors.New("用户名已注册")
-	}
-	// 检查手机号是否已被注册
-	if u.Phone != "" {
-		if !errors.Is(global.GVA_DB.Where("phone = ?", u.Phone).First(&user).Error, gorm.ErrRecordNotFound) {
-			return userInter, errors.New("手机号已被注册")
+	// 使用事务确保检查和创建操作的原子性
+	err = global.GVA_DB.Transaction(func(tx *gorm.DB) error {
+		var user system.SysUser
+		// 判断用户名是否注册（排除已软删除的用户）
+		if !errors.Is(tx.Where("username = ? AND deleted_at IS NULL", u.Username).First(&user).Error, gorm.ErrRecordNotFound) {
+			return errors.New("用户名已注册")
 		}
-	}
-	// 否则 附加uuid 密码hash加密 注册
-	u.Password = utils.BcryptHash(u.Password)
-	u.UUID = uuid.New()
-	err = global.GVA_DB.Create(&u).Error
-	return u, err
+		// 检查手机号是否已被注册（排除已软删除的用户）
+		if u.Phone != "" {
+			if !errors.Is(tx.Where("phone = ? AND deleted_at IS NULL", u.Phone).First(&user).Error, gorm.ErrRecordNotFound) {
+				return errors.New("手机号已被注册")
+			}
+		}
+		// 邮箱唯一性检查（如果提供了邮箱）
+		if u.Email != "" {
+			if !errors.Is(tx.Where("email = ? AND deleted_at IS NULL", u.Email).First(&user).Error, gorm.ErrRecordNotFound) {
+				return errors.New("邮箱已被注册")
+			}
+		}
+		// 附加uuid 密码hash加密 注册
+		u.Password = utils.BcryptHash(u.Password)
+		u.UUID = uuid.New()
+		// 创建用户
+		if err := tx.Create(&u).Error; err != nil {
+			// 捕获唯一约束冲突错误并提供更友好的错误信息
+			if strings.Contains(err.Error(), "unique constraint") {
+				if strings.Contains(err.Error(), "phone") {
+					return errors.New("手机号已被注册")
+				} else if strings.Contains(err.Error(), "username") {
+					return errors.New("用户名已注册")
+				} else if strings.Contains(err.Error(), "email") {
+					return errors.New("邮箱已被注册")
+				}
+			}
+			return err
+		}
+		userInter = u
+		return nil
+	})
+	return
 }
 
 //@author: [piexlmax](https://github.com/piexlmax)
@@ -241,10 +273,10 @@ func (userService *UserService) SetUserInfo(req system.SysUser) error {
 		// 检查用户名是否已被其他用户使用
 		if req.Username != "" {
 			var existingUser system.SysUser
-			err := tx.Where("username = ? AND id != ?", req.Username, req.ID).First(&existingUser).Error
+			err := tx.Where("username = ? AND id != ? AND deleted_at IS NULL", req.Username, req.ID).First(&existingUser).Error
 			if err == nil {
 				// 找到了使用相同用户名的其他用户
-				return errors.New("用户名已被其他用户使用")
+			return errors.New("用户名已被其他用户使用")
 			}
 			// 如果err不是记录不存在的错误，则返回该错误
 			if !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -252,13 +284,13 @@ func (userService *UserService) SetUserInfo(req system.SysUser) error {
 			}
 		}
 
-		// 检查手机号是否已被其他用户使用
+		// 检查手机号是否已被其他用户使用（排除已软删除的用户）
 		if req.Phone != "" {
 			var existingUser system.SysUser
-			err := tx.Where("phone = ? AND id != ?", req.Phone, req.ID).First(&existingUser).Error
+			err := tx.Where("phone = ? AND id != ? AND deleted_at IS NULL", req.Phone, req.ID).First(&existingUser).Error
 			if err == nil {
 				// 找到了使用相同手机号的其他用户
-				return errors.New("手机号已被其他用户使用")
+			return errors.New("手机号已被其他用户使用")
 			}
 			// 如果err不是记录不存在的错误，则返回该错误
 			if !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -295,7 +327,7 @@ func (userService *UserService) SetSelfInfo(req system.SysUser) error {
 		// 检查用户名是否已被其他用户使用
 		if req.Username != "" {
 			var existingUser system.SysUser
-			err := tx.Where("username = ? AND id != ?", req.Username, req.ID).First(&existingUser).Error
+			err := tx.Where("username = ? AND id != ? AND deleted_at IS NULL", req.Username, req.ID).First(&existingUser).Error
 			if err == nil {
 				// 找到了使用相同用户名的其他用户
 				return errors.New("用户名已被其他用户使用")
@@ -306,10 +338,10 @@ func (userService *UserService) SetSelfInfo(req system.SysUser) error {
 			}
 		}
 
-		// 检查手机号是否已被其他用户使用
+		// 检查手机号是否已被其他用户使用（排除已软删除的用户）
 		if req.Phone != "" {
 			var existingUser system.SysUser
-			err := tx.Where("phone = ? AND id != ?", req.Phone, req.ID).First(&existingUser).Error
+			err := tx.Where("phone = ? AND id != ? AND deleted_at IS NULL", req.Phone, req.ID).First(&existingUser).Error
 			if err == nil {
 				// 找到了使用相同手机号的其他用户
 				return errors.New("手机号已被其他用户使用")
