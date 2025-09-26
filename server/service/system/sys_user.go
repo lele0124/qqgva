@@ -116,7 +116,8 @@ func (userService *UserService) GetUserInfoList(info systemReq.GetUserList) (lis
 	if err != nil {
 		return
 	}
-	err = db.Limit(limit).Offset(offset).Preload("Authorities").Preload("Authority").Find(&userList).Error
+	// 默认按最后更新时间降序排序
+	err = db.Order("updated_at DESC").Limit(limit).Offset(offset).Preload("Authorities").Preload("Authority").Find(&userList).Error
 	return userList, total, err
 }
 

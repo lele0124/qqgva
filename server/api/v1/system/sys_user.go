@@ -153,16 +153,9 @@ func (b *BaseApi) Register(c *gin.Context) {
 			AuthorityId: v,
 		})
 	}
-	// 处理Enable字段类型转换
-	var enable int
-	if r.Enable != "" {
-		enable, err = strconv.Atoi(r.Enable)
-		if err != nil {
-			response.FailWithMessage("Enable参数格式错误", c)
-			return
-		}
-	} else {
-		// 如果未提供Enable参数，默认为启用状态
+	// 获取Enable值，默认为1(启用)
+	enable := r.Enable
+	if enable == 0 {
 		enable = 1
 	}
 	user := &system.SysUser{Username: r.Username, NickName: r.NickName, Name: r.Name, Password: r.Password, HeaderImg: r.HeaderImg, AuthorityId: r.AuthorityId, Authorities: authorities, Enable: enable, Phone: r.Phone, Email: r.Email}

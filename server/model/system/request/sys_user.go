@@ -13,7 +13,7 @@ type Register struct {
 	Name         string `json:"name" example:"姓名"`
 	HeaderImg    string `json:"headerImg" example:"头像链接"`
 	AuthorityId  uint   `json:"authorityId" swaggertype:"string" example:"int 角色id"`
-	Enable       string `json:"enable" swaggertype:"string" example:"int 是否启用"`
+	Enable       int    `json:"enable" swaggertype:"integer" example:"int 是否启用"`
 	AuthorityIds []uint `json:"authorityIds" swaggertype:"string" example:"[]uint 角色id"`
 	Phone        string `json:"phone" example:"电话号码"`
 	Email        string `json:"email" example:"电子邮箱"`
