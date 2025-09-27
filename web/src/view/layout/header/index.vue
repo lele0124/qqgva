@@ -62,9 +62,10 @@
             class="cursor-pointer flex justify-center items-center text-black dark:text-gray-100"
           >
             <CustomPic />
-            <span v-show="!isMobile" class="w-16">{{
-              userStore.userInfo.nickName
-            }}</span>
+            <div v-show="!isMobile" class="w-32 text-left">
+              <div class="text-sm font-medium">{{ userStore.userInfo.name || userStore.userInfo.nickName }}</div>
+              <div class="text-xs text-gray-400">{{ userStore.userInfo.phone || '未设置手机' }}</div>
+            </div>
             <el-icon>
               <arrow-down />
             </el-icon>
