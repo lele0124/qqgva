@@ -69,11 +69,20 @@
         />
         <el-table-column
           align="left"
-          label="API路径"
-          min-width="150"
+          label="API信息"
+          min-width="250"
           prop="path"
           sortable="custom"
-        />
+        >
+          <template #default="scope">
+            <div class="text-xs text-gray-400">
+              {{ scope.row.method }} / {{ methodFilter(scope.row.method) }}
+            </div>
+            <div>
+              {{ scope.row.path }}
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column
           align="left"
           label="API分组"
@@ -88,19 +97,6 @@
           prop="description"
           sortable="custom"
         />
-        <el-table-column
-          align="left"
-          label="请求"
-          min-width="150"
-          prop="method"
-          sortable="custom"
-        >
-          <template #default="scope">
-            <div>
-              {{ scope.row.method }} / {{ methodFilter(scope.row.method) }}
-            </div>
-          </template>
-        </el-table-column>
 
         <el-table-column align="left" fixed="right" label="操作" :min-width="appStore.operateMinWith">
           <template #default="scope">
@@ -182,10 +178,19 @@
       >
         <el-table-column
           align="left"
-          label="API路径"
-          min-width="150"
+          label="API信息"
+          min-width="250"
           prop="path"
-        />
+        >
+          <template #default="scope">
+            <div class="text-xs text-gray-400">
+              {{ scope.row.method }} / {{ methodFilter(scope.row.method) }}
+            </div>
+            <div>
+              {{ scope.row.path }}
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column
           align="left"
           label="API分组"
