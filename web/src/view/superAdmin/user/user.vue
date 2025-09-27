@@ -328,17 +328,27 @@
             <el-input v-model="userInfo.operatorName" disabled />
           </el-form-item>
           <el-form-item label="操作者ID" prop="operatorId" class="form-half bold-label">
-            <el-input v-model="userInfo.operatorId" disabled />
+            <div class="flex items-center">
+              <el-input v-model="userInfo.operatorId" disabled style="margin-right: 8px; min-width: 200px;" />
+              <el-button 
+                type="text" 
+                size="small" 
+                @click="copyToClipboard(userInfo.operatorId, '操作者ID已复制')"
+                title="复制操作者ID"
+              >
+                <el-icon><copy-document /></el-icon>
+              </el-button>
+            </div>
           </el-form-item>
         </div>
         
         <!-- 将时间相关的只读字段移到表单最下方，并统一显示方式 -->
         <div v-if="dialogFlag === 'edit'" class="form-row">
           <el-form-item label="更新时间" prop="UpdatedAt" class="form-half bold-label">
-            <el-input v-model="userInfo.UpdatedAt" disabled />
+            <el-input :value="formatDate(userInfo.UpdatedAt)" disabled />
           </el-form-item>
           <el-form-item label="创建时间" prop="CreatedAt" class="form-half bold-label">
-            <el-input v-model="userInfo.CreatedAt" disabled />
+            <el-input :value="formatDate(userInfo.CreatedAt)" disabled />
           </el-form-item>
         </div>
       </el-form>
