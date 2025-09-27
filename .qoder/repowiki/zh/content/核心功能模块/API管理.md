@@ -35,15 +35,15 @@
 
 ```mermaid
 graph TD
-subgraph "服务端"
-A[Model] --> B[Service]
-B --> C[API]
-C --> D[Router]
-end
-subgraph "客户端"
-E[View] --> F[API]
-end
-D < --> F
+    subgraph "服务端"
+        A["Model"] --> B["Service"]
+        B --> C["API"]
+        C --> D["Router"]
+    end
+    subgraph "客户端"
+        E["View"] --> F["API"]
+    end
+    D <--> F
 ```
 
 **图源**
@@ -96,22 +96,17 @@ SysApi结构体定义了API的核心属性及其用途：
 
 ```mermaid
 classDiagram
-class SysApi {
-+uint ID
-+string Path
-+string Description
-+string ApiGroup
-+string Method
-+time.Time CreatedAt
-+time.Time UpdatedAt
-+*time.Time DeletedAt
-}
-note right of SysApi
-Path : API路径，用于路由匹配
-Description : API中文描述，便于理解
-ApiGroup : API组别，用于分类管理
-Method : 请求方法(POST/GET/PUT/DELETE)
-end
+    class SysApi {
+        +uint ID
+        +string Path
+        +string Description
+        +string ApiGroup
+        +string Method
+        +time.Time CreatedAt
+        +time.Time UpdatedAt
+        +*time.Time DeletedAt
+    }
+    note right of SysApi : "Path : API路径，用于路由匹配<br/>Description : API中文描述，便于理解<br/>ApiGroup : API组别，用于分类管理<br/>Method : 请求方法(POST/GET/PUT/DELETE)"
 ```
 
 **图源**
