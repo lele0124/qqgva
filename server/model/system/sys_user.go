@@ -13,6 +13,7 @@ type Login interface {
 	GetUserId() uint
 	GetAuthorityId() uint
 	GetUserInfo() any
+	GetPhone() string
 }
 
 var _ Login = new(SysUser)
@@ -62,4 +63,8 @@ func (s *SysUser) GetAuthorityId() uint {
 
 func (s *SysUser) GetUserInfo() any {
 	return *s
+}
+
+func (s *SysUser) GetPhone() string {
+	return s.Phone
 }

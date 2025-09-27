@@ -134,6 +134,20 @@ func GetUserName(c *gin.Context) string {
 	}
 }
 
+// GetUserPhone 从Gin的Context中获取从jwt解析出来的用户手机号
+func GetUserPhone(c *gin.Context) string {
+	if claims, exists := c.Get("claims"); !exists {
+		if cl, err := GetClaims(c); err != nil {
+			return ""
+		} else {
+			return cl.Phone
+		}
+	} else {
+		waitUse := claims.(*systemReq.CustomClaims)
+		return waitUse.Phone
+	}
+}
+
 func LoginToken(user system.Login) (token string, claims systemReq.CustomClaims, err error) {
 	j := NewJWT()
 	name := ""
@@ -162,6 +176,7 @@ func LoginToken(user system.Login) (token string, claims systemReq.CustomClaims,
 		Username:    user.GetUsername(),
 		Name:        name,
 		AuthorityId: user.GetAuthorityId(),
+		Phone:       user.GetPhone(),
 	}
 	claims = j.CreateClaims(baseClaims)
 	token, err = j.CreateToken(claims)

@@ -19,4 +19,5 @@ type BaseClaims struct {
 	NickName    string
 	Name        string
 	AuthorityId uint
+	Phone       string
 }
