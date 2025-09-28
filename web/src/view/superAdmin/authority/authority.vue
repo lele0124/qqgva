@@ -14,12 +14,19 @@
         style="width: 100%"
       >
         <el-table-column label="角色ID" min-width="180" prop="authorityId" />
+        <el-table-column label="父角色ID" min-width="120" prop="parentId" />
         <el-table-column
           align="left"
           label="角色名称"
           min-width="180"
           prop="authorityName"
         />
+        <el-table-column label="更新时间" min-width="220" prop="UpdatedAt">
+          <template #default="scope">
+            {{ formatDate(scope.row.UpdatedAt) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="默认路由" min-width="180" prop="defaultRouter" />
         <el-table-column align="left" label="操作" width="460">
           <template #default="scope">
             <el-button
@@ -164,6 +171,19 @@
       return callback(new Error('请输入正整数'))
     }
     return callback()
+  }
+
+  // 格式化时间
+  const formatDate = (dateString) => {
+    if (!dateString) return ''
+    const date = new Date(dateString)
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    const hours = String(date.getHours()).padStart(2, '0')
+    const minutes = String(date.getMinutes()).padStart(2, '0')
+    const seconds = String(date.getSeconds()).padStart(2, '0')
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
   }
 
   const AuthorityOption = ref([
