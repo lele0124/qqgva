@@ -6,8 +6,8 @@
 
 ### 核心业务特性
 - **多租户数据隔离**：通过商户ID实现数据维度的完全隔离
-- **员工独立账户管理**：员工可以在多个商户中拥有不同的独立账户，每个账户有独立的用户名、手机号和密码
-- **跨商户身份支持**：同一手机号或用户名可在不同商户中创建不同的员工账户，账户间完全独立
+- **员工独立账户管理**：员工可以在多个商户中拥有不同的独立账户，每个账户有独立的用户名和密码
+- **跨商户身份支持**：同一手机号可在不同商户中创建不同的员工账户，账户间完全独立，每个账户拥有独立的密码
 - **角色权限继承**：基于现有Casbin RBAC体系，增加商户维度的权限控制
 - **统一认证体系**：保持JWT认证机制，扩展支持商户上下文和多账户登录选择
 
@@ -89,15 +89,16 @@ graph TB
 **数据迁移策略**：
 ```sql
 -- 创建默认商户（ID=1）
-INSERT INTO sys_merchant (id, merchant_code, merchant_name, merchant_type, level, path, contact_name, contact_phone, contact_email, status, is_enabled, valid_start_time, valid_end_time, merchant_level, operator_id, operator_name, operator_merchant_id, operator_merchant_name) 
-VALUES (1, 'DEFAULT_MERCHANT', '默认商户', 'ENTERPRISE', 1, '1', '系统管理员', '13800000000', 'admin@system.com', 'ACTIVE', 1, '2024-01-01 00:00:00', '2099-12-31 23:59:59', 'VIP', 1, '系统', 1, '默认商户');
+INSERT INTO sys_merchant (id, merchant_code, merchant_name, merchant_type, level, path, contact_name, contact_phone, contact_email, is_enabled, valid_start_time, valid_end_time, merchant_level, operator_id, operator_name, operator_merchant_id, operator_merchant_name) 
+VALUES (1, 'DEFAULT_MERCHANT', '默认商户', 'ENTERPRISE', 1, '1', '系统管理员', '13800000000', 'admin@system.com', 1, '2024-01-01 00:00:00', '2099-12-31 23:59:59', 'VIP', 1, '系统', 1, '默认商户');
 
 -- 更新所有现有员工数据，设置merchant_id为1
 UPDATE sys_user SET merchant_id = 1 WHERE merchant_id IS NULL;
 
--- 更新所有现有角色数据，设置merchant_id和role_type
-UPDATE sys_authority SET merchant_id = 1, role_type = 3 WHERE merchant_id IS NULL AND authority_name != '超级管理员';
+-- 更新所有现有角色数据，先处理超级管理员角色
 UPDATE sys_authority SET merchant_id = 1, role_type = 1 WHERE authority_name = '超级管理员';
+-- 再处理其他普通角色
+UPDATE sys_authority SET merchant_id = 1, role_type = 3 WHERE merchant_id IS NULL;
 
 
 ```
@@ -121,16 +122,35 @@ UPDATE sys_authority SET merchant_id = 1, role_type = 1 WHERE authority_name = '
 **索引设计优化**：
 
 
-**优化索引策略**：
+**索引设计问题及解决方案**：
 
-移除手机号全局唯一限制，采用商户内字段唯一约束：
+**问题描述**：在软删除机制下，如果唯一索引包含`deleted_at`字段，会导致以下问题：
+- 软删除后的记录依然占用索引位置
+- 无法重新创建相同的手机号/用户名组合
+- 影响业务的正常运行，特别是员工重新入职场景
+
+**索引操作一致性问题**：
+- 文档中存在多处对同一索引的不同操作描述
+- 一处提到删除`idx_phone_unique`，另一处又创建包含`deleted_at`的索引
+- 导致实施时的混乱和错误
+
+**统一解决方案**：使用条件唯一索引（WHERE deleted_at IS NULL）
+- 唯一约束仅对未删除记录生效
+- 软删除后可以重新创建相同的手机号/用户名组合
+- 保持数据一致性的同时支持业务灵活性
+- 全文统一采用相同的索引操作逻辑
+
+**业务场景示例**：
+员工张三（手机号：13800138000）在商户A中的账户被删除后：
+- 旧设计：无法再次使用该手机号在商户A中创建账户
+- 新设计：可以正常重新使用该手机号在商户A中创建新账户
 
 **索引设计逻辑**：
-- **商户内手机号唯一**：通过`(phone, merchant_id, deleted_at)`确保同一商户内手机号唯一
-- **商户内用户名唯一**：通过`(username, merchant_id, deleted_at)`确保同一商户内用户名唯一
+- **商户内手机号唯一**：通过`(phone, merchant_id)`确保同一商户内手机号唯一（仅对未删除记录生效）
+- **商户内用户名唯一**：通过`(username, merchant_id)`确保同一商户内用户名唯一（仅对未删除记录生效）
 - **支持跨商户账户**：同一手机号或用户名可以在不同商户中创建不同的员工账户
 - **用户名灵活性**：同一手机号在不同商户中可以使用不同的用户名
-- **软删除支持**：通过`deleted_at`字段支持软删除逻辑
+- **软删除兼容**：使用条件唯一索引，仅对未删除记录（deleted_at IS NULL）生效
 
 **索引创建语句**：
 ```sql
@@ -138,34 +158,44 @@ UPDATE sys_authority SET merchant_id = 1, role_type = 1 WHERE authority_name = '
 DROP INDEX IF EXISTS idx_phone_unique ON sys_user;
 DROP INDEX IF EXISTS idx_phone_merchant_unique ON sys_user;
 
--- 创建商户内手机号唯一索引
-CREATE UNIQUE INDEX idx_phone_merchant_unique ON sys_user (phone, merchant_id, deleted_at);
+-- 创建商户内手机号唯一索引（仅对未删除记录）
+CREATE UNIQUE INDEX idx_phone_merchant_active_unique ON sys_user (phone, merchant_id) WHERE deleted_at IS NULL;
 
--- 创建商户内用户名唯一索引
-CREATE UNIQUE INDEX idx_username_merchant_unique ON sys_user (username, merchant_id, deleted_at);
+-- 创建商户内用户名唯一索引（仅对未删除记录）
+CREATE UNIQUE INDEX idx_username_merchant_active_unique ON sys_user (username, merchant_id) WHERE deleted_at IS NULL;
 
 -- 创建手机号查询索引（用于多账户登录检测）
-CREATE INDEX idx_phone_lookup ON sys_user (phone, deleted_at);
+CREATE INDEX idx_phone_active_lookup ON sys_user (phone) WHERE deleted_at IS NULL;
 
 -- 创建用户名查询索引（用于多账户登录检测）
-CREATE INDEX idx_username_lookup ON sys_user (username, deleted_at);
+CREATE INDEX idx_username_active_lookup ON sys_user (username) WHERE deleted_at IS NULL;
+
+-- 创建包含deleted_at的复合索引（用于软删除查询优化）
+CREATE INDEX idx_merchant_deleted_lookup ON sys_user (merchant_id, deleted_at);
+```
 ```
 
 **业务逻辑设计**：
 
 1. **员工创建流程**：
    - 管理员在创建员工时填写：手机号、用户名、商户ID、密码等信息
-   - 系统校验：手机号和用户名在该商户内不重复
+   - 系统校验：手机号和用户名在该商户内不重复（仅检查未删除记录）
    - 创建成功后生成唯一的sys_user记录ID
    - 该员工可以使用手机号或用户名+密码登录对应商户
 
-2. **多账户登录检测**：
-   - 用户输入手机号或用户名后，系统查询sys_user表
-   - 如果找不到任何记录，提示"用户不存在或无登录权限"
+2. **软删除和重新创建处理**：
+   - 员工账户被软删除后，`deleted_at`字段记录删除时间
+   - 由于使用条件唯一索引，可以重新使用相同的手机号/用户名组合创建新账户
+   - 新账户与原账户为不同的记录，拥有不同的ID和独立的密码
+   - 支持员工离职后重新入职的业务场景
+
+3. **多账户登录检测**：
+   - 用户输入手机号或用户名后，系统查询sys_user表（仅查询未删除记录）
+   - 如果找不到任何记录，提示“用户不存在或无登录权限”
    - 如果找到一条记录，直接进入密码验证流程
    - 如果找到多条记录，显示所有对应的商户列表供用户选择
 
-3. **商户选择和密码验证**：
+4. **商户选择和密码验证**：
    - 用户选择具体商户后，系统获取该商户下的具体账户信息
    - 验证用户输入的密码是否与该账户的密码匹配
    - 检查商户状态和用户状态是否正常
@@ -192,21 +222,26 @@ VALUES (3, 'zhangsan_tech', '13900139000', 1, '李四', 6, 'encrypted_password_3
 4. **登录便捷**：支持手机号或用户名登录，自动检测多账户情况
 5. **扩展性好**：在现有表结构基础上只需调整索引，迁移成本低
 
-**数据迁移策略**：
+**数据迁移策略（统一索引操作）**：
 ```sql
--- 1. 删除原有的手机号全局唯一索引
-DROP INDEX IF EXISTS idx_phone_unique ON sys_user;
-
--- 2. 为现有数据设置默认商户
+-- 1. 为现有数据设置默认商户
 UPDATE sys_user SET merchant_id = 1 WHERE merchant_id IS NULL;
 
--- 3. 创建新的索引
-CREATE UNIQUE INDEX idx_phone_merchant_unique ON sys_user (phone, merchant_id, deleted_at);
-CREATE UNIQUE INDEX idx_username_merchant_unique ON sys_user (username, merchant_id, deleted_at);
-CREATE INDEX idx_phone_lookup ON sys_user (phone, deleted_at);
-CREATE INDEX idx_username_lookup ON sys_user (username, deleted_at);
+-- 2. 删除原有的手机号相关索引（如果存在）
+DROP INDEX IF EXISTS idx_phone_unique ON sys_user;
+DROP INDEX IF EXISTS idx_user_phone ON sys_user;
+DROP INDEX IF EXISTS idx_phone_merchant_unique ON sys_user;
 
--- 4. 验证数据完整性
+-- 3. 创建新的条件唯一索引（仅对未删除记录生效）
+CREATE UNIQUE INDEX idx_phone_merchant_active_unique ON sys_user (phone, merchant_id) WHERE deleted_at IS NULL;
+CREATE UNIQUE INDEX idx_username_merchant_active_unique ON sys_user (username, merchant_id) WHERE deleted_at IS NULL;
+
+-- 4. 创建查询优化索引
+CREATE INDEX idx_phone_active_lookup ON sys_user (phone) WHERE deleted_at IS NULL;
+CREATE INDEX idx_username_active_lookup ON sys_user (username) WHERE deleted_at IS NULL;
+CREATE INDEX idx_merchant_deleted_lookup ON sys_user (merchant_id, deleted_at);
+
+-- 5. 验证数据完整性
 SELECT phone, merchant_id, COUNT(*) as count 
 FROM sys_user 
 WHERE deleted_at IS NULL 
@@ -275,8 +310,6 @@ VALUES ('财务人员', 2, 3);
 | MerchantIcon | string | 否 | 无 | 商户图标URL | /uploads/icons/merchant_1.png |
 | ParentID | uint | 否 | 普通索引 | 父商户ID（NULL表示顶级商户） | 1 |
 | MerchantType | string | 是 | 无 | 商户类型 | ENTERPRISE, INDIVIDUAL |
-| Level | int | 是 | 无 | 商户层级（1为顶级） | 1 |
-| Path | string | 是 | 无 | 层级路径（如：1/2/3） | 1/2 |
 | ContactName | string | 是 | 无 | 联系人姓名 | 张三 |
 | ContactPhone | string | 是 | 无 | 联系电话 | 13800138000 |
 | ContactEmail | string | 是 | 无 | 联系邮箱 | contact@example.com |
@@ -284,12 +317,10 @@ VALUES ('财务人员', 2, 3);
 | LegalPerson | string | 否 | 无 | 法人代表 | 李四 |
 | RegisteredAddress | string | 否 | 无 | 注册地址 | 北京市朝阳区XX路XX号 |
 | BusinessScope | string | 否 | 无 | 经营范围 | 技术开发、技术服务 |
-
 | IsEnabled | int | 是 | 普通索引 | 商户开关状态：1-正常 0-关闭 | 1 |
-| ValidStartTime | time.Time | 否 | 无 | 有效开始时间 | 2024-01-01 00:00:00 |
-| ValidEndTime | time.Time | 否 | 无 | 有效结束时间 | 2024-12-31 23:59:59 |
+| ValidStartTime | time.Time | 否 | 无 | 有效开始时间（仅记录用途） | 2024-01-01 00:00:00 |
+| ValidEndTime | time.Time | 否 | 无 | 有效结束时间（仅记录用途） | 2024-12-31 23:59:59 |
 | MerchantLevel | string | 是 | 无 | 商户等级 | BASIC, PREMIUM, VIP |
-
 | OperatorID | uint | 是 | 无 | 操作者用户ID | 1 |
 | OperatorName | string | 是 | 无 | 操作者姓名 | 张三 |
 | OperatorMerchantID | uint | 否 | 无 | 操作者所属商户ID | 1 |
@@ -298,10 +329,106 @@ VALUES ('财务人员', 2, 3);
 | UpdatedAt | time.Time | 是 | 无 | 更新时间 | 2024-01-02 15:30:00 |
 | DeletedAt | gorm.DeletedAt | 否 | 无 | 删除时间 | NULL |
 
+**表结构冗余优化说明**：
+- **移除Level字段**：商户层级可以通过递归查询ParentID动态计算，无需冗余存储
+- **移除Path字段**：层级路径可以通过递归查询ParentID动态构建，避免数据不一致风险
+- **保留ParentID字段**：作为唯一的层级关系数据源，确保数据的单一职责和一致性
+
 **层级关系说明**：
-- **ParentID**：指向父商户的ID，NULL表示顶级商户
-- **Level**：商户在层级中的深度，顶级商户为1，子商户为2，依此类推
-- **Path**：记录从根节点到当前节点的完整路径，便于层级查询
+- **ParentID**：指向父商户的ID，NULL表示顶级商户，作为树形结构的唯一数据源
+- **层级深度计算**：通过递归查询ParentID链条计算，实时准确，无一致性风险
+- **层级路径构建**：通过递归查询ParentID链条构建完整路径，支持面包屑导航和树形查询
+
+**层级信息获取策略**：
+
+1. **算法计算 + 缓存机制**：
+   - **实时计算**：通过递归算法计算商户的层级深度和路径信息
+   - **Redis缓存**：将计算结果缓存到Redis，提高查询性能
+   - **缓存更新**：当商户层级结构发生变化时，及时清除相关缓存
+   - **缓存KEY设计**：`merchant:level:{id}` 和 `merchant:path:{id}`
+
+2. **层级深度计算算法**：
+   ```
+   功能：计算商户层级深度
+   输入：商户ID
+   输出：层级深度（1-8）
+   
+   算法逻辑：
+   1. 从Redis缓存查询层级深度
+   2. 如果缓存命中，直接返回结果
+   3. 如果缓存未命中，执行递归计算：
+      - 初始化：level = 1, currentId = merchantId
+      - 循环查询：SELECT parent_id FROM sys_merchant WHERE id = currentId
+      - 如果parent_id不为NULL：level++, currentId = parent_id，继续循环
+      - 如果parent_id为NULL：结束循环，返回level
+   4. 将计算结果缓存到Redis（TTL: 24小时）
+   5. 返回层级深度
+   ```
+
+3. **层级路径构建算法**：
+   ```
+   功能：构建商户层级路径
+   输入：商户ID
+   输出：完整路径字符串（如："1/12/35/123"）
+   
+   算法逻辑：
+   1. 从Redis缓存查询层级路径
+   2. 如果缓存命中，直接返回结果
+   3. 如果缓存未命中，执行递归构建：
+      - 初始化：path = [], currentId = merchantId
+      - 循环查询：SELECT id, parent_id FROM sys_merchant WHERE id = currentId
+      - 将currentId添加到path数组开头
+      - 如果parent_id不为NULL：currentId = parent_id，继续循环
+      - 如果parent_id为NULL：结束循环
+   4. 将path数组用"/"连接成字符串
+   5. 将构建结果缓存到Redis（TTL: 24小时）
+   6. 返回层级路径字符串
+   ```
+
+4. **缓存管理策略**：
+   - **缓存命名规范**：`merchant:level:{merchantId}` 和 `merchant:path:{merchantId}`
+   - **缓存过期时间**：24小时，平衡性能和数据实时性
+   - **缓存更新触发**：在商户ParentID发生变化时，清除当前商户及其所有子商户的缓存
+   - **批量缓存清理**：提供管理接口，支持手动清理所有商户层级缓存
+
+5. **性能优化考量**：
+   - **数据库索引**：在ParentID字段上创建索引，优化递归查询性能
+   - **查询限制**：最大层级8级的限制，确保递归查询的性能可控
+   - **批量预热**：系统启动时，可选择性地预热常用商户的层级信息缓存
+   - **监控告警**：监控层级计算的耗时，当超过阈值时进行告警
+
+**数据一致性保证**：
+
+1. **单一数据源**：仅以ParentID为准，所有层级相关信息都基于ParentID计算
+2. **原子操作**：商户层级变更使用数据库事务，确保操作的原子性
+3. **缓存同步**：在ParentID变更后，立即清除相关缓存，确保下次查询获取最新数据
+4. **数据校验**：提供数据一致性检查工具，验证商户层级结构的完整性
+
+**业务逻辑示例**：
+
+1. **创建子商户时**：
+   - 查询父商户层级深度（优先从缓存获取）
+   - 验证新层级是否超过8级限制
+   - 设置新商户的ParentID
+   - 无需设置Level和Path字段
+
+2. **商户层级变更时**：
+   - 更新商户的ParentID
+   - 清除该商户及其所有子商户的层级缓存
+   - 系统下次查询时自动重新计算并缓存
+
+3. **查询商户层级信息时**：
+   - 优先从Redis缓存获取
+   - 缓存未命中时触发实时计算
+   - 将计算结果缓存供后续使用
+
+**优化方案优势**：
+
+1. **数据一致性**：消除了Level和Path字段可能导致的数据不一致问题
+2. **维护简化**：层级结构变更时只需更新ParentID字段，无需同步更新多个字段
+3. **灵活性强**：支持任意层级结构调整，不受预存储路径信息限制
+4. **性能优化**：通过缓存机制在保证数据准确性的前提下提供高性能查询
+5. **扩展性好**：为未来可能的层级限制调整、路径格式变更等需求提供灵活性
 
 
 
@@ -311,13 +438,60 @@ VALUES ('财务人员', 2, 3);
 |--------|------|------|------|------|--------|
 | ID | uint | 是 | 主键 | 主键ID | 1 |
 | MerchantID | uint | 是 | 外键索引 | 商户ID | 1 |
-| PreviousStatus | string | 是 | 无 | 变更前状态 | ACTIVE |
-| NewStatus | string | 是 | 无 | 变更后状态 | SUSPENDED |
-| ChangeReason | string | 是 | 无 | 变更原因 | 系统管理员操作 |
+| PreviousEnabled | int | 是 | 无 | 变更前IsEnabled状态（1-正常 0-关闭） | 1 |
+| NewEnabled | int | 是 | 无 | 变更后IsEnabled状态（1-正常 0-关闭） | 0 |
+| ChangeReason | string | 是 | 无 | 变更原因 | 商户违规被禁用 |
 | OperatorID | uint | 是 | 无 | 操作者用户ID | 2 |
 | OperatorName | string | 是 | 无 | 操作者姓名 | 张三 |
 | OperatorMerchantID | uint | 否 | 无 | 操作者所属商户ID | 1 |
+| OperatorMerchantName | string | 否 | 无 | 操作者所属商户名称 | 默认商户 |
 | CreatedAt | time.Time | 是 | 无 | 变更时间 | 2024-01-02 15:00:00 |
+
+**字段设计说明**：
+- **PreviousEnabled/NewEnabled**：直接对应sys_merchant表的IsEnabled字段值（int类型：1或0）
+- **状态值含义**：1表示商户正常运营，0表示商户被关闭
+- **数据一致性**：确保记录的状态值与sys_merchant表的IsEnabled字段完全一致
+- **审计完整性**：记录操作者的详细信息，包括所属商户，便于审计追踪
+
+**记录示例**：
+```sql
+-- 记录商户状态从正常（1）变更为关闭（0）
+INSERT INTO sys_merchant_status_log (merchant_id, previous_enabled, new_enabled, change_reason, operator_id, operator_name, operator_merchant_id, operator_merchant_name) 
+VALUES (2, 1, 0, '商户违规被禁用', 1, '超级管理员', 1, '默认商户');
+
+-- 记录商户状态从关闭（0）恢复为正常（1）
+INSERT INTO sys_merchant_status_log (merchant_id, previous_enabled, new_enabled, change_reason, operator_id, operator_name, operator_merchant_id, operator_merchant_name) 
+VALUES (2, 0, 1, '整改完成，恢复正常运营', 1, '超级管理员', 1, '默认商户');
+```
+
+**业务逻辑集成**：
+
+1. **状态变更触发**：
+   - 在sys_merchant表的IsEnabled字段发生变更时自动触发记录创建
+   - 通过数据库触发器或应用层事务确保记录的完整性
+   - 只有当IsEnabled值实际发生变化时才创建变更记录
+
+2. **变更记录查询**：
+   ```sql
+   -- 查询指定商户的状态变更历史
+   SELECT 
+       merchant_id,
+       CASE previous_enabled WHEN 1 THEN '正常' WHEN 0 THEN '关闭' END as previous_status,
+       CASE new_enabled WHEN 1 THEN '正常' WHEN 0 THEN '关闭' END as new_status,
+       change_reason,
+       operator_name,
+       operator_merchant_name,
+       created_at
+   FROM sys_merchant_status_log 
+   WHERE merchant_id = 2 
+   ORDER BY created_at DESC;
+   ```
+
+3. **数据完整性约束**：
+   - PreviousEnabled和NewEnabled字段只能为0或1
+   - 确保PreviousEnabled != NewEnabled（避免无效变更记录）
+   - MerchantID必须对应sys_merchant表中的有效记录
+   - OperatorID必须对应sys_user表中的有效用户
 
 ### 商户状态控制设计
 
@@ -330,7 +504,152 @@ VALUES ('财务人员', 2, 3);
 **有效时间设计**：
 - **ValidStartTime**：商户有效开始时间，用于记录商户的合同或授权起始时间
 - **ValidEndTime**：商户有效结束时间，用于记录商户的合同或授权结束时间
-- **注意**：有效时间段目前仅做记录用途，不对登录逻辑进行处理
+- **注意**：有效时间段目前仅做记录用途，不对登录逻辑进行处理，为未来自动化合同管理预留
+
+#### 商户层级限制设计
+
+**层级深度限制**：
+- **最大8级**：为保证系统性能和数据查询效率，限制商户层级最多8级
+- **层级校验**：在创建子商户时，系统自动校验层级深度，超过限制时拒绝创建
+- **性能优化**：合理的层级深度可以确保树形查询和面包屑导航的性能
+
+**层级验证逻辑详细设计**：
+
+1. **创建前验证流程**：
+   ```sql
+   -- 查询父商户的层级信息
+   SELECT level FROM sys_merchant WHERE id = parent_id AND deleted_at IS NULL;
+   
+   -- 计算子商户将要的层级
+   -- new_level = parent_level + 1
+   
+   -- 层级校验条件
+   IF new_level > 8 THEN
+       REJECT WITH ERROR CODE 40312;
+   END IF;
+   ```
+
+2. **前端验证逻辑**：
+   - 在创建商户表单提交前，检查父商户的层级
+   - 如果父商户已达到8级，禁用“创建子商户”按钮
+   - 在选择父商户时，显示层级信息和剩余可创建层数
+
+3. **后端业务逻辑验证**：
+   - API接口在处理创建请求时，必须再次校验层级限制
+   - 使用数据库事务确保并发创建时的数据一致性
+   - 记录操作日志，包括层级限制拒绝的情况
+
+**超过限制的错误处理**：
+
+1. **错误码定义**：
+   ```json
+   {
+       "code": 40312,
+       "message": "商户层级超过限制，最多支朁8级商户结构",
+       "data": {
+           "currentLevel": 8,
+           "maxLevel": 8,
+           "parentMerchantId": 123,
+           "parentMerchantName": "XX三级部门",
+           "parentMerchantPath": "1/12/35/88/99/101/112/123"
+       }
+   }
+   ```
+
+2. **前端错误提示**：
+   - **页面提示**：在创建商户页面显示明确的错误信息
+   - **视觉反馈**：禁用相关按钮，显示灰色状态和提示文字
+   - **操作建议**：提示用户可以在上级商户中重新组织结构
+
+3. **管理员操作提示**：
+   - 在商户列表中显示每个商户的层级信息
+   - 对于已达到8级的商户，显示“已达最大层级”标识
+   - 提供层级统计报表，帮助管理员了解商户结构复杂度
+
+**业务场景处理示例**：
+
+1. **正常创建流程**：
+   - 父商户：“部门A”（Level 6）
+   - 创建子商户：“小组A1”（Level 7）→ 允许创建
+   - 再创建子商户：“项目组A1-1”（Level 8）→ 允许创建
+   - 继续创建：拒绝，返回错误码40301
+
+2. **边界情况处理**：
+   - 当父商户为Level 8时，“新增子商户”按钮自动禁用
+   - 在商户详情页面显示“已达最大层级，无法创建子商户”
+   - 提供“查看层级结构”功能，帮助用户理解当前层级关系
+
+**性能优化考量**：
+
+1. **索引优化**：
+   - 在`level`字段上创建索引，优化层级查询性能
+   - 在`path`字段上创建索引，支持快速的祖先查询
+
+2. **缓存策略**：
+   - 缓存商户层级信息，减少频繁的数据库查询
+   - 在商户结构变更时，及时更新相关缓存
+
+3. **批量操作优化**：
+   - 对于大量商户的层级计算，采用批量处理方式
+   - 使用递归CTE或其他高效算法进行树形结构遍历
+
+**API接口层级限制处理示例**：
+
+```json
+// POST /api/v1/merchant 创建商户接口
+// 请求参数
+{
+    "merchantName": "新部门",
+    "parentId": 123,
+    "merchantType": "DEPARTMENT",
+    "contactName": "张三",
+    "contactPhone": "13800138000"
+}
+
+// 成功响应（层级未超限）
+{
+    "code": 200,
+    "message": "商户创建成功",
+    "data": {
+        "merchantId": 124,
+        "merchantName": "新部门",
+        "level": 7,
+        "path": "1/12/35/88/99/101/123/124",
+        "parentMerchantName": "XX三级部门"
+    }
+}
+
+// 失败响应（层级超限）
+{
+    "code": 40312,
+    "message": "商户层级超过限制，最多支朁8级商户结构",
+    "data": {
+        "currentLevel": 8,
+        "maxLevel": 8,
+        "parentMerchantId": 123,
+        "parentMerchantName": "XX三级部门",
+        "parentMerchantPath": "1/12/35/88/99/101/112/123",
+        "suggestion": "请考虑在上级商户中重新组织结构或联系管理员调整层级限制"
+    }
+}
+```
+
+**前端页面层级信息显示**：
+
+1. **商户列表显示**：
+   - 显示每个商户的层级信息（Level 1/8, Level 5/8）
+   - 使用不同颜色区分层级，8级显示为红色警告
+   - 提供层级数量的视觉化指示器
+
+2. **创建商户表单**：
+   - 在选择父商户时，实时显示当前层级和剩余可创建层数
+   - 对于8级商户，禁用选择并显示“已达最大层级”提示
+   - 提供层级预览功能，显示完整的层级路径
+
+3. **商户详情页面**：
+   - 以面包屑形式显示完整的层级路径
+   - 显示子商户数量和剩余可创建层数
+   - 提供层级结构树形视图，帮助用户理解商户组织架构
 
 #### 登录限制逻辑
 
@@ -379,7 +698,12 @@ sequenceDiagram
     "data": {
         "merchantId": 2,
         "merchantName": "XX科技有限公司",
-        "isEnabled": 0
+        "isEnabled": 0,
+        "lastStatusChange": {
+            "changeTime": "2024-01-02 15:00:00",
+            "changeReason": "商户违规被禁用",
+            "operatorName": "超级管理员"
+        }
     }
 }
 ```
@@ -416,12 +740,10 @@ erDiagram
         string MerchantType
         int Level
         string Path
-        string Status
         int IsEnabled
         time ValidStartTime
         time ValidEndTime
         string MerchantLevel
-        uint AdminUserID FK
         uint OperatorID FK
         string OperatorName
         uint OperatorMerchantID
@@ -531,26 +853,19 @@ sequenceDiagram
             API-->>LOGIN: 显示错误信息
         end
     else 有多个身份
-
-            AUTH-->>API: 返回商户选择列表
-            API-->>LOGIN: 显示商户选择界面
-            U->>LOGIN: 选择商户身份和密码
-        AUTH->>AUTH: 验证密码（对应商户身份和密码）和商户状态
-        alt 密码验证成功
-            LOGIN->>API: 提交商户选择
-            API->>AUTH: 验证选择的商户身份
-            AUTH->>AUTH: 检查选择商户状态
-            alt 商户正常
-                AUTH->>AUTH: 生成JWT Token
-                AUTH-->>API: 返回登录成功+Token
-                API-->>LOGIN: 跳转到主界面
-            else 商户关闭
-                AUTH-->>API: 返回商户状态错误
-                API-->>LOGIN: 显示商户关闭信息
-            end
-        else 密码验证失败
-            AUTH-->>API: 返回密码错误
-            API-->>LOGIN: 显示密码错误信息
+        AUTH-->>API: 返回商户选择列表
+        API-->>LOGIN: 显示商户选择界面
+        U->>LOGIN: 选择商户身份
+        LOGIN->>API: 提交商户选择和密码
+        API->>AUTH: 验证所选商户身份和密码
+        AUTH->>AUTH: 检查选择商户状态
+        alt 密码正确且商户正常
+            AUTH->>AUTH: 生成JWT Token
+            AUTH-->>API: 返回登录成功+Token
+            API-->>LOGIN: 跳转到主界面
+        else 密码错误或商户关闭
+            AUTH-->>API: 返回对应错误信息
+            API-->>LOGIN: 显示错误信息
         end
     end
 ```
@@ -563,7 +878,7 @@ sequenceDiagram
 
 | 参数名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
-| phone | string | 是 | 手机号 |
+| identifier | string | 是 | 用户标识（手机号或用户名） |
 | password | string | 是 | 密码 |
 
 **响应格式** - 只有一个身份：
@@ -599,7 +914,7 @@ sequenceDiagram
     "message": "请选择登录商户",
     "data": {
         "name": "张三",
-        "phone": "13800138000",
+        "identifier": "13800138000",
         "accounts": [
             {
                 "id": 1,
@@ -703,6 +1018,235 @@ sequenceDiagram
 - 检查目标商户的状态和账户在该商户中的状态
 - 生成新的JWT Token包含目标账户信息
 
+#### 多账户登录会话管理机制
+
+**会话管理核心设计**：
+
+1. **临时令牌机制**：
+   - 用户输入手机号后，系统检测到多账户情况时生成临时令牌
+   - 临时令牌有效期：15分钟，仅用于商户选择阶段
+   - 临时令牌包含：用户标识、可选商户列表、生成时间
+   - 与IP地址绑定，防止临时令牌被盗用
+
+2. **商户选择验证流程**：
+   - 用户选择商户后输入密码
+   - 系统验证临时令牌有效性和IP匹配
+   - 验证用户在所选商户中的密码
+   - 检查商户和账户状态是否正常
+
+3. **正式会话建立**：
+   - 验证通过后清理临时令牌
+   - 生成包含完整商户上下文的JWT Token
+   - 在Redis中存储用户会话信息
+   - 前端存储Token并初始化商户上下文
+
+**详细的会话管理流程**：
+
+```mermaid
+sequenceDiagram
+    participant U as 用户
+    participant F as 前端
+    participant API as 登录API
+    participant CACHE as Redis缓存
+    participant DB as 数据库
+    
+    Note over U,DB: 阶段1: 多账户检测阶段
+    U->>F: 输入手机号
+    F->>API: POST /api/v1/auth/login {手机号}
+    API->>DB: 查询手机号对应的所有账户
+    DB-->>API: 返回多个账户信息
+    
+    Note over API,CACHE: 生成临时令牌
+    API->>API: 生成临时令牌 + 绑定IP
+    API->>CACHE: 存储temp_login:{sessionId}\n包含账户列表和IP
+    API-->>F: 返回商户列表和临时令牌
+    
+    Note over U,F: 阶段2: 商户选择阶段
+    F->>F: 显示商户选择界面
+    U->>F: 选择目标商户
+    F->>F: 显示密码输入框
+    U->>F: 输入密码
+    
+    Note over F,DB: 阶段3: 最终认证和会话建立
+    F->>API: POST /api/v1/auth/select-identity\n{账户ID, 临时令牌, 密码}
+    API->>CACHE: 验证临时令牌有效性和IP匹配
+    API->>DB: 验证密码和商户状态
+    
+    alt 验证成功
+        API->>API: 生成正式JWT Token
+        API->>CACHE: 存储user_session:{userId}:{merchantId}:{sessionId}
+        API->>CACHE: 清理临时令牌
+        API-->>F: 返回正式Token和用户信息
+        F->>F: 存储Token到localStorage
+        F->>F: 初始化商户上下文状态
+        F->>F: 跳转到主界面
+    else 验证失败
+        API-->>F: 返回错误信息
+        F->>F: 显示错误提示，保持在密码输入阶段
+    end
+```
+
+**临时令牌安全机制**：
+
+1. **临时令牌结构**：
+   ```json
+   {
+       "tokenType": "TEMP_LOGIN",
+       "identifier": "13800138000",
+       "clientIP": "192.168.1.100",
+       "availableAccounts": [
+           {
+               "accountId": 1,
+               "merchantId": 1,
+               "merchantName": "XX科技",
+               "authorityName": "销售经理",
+               "merchantStatus": "ACTIVE"
+           }
+       ],
+       "expiresAt": 1640995200,
+       "sessionId": "temp_session_uuid"
+   }
+   ```
+
+2. **Redis缓存管理**：
+   ```
+   Key: temp_login:{sessionId}
+   Value: {临时令牌数据}
+   TTL: 900秒 (15分钟)
+   ```
+
+3. **安全限制措施**：
+   - 临时令牌只能使用一次，使用后立即删除
+   - 同一IP地址最多同时搁3个临时令牌
+   - 临时令牌与IP地址绑定，在其他IP使用无效
+   - 超过重试次数限制后自动锁定账户
+
+**正式JWT Token管理**：
+
+1. **Token Payload扩展**：
+   ```json
+   {
+       "sub": "user_authentication",
+       "userId": 2,
+       "accountId": 2,
+       "username": "zhangsan_tech",
+       "phone": "13800138000",
+       "name": "张三",
+       "merchantContext": {
+           "merchantId": 2,
+           "merchantName": "YY贸易有限公司",
+           "merchantCode": "YY_TRADE_001",
+           "merchantType": "ENTERPRISE",
+           "level": 2,
+           "path": "1/2"
+       },
+       "authorities": {
+           "authorityId": 8,
+           "authorityName": "技术顾问",
+           "roleType": 3,
+           "permissions": [
+               "merchant:info:view",
+               "merchant:user:view"
+           ]
+       },
+       "sessionInfo": {
+           "loginTime": 1640995200,
+           "loginIP": "192.168.1.100",
+           "deviceType": "WEB",
+           "sessionId": "session_uuid"
+       },
+       "iat": 1640995200,
+       "exp": 1641081600,
+       "jti": "session_uuid"
+   }
+   ```
+
+2. **会话状态存储**：
+   ```
+   Key: user_session:{userId}:{merchantId}:{sessionId}
+   Value: {
+       "accountId": 2,
+       "merchantId": 2,
+       "loginTime": 1640995200,
+       "lastActiveTime": 1640995800,
+       "loginIP": "192.168.1.100",
+       "deviceInfo": {
+           "userAgent": "Mozilla/5.0...",
+           "platform": "Web"
+       },
+       "permissions": ["merchant:info:view"],
+       "isActive": true
+   }
+   TTL: 86400秒 (24小时)
+   ```
+
+**商户上下文状态管理**：
+
+1. **前端状态管理策略**：
+   - 从 JWT Token 中解析商户上下文信息
+   - 在 Pinia Store 中统一管理商户状态
+   - 支持商户切换和状态持久化
+   - 页面刷新后自动恢复商户上下文
+
+2. **后端会话验证机制**：
+   - 解析请求中的 JWT Token
+   - 验证 Redis 中的会话状态
+   - 更新最后活跃时间
+   - 设置请求上下文中的商户信息
+
+**Token刷新接口**：
+- **接口路径**：`POST /api/v1/auth/refresh`
+- **请求头**：`Authorization: Bearer {current_token}`
+- **响应格式**：
+  ```json
+  {
+      "code": 0,
+      "message": "Token刷新成功",
+      "data": {
+          "token": "new_jwt_token_here",
+          "expiresAt": "2024-01-02T10:00:00Z"
+      }
+  }
+  ```
+
+**会话验证接口**：
+- **接口路径**：`GET /api/v1/auth/validate`
+- **功能说明**：验证当前Token和会话有效性，返回最新的用户和商户信息
+- **响应格式**：
+  ```json
+  {
+      "code": 0,
+      "message": "会话有效",
+      "data": {
+          "isValid": true,
+          "user": {
+              "userId": 2,
+              "username": "zhangsan_tech",
+              "name": "张三",
+              "merchantInfo": {
+                  "merchantId": 2,
+                  "merchantName": "YY贸易有限公司"
+              }
+          },
+          "sessionInfo": {
+              "loginTime": 1640995200,
+              "lastActiveTime": 1640995800,
+              "expiresAt": 1641081600
+          }
+      }
+  }
+  ```
+
+**登出接口升级**：
+- **接口路径**：`POST /api/v1/auth/logout`
+- **功能增强**：清理Redis中的会话信息，支持全部设备登出选项
+- **请求参数**：
+  ```json
+  {
+      "logoutAll": false  // 是否登出所有设备
+  }
+  ```
+
 **响应格式**：
 ```json
 {
@@ -737,6 +1281,7 @@ sequenceDiagram
 
 | 参数名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
+| merchantCode | string | 是 | 商户编码（全局唯一标识） |
 | merchantName | string | 是 | 商户名称 |
 | merchantIcon | string | 否 | 商户图标URL |
 | parentId | uint | 否 | 父商户ID（不填为顶级商户） |
@@ -753,15 +1298,34 @@ sequenceDiagram
 | validStartTime | string | 否 | 有效开始时间 |
 | validEndTime | string | 否 | 有效结束时间 |
 
+**字段详细说明**：
+
+1. **merchantCode**（必填）：
+   - 商户唯一编码，在整个系统中必须唯一
+   - 建议格式：`MERCH + 年份 + 序号`，如：`MERCH20240001`
+   - 创建后不可修改，用于系统内部标识和外部接口调用
+   - 支持字母、数字、下划线，长度6-32位
+   - 系统会自动验证编码的唯一性
+
+2. **merchantName**（必填）：
+   - 商户显示名称，支持中文
+   - 用于前端显示和业务交互
+   - 长度限制：2-100字符
+
+3. **parentId**（可选）：
+   - 指定父商户，不填表示创建顶级商户
+   - 系统会自动验证父商户的存在性和层级限制
+   - 不能超过8级层级深度
 
 **层级关系处理**：
-- 如果提供parentId，系统会自动计算level和path
-- 顶级商户：level=1, path=merchantId
-- 子商户：level=父商户level+1, path=父商户path/merchantId
+- 系统会根据ParentID自动计算商户层级深度
+- 如果超过8级限制，返回错误码40312
+- 会自动构建完整的层级路径信息
 
 **请求示例**：
 ```json
 {
+  "merchantCode": "MERCH20240005",
   "merchantName": "XX科技有限公司",
   "merchantIcon": "/uploads/icons/merchant_logo.png",
   "parentId": 1,
@@ -776,10 +1340,18 @@ sequenceDiagram
   "merchantLevel": "PREMIUM",
   "isEnabled": 1,
   "validStartTime": "2024-01-01 00:00:00",
-  "validEndTime": "2024-12-31 23:59:59",
-
+  "validEndTime": "2024-12-31 23:59:59"
 }
 ```
+
+**字段验证规则**：
+- **merchantCode**：系统自动检查全局唯一性，不允许重复
+- **contactPhone**：验证手机号格式的合法性
+- **contactEmail**：验证邮箱格式的合法性
+- **businessLicense**：如果提供，验证营业执照号格式
+- **parentId**：验证父商户存在性和层级限制
+- **merchantType**：限定为ENTERPRISE或INDIVIDUAL
+- **merchantLevel**：限定为BASIC、PREMIUM或VIP
 
 **响应格式**：
 ```json
@@ -790,10 +1362,65 @@ sequenceDiagram
     "merchantId": 5,
     "merchantCode": "MERCH20240005",
     "merchantName": "XX科技有限公司",
+    "parentId": 1,
     "level": 2,
     "path": "1/5",
-
+    "operatorInfo": {
+      "operatorId": 1,
+      "operatorName": "超级管理员",
+      "operatorMerchantId": 1,
+      "operatorMerchantName": "默认商户"
+    },
     "createdAt": "2024-01-01T10:00:00Z"
+  }
+}
+```
+
+**错误响应示例**：
+
+1. **商户编码重复**：
+```json
+{
+  "code": 40309,
+  "message": "商户编码已存在",
+  "data": {
+    "merchantCode": "MERCH20240005",
+    "existingMerchantId": 3,
+    "existingMerchantName": "其他科技公司"
+  }
+}
+```
+
+2. **层级超过限制**：
+```json
+{
+  "code": 40312,
+  "message": "商户层级超过限制，最多支持8级商户结构",
+  "data": {
+    "currentLevel": 8,
+    "maxLevel": 8,
+    "parentMerchantId": 123,
+    "parentMerchantName": "XX八级部门"
+  }
+}
+```
+
+3. **必填字段缺失**：
+```json
+{
+  "code": 40001,
+  "message": "参数验证失败",
+  "data": {
+    "errors": [
+      {
+        "field": "merchantCode",
+        "message": "商户编码不能为空"
+      },
+      {
+        "field": "contactPhone",
+        "message": "联系电话格式不正确"
+      }
+    ]
   }
 }
 ```
@@ -823,7 +1450,7 @@ sequenceDiagram
                 "parentId": null,
                 "level": 1,
                 "path": "1",
-                "status": "ACTIVE",
+                "isEnabled": 1,
                 "children": [
                     {
                         "merchantId": 2,
@@ -832,7 +1459,7 @@ sequenceDiagram
                         "parentId": 1,
                         "level": 2,
                         "path": "1/2",
-                        "status": "ACTIVE",
+                        "isEnabled": 1,
                         "children": []
                     }
                 ]
@@ -878,7 +1505,7 @@ sequenceDiagram
 | pageSize | int | 否 | 每页数量（默认10） |
 | merchantName | string | 否 | 商户名称（模糊查询） |
 | merchantType | string | 否 | 商户类型筛选 |
-| status | string | 否 | 状态筛选 |
+| isEnabled | int | 否 | 状态筛选（1-正常 0-关闭） |
 | parentId | uint | 否 | 父商户ID筛选 |
 | level | int | 否 | 层级筛选 |
 | treeView | bool | 否 | 是否返回树形结构 |
@@ -919,8 +1546,8 @@ sequenceDiagram
    - 在当前商户中创建新的员工记录
    - 设置用户在该商户中的特定信息（用户名、角色、密码等）
 
-2. **支持同一手机号或用户名在不同商户中创建账户**：
-   - 同一手机号或用户名可以在不同商户中创建不同的员工账户
+2. **支持同一手机号在不同商户中创建账户**：
+   - 同一手机号可以在不同商户中创建不同的员工账户
    - 每个账户拥有独立的用户名、密码、角色
    - 同一商户内手机号和用户名必须唯一
 
@@ -1384,6 +2011,728 @@ sequenceDiagram
     MW-->>F: 返回最终结果
 ```
 
+#### 数据隔离具体实现机制
+
+**1. 数据隔离中间件设计**：
+
+```go
+// middleware/merchant_isolation.go
+func MerchantDataIsolationMiddleware() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        // 获取JWT中的商户信息
+        claims, exists := c.Get("claims")
+        if !exists {
+            response.FailWithMessage("认证失败", c)
+            c.Abort()
+            return
+        }
+        
+        waitUse := claims.(*systemReq.CustomClaims)
+        
+        // 超级管理员绕过数据隔离
+        if waitUse.AuthorityId == "super_admin" {
+            c.Set("bypassMerchantIsolation", true)
+            c.Next()
+            return
+        }
+        
+        // 设置商户上下文
+        merchantID := waitUse.MerchantID
+        if merchantID == 0 {
+            response.FailWithCodeMessage(40302, "商户上下文缺失", c)
+            c.Abort()
+            return
+        }
+        
+        // 在上下文中设置商户ID
+        c.Set("merchantID", merchantID)
+        c.Set("userRole", waitUse.AuthorityId)
+        c.Set("merchantContext", waitUse.MerchantContext)
+        
+        c.Next()
+    }
+}
+```
+
+**2. GORM自动过滤器设计**：
+
+```go
+// service/merchant_scope.go
+// 商户数据过滤器
+func MerchantScope(merchantID uint) func(db *gorm.DB) *gorm.DB {
+    return func(db *gorm.DB) *gorm.DB {
+        return db.Where("merchant_id = ?", merchantID)
+    }
+}
+
+// 上下文提取器
+func GetMerchantIDFromContext(c *gin.Context) (uint, error) {
+    // 检查是否绕过数据隔离
+    if bypass, exists := c.Get("bypassMerchantIsolation"); exists && bypass.(bool) {
+        return 0, nil // 超级管理员不限制
+    }
+    
+    merchantID, exists := c.Get("merchantID")
+    if !exists {
+        return 0, fmt.Errorf("商户上下文不存在")
+    }
+    
+    return merchantID.(uint), nil
+}
+
+// 通用查询方法
+func QueryWithMerchantScope(c *gin.Context, db *gorm.DB) *gorm.DB {
+    merchantID, err := GetMerchantIDFromContext(c)
+    if err != nil {
+        // 记录错误日志
+        return db.Where("1 = 0") // 返回空结果
+    }
+    
+    if merchantID == 0 {
+        // 超级管理员，不限制查询
+        return db
+    }
+    
+    return db.Scopes(MerchantScope(merchantID))
+}
+```
+
+**3. 服务层数据隔离实现**：
+
+```go
+// service/sys_user.go - 用户服务改造
+func (userService *UserService) GetUserInfoList(c *gin.Context, info request.PageInfo) (list interface{}, total int64, err error) {
+    limit := info.PageSize
+    offset := info.PageSize * (info.Page - 1)
+    
+    // 获取基础查询
+    db := global.GVA_DB.Model(&system.SysUser{})
+    
+    // 应用商户数据隔离
+    db = QueryWithMerchantScope(c, db)
+    
+    var userList []system.SysUser
+    err = db.Count(&total).Error
+    if err != nil {
+        return nil, 0, err
+    }
+    
+    // 预加载商户信息
+    err = db.Limit(limit).Offset(offset).
+        Preload("Authorities").
+        Preload("Merchant").  // 预加载商户信息
+        Find(&userList).Error
+        
+    return userList, total, err
+}
+
+func (userService *UserService) Register(c *gin.Context, u system.SysUser) (userInter system.SysUser, err error) {
+    // 获取商户上下文
+    merchantID, err := GetMerchantIDFromContext(c)
+    if err != nil {
+        return userInter, fmt.Errorf("无法获取商户上下文: %v", err)
+    }
+    
+    if merchantID > 0 {
+        // 自动设置商户ID
+        u.MerchantID = merchantID
+    }
+    
+    // 执行创建操作
+    err = global.GVA_DB.Create(&u).Error
+    return u, err
+}
+
+func (userService *UserService) SetUserInfo(c *gin.Context, reqUser system.SysUser) error {
+    // 获取商户上下文进行权限校验
+    db := QueryWithMerchantScope(c, global.GVA_DB)
+    
+    // 只能更新当前商户内的用户
+    return db.Where("id = ?", reqUser.ID).
+        Select("username", "nick_name", "email", "phone", "enable").
+        Updates(&reqUser).Error
+}
+```
+
+**4. API控制器改造**：
+
+```go
+// api/v1/system/sys_user.go
+func (b *BaseApi) GetUserList(c *gin.Context) {
+    var pageInfo request.PageInfo
+    err := c.ShouldBindQuery(&pageInfo)
+    if err != nil {
+        response.FailWithMessage(err.Error(), c)
+        return
+    }
+    
+    // 传递上下文到服务层，自动应用数据隔离
+    list, total, err := userService.GetUserInfoList(c, pageInfo)
+    if err != nil {
+        global.GVA_LOG.Error("获取失败!", zap.Error(err))
+        response.FailWithMessage("获取失败", c)
+        return
+    }
+    
+    response.OkWithDetailed(response.PageResult{
+        List:     list,
+        Total:    total,
+        Page:     pageInfo.Page,
+        PageSize: pageInfo.PageSize,
+    }, "获取成功", c)
+}
+
+func (b *BaseApi) Register(c *gin.Context) {
+    var r request.Register
+    err := c.ShouldBindJSON(&r)
+    if err != nil {
+        response.FailWithMessage(err.Error(), c)
+        return
+    }
+    
+    user := &system.SysUser{
+        Username:    r.Username,
+        NickName:    r.NickName,
+        Password:    r.Password,
+        AuthorityId: r.AuthorityId,
+        // MerchantID 在服务层自动填充
+    }
+    
+    userReturn, err := userService.Register(c, *user)
+    if err != nil {
+        response.FailWithDetailed(response.SysUserResponse{User: userReturn}, fmt.Sprintf("%v", err), c)
+        return
+    }
+    
+    response.OkWithDetailed(response.SysUserResponse{User: userReturn}, "用户创建成功", c)
+}
+```
+
+**5. 数据模型适配**：
+
+```go
+// model/system/sys_user.go
+type SysUser struct {
+    global.GVA_MODEL
+    UUID        uuid.UUID      `json:"uuid" gorm:"index;comment:用户UUID"`
+    Username    string         `json:"userName" gorm:"index;comment:用户登录名"`
+    Password    string         `json:"-" gorm:"comment:用户登录密码"`
+    NickName    string         `json:"nickName" gorm:"default:系统用户;comment:用户昵称"`
+    Phone       string         `json:"phone" gorm:"comment:用户手机号"`
+    Email       string         `json:"email" gorm:"comment:用户邮箱"`
+    Enable      int            `json:"enable" gorm:"default:1;comment:用户是否被冻结 1正常 2冻结"`
+    AuthorityId string         `json:"authorityId" gorm:"default:888;comment:用户角色ID"`
+    MerchantID  uint           `json:"merchantId" gorm:"index;comment:所属商户ID"` // 新增字段
+    Authorities []SysAuthority `json:"authorities" gorm:"many2many:sys_user_authority;"`
+    Merchant    *SysMerchant   `json:"merchant,omitempty" gorm:"foreignkey:MerchantID"` // 关联商户
+}
+
+// 表名
+func (SysUser) TableName() string {
+    return "sys_users"
+}
+```
+
+**6. 批量操作的数据隔离**：
+
+```go
+// service/batch_operations.go
+func (userService *UserService) DeleteUserByIds(c *gin.Context, ids []uint) (err error) {
+    // 应用商户数据隔离
+    db := QueryWithMerchantScope(c, global.GVA_DB)
+    
+    // 只能删除当前商户的用户
+    return db.Where("id IN (?)", ids).Delete(&system.SysUser{}).Error
+}
+
+func (userService *UserService) SetUserAuthorities(c *gin.Context, id uint, authorityIds []string) (err error) {
+    // 验证用户是否属于当前商户
+    db := QueryWithMerchantScope(c, global.GVA_DB)
+    
+    var user system.SysUser
+    err = db.Where("id = ?", id).First(&user).Error
+    if err != nil {
+        return fmt.Errorf("用户不存在或无权限访问")
+    }
+    
+    // 执行权限更新操作...
+    return nil
+}
+```
+
+**7. 数据隔离安全校验**：
+
+```go
+// utils/security/merchant_validator.go
+// 商户数据访问校验器
+func ValidateMerchantAccess(c *gin.Context, targetMerchantID uint) error {
+    currentMerchantID, err := GetMerchantIDFromContext(c)
+    if err != nil {
+        return fmt.Errorf("无法获取当前商户上下文")
+    }
+    
+    // 超级管理员可以访问所有商户
+    if currentMerchantID == 0 {
+        return nil
+    }
+    
+    // 检查目标商户是否为当前商户或其子商户
+    if !IsMerchantAccessible(currentMerchantID, targetMerchantID) {
+        return fmt.Errorf("无权访问目标商户数据")
+    }
+    
+    return nil
+}
+
+// 商户层级访问权限检查
+func IsMerchantAccessible(currentMerchantID, targetMerchantID uint) bool {
+    if currentMerchantID == targetMerchantID {
+        return true
+    }
+    
+    // 检查目标商户是否为当前商户的子商户
+    var targetMerchant model.SysMerchant
+    err := global.GVA_DB.Where("id = ?", targetMerchantID).First(&targetMerchant).Error
+    if err != nil {
+        return false
+    }
+    
+    // 解析层级路径，检查是否包含当前商户
+    pathParts := strings.Split(targetMerchant.Path, "/")
+    for _, part := range pathParts {
+        if merchantID, _ := strconv.ParseUint(part, 10, 32); merchantID == uint64(currentMerchantID) {
+            return true
+        }
+    }
+    
+    return false
+}
+```
+
+**8. 数据隔离监控和日志**：
+
+```go
+// middleware/audit_log.go
+func DataAccessAuditMiddleware() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        start := time.Now()
+        
+        // 记录请求信息
+        merchantID, _ := c.Get("merchantID")
+        userRole, _ := c.Get("userRole")
+        
+        c.Next()
+        
+        // 记录访问日志
+        duration := time.Since(start)
+        logData := map[string]interface{}{
+            "method":      c.Request.Method,
+            "uri":         c.Request.RequestURI,
+            "merchant_id": merchantID,
+            "user_role":   userRole,
+            "status":      c.Writer.Status(),
+            "duration":    duration.Milliseconds(),
+            "client_ip":   c.ClientIP(),
+        }
+        
+        // 记录数据访问日志
+        global.GVA_LOG.Info("数据访问日志", zap.Any("audit", logData))
+    }
+}
+```
+
+**9. 配置和初始化**：
+
+```go
+// initialize/router.go
+func Routers() *gin.Engine {
+    Router := gin.Default()
+    
+    // ... 其他中间件
+    
+    // 数据隔离中间件（在认证中间件之后）
+    Router.Use(middleware.JWTAuth())
+    Router.Use(middleware.MerchantDataIsolationMiddleware())
+    Router.Use(middleware.DataAccessAuditMiddleware())
+    
+    // API 路由组
+    PublicGroup := Router.Group("")
+    {
+        // 公开接口（登录等）
+    }
+    
+    PrivateGroup := Router.Group("")
+    PrivateGroup.Use(middleware.CasbinHandler())
+    {
+        // 需要数据隔离的接口
+        systemRouter.InitUserRouter(PrivateGroup)
+        systemRouter.InitAuthorityRouter(PrivateGroup)
+        // ... 其他路由
+    }
+    
+    return Router
+}
+```
+
+**10. 前端数据隔离实现**：
+
+```javascript
+// utils/request.js - Axios拦截器扩展
+// 自动添加商户上下文
+request.interceptors.request.use(
+    config => {
+        const token = getToken()
+        if (token) {
+            config.headers['Authorization'] = `Bearer ${token}`
+            
+            // 从 Token 中提取商户信息
+            const merchantInfo = getMerchantContextFromToken(token)
+            if (merchantInfo && merchantInfo.merchantId) {
+                config.headers['X-Merchant-ID'] = merchantInfo.merchantId
+                config.headers['X-Merchant-Context'] = JSON.stringify(merchantInfo)
+            }
+        }
+        return config
+    },
+    error => {
+        return Promise.reject(error)
+    }
+)
+
+// 响应拦截器 - 处理数据隔离错误
+request.interceptors.response.use(
+    response => {
+        return response
+    },
+    error => {
+        const { response } = error
+        if (response?.status === 403 && response?.data?.code === 40301) {
+            // 商户数据访问被拒绝
+            ElMessage.error('无权访问该数据，请检查商户权限')
+            return Promise.reject(error)
+        }
+        
+        if (response?.status === 401 && response?.data?.code === 40302) {
+            // 商户上下文缺失
+            ElMessage.error('商户上下文异常，请重新登录')
+            // 跳转到登录页
+            router.push('/login')
+            return Promise.reject(error)
+        }
+        
+        return Promise.reject(error)
+    }
+)
+```
+
+```javascript
+// stores/merchant.js - 商户上下文状态管理
+export const useMerchantStore = defineStore('merchant', {
+    state: () => ({
+        currentMerchant: null,
+        merchantContext: {
+            merchantId: null,
+            merchantName: '',
+            level: 0,
+            path: '',
+            permissions: []
+        },
+        dataScope: 'MERCHANT' // 'GLOBAL' | 'MERCHANT' | 'DEPARTMENT'
+    }),
+    
+    getters: {
+        // 判断当前用户是否为超级管理员
+        isSuperAdmin: (state) => {
+            const userStore = useUserStore()
+            return userStore.userInfo.authorityId === 'super_admin'
+        },
+        
+        // 获取数据范围标识
+        getDataScope: (state) => {
+            if (this.isSuperAdmin) return 'GLOBAL'
+            return state.dataScope
+        }
+    },
+    
+    actions: {
+        // 初始化商户上下文
+        initMerchantContext(tokenPayload) {
+            if (tokenPayload.merchantContext) {
+                this.merchantContext = tokenPayload.merchantContext
+                this.currentMerchant = {
+                    merchantId: tokenPayload.merchantContext.merchantId,
+                    merchantName: tokenPayload.merchantContext.merchantName
+                }
+                this.dataScope = 'MERCHANT'
+            } else {
+                // 超级管理员
+                this.dataScope = 'GLOBAL'
+            }
+        },
+        
+        // 验证数据访问权限
+        validateDataAccess(targetMerchantId) {
+            if (this.isSuperAdmin) return true
+            if (!this.merchantContext.merchantId) return false
+            
+            // 只能访问当前商户数据
+            return this.merchantContext.merchantId === targetMerchantId
+        }
+    }
+})
+```
+
+```vue
+<!-- components/MerchantDataFilter.vue - 数据过滤组件 -->
+<template>
+  <div class="merchant-data-filter">
+    <!-- 超级管理员显示商户选择器 -->
+    <el-select 
+      v-if="merchantStore.isSuperAdmin" 
+      v-model="selectedMerchantId"
+      placeholder="选择商户"
+      clearable
+      @change="handleMerchantChange"
+    >
+      <el-option label="全部商户" :value="null" />
+      <el-option 
+        v-for="merchant in availableMerchants"
+        :key="merchant.id"
+        :label="merchant.merchantName"
+        :value="merchant.id"
+      />
+    </el-select>
+    
+    <!-- 商户管理员显示当前商户信息 -->
+    <div v-else class="current-merchant-info">
+      <el-tag type="info">
+        当前商户：{{ merchantStore.merchantContext.merchantName }}
+      </el-tag>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useMerchantStore } from '@/stores/merchant'
+
+const merchantStore = useMerchantStore()
+const selectedMerchantId = ref(null)
+const availableMerchants = ref([])
+
+const emit = defineEmits(['merchant-change'])
+
+function handleMerchantChange(merchantId) {
+  emit('merchant-change', merchantId)
+}
+
+onMounted(async () => {
+  if (merchantStore.isSuperAdmin) {
+    // 加载所有商户列表
+    try {
+      const response = await getMerchantList()
+      availableMerchants.value = response.data.list
+    } catch (error) {
+      console.error('加载商户列表失败:', error)
+    }
+  }
+})
+</script>
+```
+
+**11. 数据隔离测试策略**：
+
+```javascript
+// tests/unit/data-isolation.test.js
+describe('数据隔离测试', () => {
+  describe('中间件测试', () => {
+    test('应该正确提取商户上下文', () => {
+      const mockContext = {
+        get: jest.fn().mockImplementation((key) => {
+          if (key === 'claims') {
+            return {
+              MerchantID: 123,
+              AuthorityId: 'merchant_admin'
+            }
+          }
+        }),
+        set: jest.fn()
+      }
+      
+      // 模拟中间件执行
+      const middleware = MerchantDataIsolationMiddleware()
+      middleware(mockContext, () => {})
+      
+      expect(mockContext.set).toHaveBeenCalledWith('merchantID', 123)
+    })
+    
+    test('超级管理员应该绕过数据隔离', () => {
+      const mockContext = {
+        get: jest.fn().mockReturnValue({
+          AuthorityId: 'super_admin'
+        }),
+        set: jest.fn()
+      }
+      
+      const middleware = MerchantDataIsolationMiddleware()
+      middleware(mockContext, () => {})
+      
+      expect(mockContext.set).toHaveBeenCalledWith('bypassMerchantIsolation', true)
+    })
+  })
+  
+  describe('服务层数据隔离测试', () => {
+    test('查询时应该自动添加商户过滤条件', () => {
+      const mockContext = {
+        get: jest.fn().mockImplementation((key) => {
+          if (key === 'merchantID') return 123
+          if (key === 'bypassMerchantIsolation') return false
+        })
+      }
+      
+      const mockDB = {
+        Where: jest.fn().mockReturnThis(),
+        Find: jest.fn()
+      }
+      
+      const result = QueryWithMerchantScope(mockContext, mockDB)
+      expect(mockDB.Where).toHaveBeenCalledWith('merchant_id = ?', 123)
+    })
+    
+    test('创建操作应该自动设置商户ID', async () => {
+      const mockContext = {
+        get: jest.fn().mockReturnValue(123)
+      }
+      
+      const userService = new UserService()
+      const userData = {
+        Username: 'testuser',
+        NickName: '测试用户'
+      }
+      
+      await userService.Register(mockContext, userData)
+      expect(userData.MerchantID).toBe(123)
+    })
+  })
+  
+  describe('安全性测试', () => {
+    test('不同商户用户无法访问对方数据', async () => {
+      const merchantAContext = { get: () => 1 }
+      const merchantBContext = { get: () => 2 }
+      
+      // 商户A创建用户
+      const userA = await userService.Register(merchantAContext, {
+        Username: 'userA'
+      })
+      
+      // 商户B尝试访问商户A的用户
+      const userList = await userService.GetUserInfoList(merchantBContext, {
+        Page: 1,
+        PageSize: 10
+      })
+      
+      expect(userList.list).not.toContain(userA)
+    })
+    
+    test('跨商户数据操作应该被限制', async () => {
+      const merchantAContext = { get: () => 1 }
+      const merchantBContext = { get: () => 2 }
+      
+      // 商户A创建用户
+      const userA = await userService.Register(merchantAContext, {
+        Username: 'userA'
+      })
+      
+      // 商户B尝试修改商户A的用户
+      await expect(
+        userService.SetUserInfo(merchantBContext, {
+          ID: userA.ID,
+          NickName: '修改后的名称'
+        })
+      ).rejects.toThrow()
+    })
+  })
+})
+```
+
+```go
+// tests/integration/data_isolation_test.go
+func TestDataIsolation(t *testing.T) {
+    // 初始化测试数据库
+    db := setupTestDB()
+    defer db.Close()
+    
+    t.Run("数据隔离基础功能测试", func(t *testing.T) {
+        // 创建测试商户
+        merchant1 := createTestMerchant("merchant1")
+        merchant2 := createTestMerchant("merchant2")
+        
+        // 创建不同商户的用户
+        user1 := createTestUser(merchant1.ID, "user1")
+        user2 := createTestUser(merchant2.ID, "user2")
+        
+        // 测试商户1的上下文
+        ctx1 := createMerchantContext(merchant1.ID)
+        userList1 := getUserList(ctx1)
+        
+        assert.Len(t, userList1, 1)
+        assert.Equal(t, user1.ID, userList1[0].ID)
+        
+        // 测试商户2的上下文
+        ctx2 := createMerchantContext(merchant2.ID)
+        userList2 := getUserList(ctx2)
+        
+        assert.Len(t, userList2, 1)
+        assert.Equal(t, user2.ID, userList2[0].ID)
+    })
+    
+    t.Run("超级管理员数据访问测试", func(t *testing.T) {
+        // 超级管理员上下文
+        superAdminCtx := createSuperAdminContext()
+        allUsers := getUserList(superAdminCtx)
+        
+        // 应该能看到所有商户的用户
+        assert.Len(t, allUsers, 2)
+    })
+}
+```
+
+**12. 性能优化和监控**：
+
+```go
+// utils/performance/data_isolation_metrics.go
+// 数据隔离性能监控
+func MonitorDataIsolationPerformance() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        start := time.Now()
+        
+        c.Next()
+        
+        duration := time.Since(start)
+        
+        // 记录数据隔离相关指标
+        merchantID, _ := c.Get("merchantID")
+        if merchantID != nil {
+            // 监控数据隔离查询性能
+            prometheus.RecordDataIsolationLatency(
+                c.Request.Method,
+                c.FullPath(),
+                fmt.Sprintf("%d", merchantID),
+                duration,
+            )
+        }
+    }
+}
+
+// 数据隔离查询优化建议
+func OptimizeDataIsolationQuery(db *gorm.DB, merchantID uint) *gorm.DB {
+    // 添加合适的索引提示
+    return db.Scopes(MerchantScope(merchantID)).
+        Select("*").  // 明确指定需要的字段
+        Order("id DESC") // 优化排序
+}
+```
+
 
 
 ### 原有系统界面兼容性改造
@@ -1492,79 +2841,15 @@ sequenceDiagram
 - 新增字段采用非必填设计
 - 向前兼容旧版本API调用
 
-### 现有员工登录界面改造
+#### 现有员工登录界面改造
 
 #### 登录流程优化设计
 
 **多商户员工登录场景分析**：
-- 员工在登录时，系统检查该手机号在多个商户中是否存在
+- 员工在登录时，系统检查该手机号或用户名是否在多个商户中有账户
 - 如果员工只属于一个商户：直接进入该商户后台
 - 如果员工属于多个商户：显示商户选择界面，让用户选择要进入的商户
 - 保持现有单商户用户体验不变，多商户功能对原用户透明
-
-#### 多商户检测接口
-
-**新增接口：检测用户多商户账户**
-- **接口路径**：`POST /api/v1/auth/check-merchants`
-- **调用时机**：用户输入用户名/手机号后，密码验证前
-- **请求参数**：
-
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
-| identifier | string | 是 | 用户标识（手机号或用户名） |
-| identifierType | string | 否 | 标识类型：phone/username（默认自动检测） |
-
-- **后端检测逻辑**：
-```sql
--- 自动检测标识类型（正则匹配手机号格式）
-SELECT u.id, u.username, u.phone, u.merchant_id, u.name,
-       m.merchant_name, m.merchant_icon, m.status,
-       CASE 
-         WHEN a.role_type = 1 THEN '超级管理员'
-         WHEN a.role_type = 2 THEN '商户管理员'
-         ELSE '员工'
-       END as user_role
-FROM sys_user u
-LEFT JOIN sys_merchant m ON u.merchant_id = m.id
-LEFT JOIN sys_authority a ON u.authority_id = a.authority_id
-WHERE (u.phone = ? OR u.username = ?) 
-  AND u.deleted_at IS NULL 
-  AND u.enable = 1
-  AND m.is_enabled = 1;
-```
-
-- **响应格式**：
-```json
-{
-  "code": 0,
-  "message": "检测成功",
-  "data": {
-    "isMultiMerchant": true,
-    "merchantCount": 2,
-    "identifierType": "phone",
-    "merchants": [
-      {
-        "userId": 10,
-        "username": "zhangsan_a",
-        "merchantId": 1,
-        "merchantName": "XX科技有限公司",
-        "merchantIcon": "/uploads/icons/merchant_1.png",
-        "userRole": "商户管理员",
-        "status": "ACTIVE"
-      },
-      {
-        "userId": 25,
-        "username": "zhangsan_b", 
-        "merchantId": 3,
-        "merchantName": "YY贸易公司",
-        "merchantIcon": "/uploads/icons/merchant_3.png",
-        "userRole": "员工",
-        "status": "ACTIVE"
-      }
-    ]
-  }
-}
-```
 
 #### 多商户登录流程
 
@@ -2356,6 +3641,8 @@ flowchart TD
 ```
 
 #### 权限资源定义表
+
+| 权限代码 | 权限名称 | API路径 | HTTP方法 | 超级管理员 | 商户管理员 | 员工角色 | 备注 |
 |----------|----------|---------|----------|------------|------------|----------|------|
 | system:merchant:create | 商户创建 | /api/v1/merchant | POST | ✓ | ✗ | ✗ | 仅超级管理员 |
 | system:merchant:list | 商户列表查看 | /api/v1/merchant/list | GET | ✓ | ✗ | ✗ | 查看所有商户 |
@@ -3940,10 +5227,21 @@ ADD COLUMN `is_main_account` tinyint(1) DEFAULT '0' COMMENT '是否为主账号'
 ALTER TABLE `sys_user` 
 ADD INDEX `idx_user_merchant_id` (`merchant_id`);
 
--- 第五步：处理手机号唯一约束（先删除后创建）
+-- 第五步：处理手机号索引约束（采用条件唯一索引）
+-- 删除原有的手机号相关索引
 ALTER TABLE `sys_user` DROP INDEX IF EXISTS `idx_user_phone`;
-ALTER TABLE `sys_user` 
-ADD UNIQUE INDEX `idx_user_phone_merchant_unique` (`phone`, `merchant_id`, `deleted_at`);
+ALTER TABLE `sys_user` DROP INDEX IF EXISTS `idx_phone_unique`;
+ALTER TABLE `sys_user` DROP INDEX IF EXISTS `idx_phone_merchant_unique`;
+
+-- 创建条件唯一索引（仅对未删除记录生效）
+-- 注意：如果数据库不支持条件索引，则使用应用层逻辑控制
+CREATE UNIQUE INDEX `idx_phone_merchant_active_unique` ON `sys_user` (`phone`, `merchant_id`) WHERE `deleted_at` IS NULL;
+CREATE UNIQUE INDEX `idx_username_merchant_active_unique` ON `sys_user` (`username`, `merchant_id`) WHERE `deleted_at` IS NULL;
+
+-- 对于MySQLv5.7及以下版本，如果不支持条件索引，则使用以下替代方案：
+-- CREATE UNIQUE INDEX `idx_phone_merchant_unique` ON `sys_user` (`phone`, `merchant_id`);
+-- CREATE UNIQUE INDEX `idx_username_merchant_unique` ON `sys_user` (`username`, `merchant_id`);
+-- 然后在应用层通过逻辑处理软删除的唯一性校验
 
 -- 第六步：更新现有员工数据，设置商户ID为1（排除超级管理员）
 UPDATE `sys_user` 
@@ -4820,15 +6118,22 @@ func (m *MerchantSwitchService) determineUserRole(user model.SysUser, merchant m
 |--------|----------|------|
 | 40301 | 商户数据访问被拒绝 | 跨商户数据访问被拦截 |
 | 40302 | 商户上下文缺失| JWT中缺少商户ID信息 |
-| 40303 | 商户状态异常 | 商户已停用或禁用 |
+| 40303 | 商户状态关闭 | 商户已停用或禁用 |
 | 40304 | 商户切换失败 | 用户不属于目标商户 |
 | 40305 | 商户员工数量超限 | 超出商户员工数量限制 |
 | 40306 | 商户角色数量超限 | 超出商户角色数量限制 |
 | 40307 | 手机号在当前商户已存在 | 同一商户内手机号重复 |
-| 40308 | 角色名称在当前商户已存在 | 同一商户内角色名称重复 |
+| 40308 | 用户名在当前商户已存在 | 同一商户内用户名重复 |
+| 40309 | 角色名称在当前商户已存在 | 同一商户内角色名称重复 |
 | 40310 | 商户层级结构异常 | 商户层级数据不一致 |
 | 40311 | 商户移动操作失败 | 不能移动到子节点或形成循环 |
-| 40312 | 商户层级超出限制 | 超出最大允许的层级深度 |
+| 40312 | 商户层级超出限制 | 超出最大8级的层级深度 |
+| 40313 | 商户名称已存在 | 商户名称在全平台不唯一 |
+| 40314 | 商户编码生成失败 | 系统生成商户编码失败 |
+| 40315 | 商户权限不足 | 当前用户无权操作该商户 |
+| 40316 | 多账户登录检测失败 | 无法检测用户的多商户账户 |
+| 40317 | 临时令牌无效 | 商户选择临时令牌已过期或无效 |
+| 40318 | 商户数据导入失败 | 现有数据迁移到多租户架构失败 |
 
 ### 前端错误处理策略
 - **全局错误拦截**：在Axios响应拦截器中统一处理多租户错误
