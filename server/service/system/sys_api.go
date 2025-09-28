@@ -210,12 +210,13 @@ func (apiService *ApiService) GetAPIInfoList(api system.SysApi, info request.Pag
 	db = db.Limit(limit).Offset(offset)
 	OrderStr := "id desc"
 	if order != "" {
-		orderMap := make(map[string]bool, 5)
+		orderMap := make(map[string]bool, 6)
 		orderMap["id"] = true
 		orderMap["path"] = true
 		orderMap["api_group"] = true
 		orderMap["description"] = true
 		orderMap["method"] = true
+		orderMap["updated_at"] = true
 		if !orderMap[order] {
 			err = fmt.Errorf("非法的排序字段: %v", order)
 			return apiList, total, err

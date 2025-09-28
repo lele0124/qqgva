@@ -70,7 +70,7 @@
         <el-table-column
           align="left"
           label="API信息"
-          min-width="250"
+          min-width="400"
           prop="path"
           sortable="custom"
         >
@@ -97,7 +97,38 @@
           prop="description"
           sortable="custom"
         />
-
+        <el-table-column
+          align="left"
+          label="来源"
+          min-width="100"
+          prop="source"
+          sortable="custom"
+        />
+        <el-table-column
+          align="left"
+          label="更新时间"
+          min-width="160"
+          prop="formattedUpdateTime"
+          sortable="custom"
+        >
+          <template #default="scope">
+            <div>
+              <div v-if="scope.row.formattedUpdateTime && scope.row.formattedUpdateTime !== '-'">
+                {{ scope.row.formattedUpdateTime }}
+              </div>
+              <div v-else>
+                <span style="color: orange;">无更新时间数据</span>
+                <!-- 调试信息 -->
+                <div v-if="process.env.NODE_ENV === 'development'" style="font-size: 10px; color: #999; margin-top: 2px;">
+                  <div v-if="scope.row.updatedAt">原始updatedAt: {{ typeof scope.row.updatedAt }}</div>
+                  <div v-if="scope.row.UpdatedAt">原始UpdatedAt: {{ typeof scope.row.UpdatedAt }}</div>
+                  <div v-if="scope.row.updated_at">原始updated_at: {{ typeof scope.row.updated_at }}</div>
+                </div>
+              </div>
+            </div>
+          </template>
+        </el-table-column>
+        
         <el-table-column align="left" fixed="right" label="操作" :min-width="appStore.operateMinWith">
           <template #default="scope">
             <el-button
@@ -427,6 +458,31 @@
   import { butler } from '@/api/autoCode'
   import { useAppStore } from "@/pinia";
 
+  // 日期格式化函数
+  const formatDate = (dateString) => {
+    console.log('formatDate输入:', dateString, '类型:', typeof dateString);
+    if (!dateString) {
+      console.log('日期为空，返回空值');
+      return '-';
+    }
+    const date = new Date(dateString);
+    console.log('日期对象:', date);
+    if (isNaN(date.getTime())) {
+      console.log('无效日期，返回空值');
+      return '-';
+    }
+    const formattedDate = date.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    }).replace(/\//g, '-');
+    console.log('格式化后的日期:', formattedDate);
+    return formattedDate;
+  };
+
   defineOptions({
     name: 'Api'
   })
@@ -615,16 +671,69 @@
 
   // 查询
   const getTableData = async () => {
+    console.log('正在获取API列表数据...');
     const table = await getApiList({
       page: page.value,
       pageSize: pageSize.value,
       ...searchInfo.value
     })
+    console.log('API列表数据返回:', table);
     if (table.code === 0) {
-      tableData.value = table.data.list
+      console.log('返回的数据列表:', table.data.list);
+      // 检查第一条数据的结构，特别是updatedAt字段
+      if (table.data.list && table.data.list.length > 0) {
+        console.log('第一条数据的结构:', table.data.list[0]);
+        console.log('updatedAt字段是否存在:', 'updatedAt' in table.data.list[0]);
+        console.log('updatedAt字段的值:', table.data.list[0].updatedAt, '类型:', typeof table.data.list[0].updatedAt);
+        console.log('UpdatedAt字段是否存在:', 'UpdatedAt' in table.data.list[0]);
+        console.log('UpdatedAt字段的值:', table.data.list[0].UpdatedAt, '类型:', typeof table.data.list[0].UpdatedAt);
+        console.log('formatDate函数测试(updatedAt):', formatDate(table.data.list[0].updatedAt));
+        console.log('formatDate函数测试(UpdatedAt):', formatDate(table.data.list[0].UpdatedAt));
+        
+        // 检查是否有其他可能的时间字段名称
+        const possibleDateFields = ['createdAt', 'CreatedAt', 'updated_at', 'created_at'];
+        possibleDateFields.forEach(field => {
+          if (field in table.data.list[0]) {
+            console.log(`${field}字段存在，值:`, table.data.list[0][field], '类型:', typeof table.data.list[0][field]);
+          }
+        });
+      }
+      // 预处理数据，为每条记录添加格式化后的日期字段
+      const processedList = table.data.list.map(item => {
+        let formattedUpdateTime = '-';
+        
+        // 只使用UpdatedAt字段
+        if (item.UpdatedAt) {
+          const date = new Date(item.UpdatedAt);
+          if (!isNaN(date.getTime())) {
+            formattedUpdateTime = date.toLocaleString('zh-CN', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit'
+            }).replace(/\//g, '-');
+          }
+        }
+        
+        // 输出调试信息
+        console.log(`${item.path || item.ID} 的格式化日期:`, formattedUpdateTime);
+        
+        return { ...item, formattedUpdateTime };
+      });
+      
+      tableData.value = processedList
       total.value = table.data.total
       page.value = table.data.page
       pageSize.value = table.data.pageSize
+      console.log('表格数据设置:', tableData.value.length, '条记录');
+    } else {
+      console.error('获取API列表失败:', table.msg);
+      ElMessage({
+        type: 'error',
+        message: '获取API列表失败: ' + table.msg
+      })
     }
   }
 
