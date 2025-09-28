@@ -30,7 +30,7 @@ func (baseMenuService *BaseMenuService) DeleteBaseMenu(id int) (err error) {
 	}
 	err = global.GVA_DB.First(&system.SysAuthority{}, "default_router = ?", menu.Name).Error
 	if err == nil {
-		return errors.New("此菜单有角色正在作为首页，不可删除")
+		return errors.New("此菜单有角色正在作为首页,不可删除")
 	}
 	return global.GVA_DB.Transaction(func(tx *gorm.DB) error {
 

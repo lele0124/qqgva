@@ -24,7 +24,7 @@
 
 ## MCP 配置结构解析
 
-`mcp.go` 文件定义了 MCP 服务的核心配置结构，包含服务端点、API 密钥、上下文长度、模型标识等关键参数。该配置通过 Viper 进行管理，并在系统启动时加载。
+`mcp.go` 文件定义了 MCP 服务的核心配置结构,包含服务端点、API 密钥、上下文长度、模型标识等关键参数。该配置通过 Viper 进行管理,并在系统启动时加载。
 
 ```mermaid
 classDiagram
@@ -45,11 +45,11 @@ class MCP {
 
 ## AI 辅助开发能力集成
 
-MCP 协议通过 `server/mcp/` 目录下的多个组件实现 AI 辅助开发能力的集成。这些组件作为工具注册到 MCP 服务器中，供 AI 调用以完成特定任务。
+MCP 协议通过 `server/mcp/` 目录下的多个组件实现 AI 辅助开发能力的集成。这些组件作为工具注册到 MCP 服务器中,供 AI 调用以完成特定任务。
 
 ### API 创建器
 
-`api_creator.go` 实现了自动创建后端 API 记录的功能。当 AI 编辑器需要添加新的 API 接口时，可通过此工具自动创建对应的权限记录。
+`api_creator.go` 实现了自动创建后端 API 记录的功能。当 AI 编辑器需要添加新的 API 接口时,可通过此工具自动创建对应的权限记录。
 
 ```mermaid
 sequenceDiagram
@@ -73,7 +73,7 @@ Client-->>AI : 返回最终结果
 
 ### 菜单生成器
 
-`menu_creator.go` 提供了前端菜单项的自动化生成功能。当需要为新功能模块创建前端页面时，可通过此工具自动生成对应的菜单配置。
+`menu_creator.go` 提供了前端菜单项的自动化生成功能。当需要为新功能模块创建前端页面时,可通过此工具自动生成对应的菜单配置。
 
 ```mermaid
 flowchart TD
@@ -94,7 +94,7 @@ style End fill:#bbf,stroke:#333
 
 ### 需求分析器
 
-`requirement_analyzer.go` 是所有 MCP 工具的首选入口，负责将用户的自然语言需求转换为 AI 可理解的结构化提示词，引导后续的代码生成流程。
+`requirement_analyzer.go` 是所有 MCP 工具的首选入口,负责将用户的自然语言需求转换为 AI 可理解的结构化提示词,引导后续的代码生成流程。
 
 ```mermaid
 graph TB
@@ -114,7 +114,7 @@ CodeGenerator --> ExecutionPlan[执行计划]
 
 ### 自动化模块分析器
 
-`gva_auto_generate.go` 中的 `AutomationModuleAnalyzer` 是核心执行工具，接收 `requirement_analyzer` 的分析结果并执行具体的模块创建操作。它支持批量创建多个模块，并能自动处理字典创建等关联任务。
+`gva_auto_generate.go` 中的 `AutomationModuleAnalyzer` 是核心执行工具,接收 `requirement_analyzer` 的分析结果并执行具体的模块创建操作。它支持批量创建多个模块,并能自动处理字典创建等关联任务。
 
 ```mermaid
 classDiagram
@@ -152,7 +152,7 @@ AutomationModuleAnalyzer --> AnalysisResponse : "返回"
 
 ### 字典选项生成器
 
-`dictionary_generator.go` 提供智能字典选项生成功能。当字段需要使用字典类型时，系统会自动检查字典是否存在，若不存在则创建对应的字典及默认选项。
+`dictionary_generator.go` 提供智能字典选项生成功能。当字段需要使用字典类型时,系统会自动检查字典是否存在,若不存在则创建对应的字典及默认选项。
 
 ```mermaid
 sequenceDiagram
@@ -182,11 +182,11 @@ end
 
 ## 前后端联动实现路径
 
-`auto_code_mcp.go` 文件实现了前后端联动的关键接口，通过 MCP 协议连接 AI 系统与后端服务。
+`auto_code_mcp.go` 文件实现了前后端联动的关键接口,通过 MCP 协议连接 AI 系统与后端服务。
 
 ### 服务端点配置
 
-在 `server/api/v1/system/auto_code_mcp.go` 中定义了三个主要端点：
+在 `server/api/v1/system/auto_code_mcp.go` 中定义了三个主要端点:
 
 - `/autoCode/mcp`: 创建 MCP 工具
 - `/autoCode/mcpList`: 获取可用工具列表
@@ -212,7 +212,7 @@ Client --> Response[工具列表/测试结果]
 
 ### 服务层实现
 
-`server/service/system/auto_code_mcp.go` 中的 `CreateMcp` 方法负责实际的 MCP 工具创建逻辑，使用 Go 模板引擎生成工具代码文件。
+`server/service/system/auto_code_mcp.go` 中的 `CreateMcp` 方法负责实际的 MCP 工具创建逻辑,使用 Go 模板引擎生成工具代码文件。
 
 ```mermaid
 flowchart TD
@@ -234,7 +234,7 @@ ReturnPath --> End([结束])
 
 ### 日志开启方法
 
-要调试 MCP 通信链路，可以通过以下方式开启详细日志：
+要调试 MCP 通信链路,可以通过以下方式开启详细日志:
 
 1. 在 `config.yaml` 中确保日志级别设置为 `debug`
 2. 使用 `global.GVA_LOG` 记录关键操作
@@ -249,7 +249,7 @@ global.GVA_LOG.Info("API列表获取成功",
 
 ### 代理设置技巧
 
-在 `server/initialize/mcp.go` 中，MCP 服务器的初始化过程允许灵活配置各种端点：
+在 `server/initialize/mcp.go` 中,MCP 服务器的初始化过程允许灵活配置各种端点:
 
 ```mermaid
 sequenceDiagram

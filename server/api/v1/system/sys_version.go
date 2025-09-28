@@ -219,7 +219,7 @@ func (sysVersionApi *SysVersionApi) GetSysVersionPublic(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	// 此接口不需要鉴权
-	// 示例为返回了一个固定的消息接口，一般本接口用于C端服务，需要自己实现业务逻辑
+	// 示例为返回了一个固定的消息接口,一般本接口用于C端服务,需要自己实现业务逻辑
 	sysVersionService.GetSysVersionPublic(ctx)
 	response.OkWithDetailed(gin.H{
 		"info": "不需要鉴权的版本管理接口信息",
@@ -278,10 +278,10 @@ func (sysVersionApi *SysVersionApi) ExportVersion(c *gin.Context) {
 		}
 	}
 
-	// 处理菜单数据，构建递归的children结构
+	// 处理菜单数据,构建递归的children结构
 	processedMenus := buildMenuTree(menuData)
 
-	// 处理API数据，清除ID和时间戳字段
+	// 处理API数据,清除ID和时间戳字段
 	processedApis := make([]system.SysApi, 0, len(apiData))
 	for _, api := range apiData {
 		cleanApi := system.SysApi{
@@ -293,7 +293,7 @@ func (sysVersionApi *SysVersionApi) ExportVersion(c *gin.Context) {
 		processedApis = append(processedApis, cleanApi)
 	}
 
-	// 处理字典数据，清除ID和时间戳字段，包含字典详情
+	// 处理字典数据,清除ID和时间戳字段,包含字典详情
 	processedDicts := make([]system.SysDictionary, 0, len(dictData))
 	for _, dict := range dictData {
 		cleanDict := system.SysDictionary{
@@ -302,8 +302,8 @@ func (sysVersionApi *SysVersionApi) ExportVersion(c *gin.Context) {
 			Status: dict.Status,
 			Desc:   dict.Desc,
 		}
-		
-		// 处理字典详情数据，清除ID和时间戳字段
+
+		// 处理字典详情数据,清除ID和时间戳字段
 		cleanDetails := make([]system.SysDictionaryDetail, 0, len(dict.SysDictionaryDetails))
 		for _, detail := range dict.SysDictionaryDetails {
 			cleanDetail := system.SysDictionaryDetail{
@@ -317,7 +317,7 @@ func (sysVersionApi *SysVersionApi) ExportVersion(c *gin.Context) {
 			cleanDetails = append(cleanDetails, cleanDetail)
 		}
 		cleanDict.SysDictionaryDetails = cleanDetails
-		
+
 		processedDicts = append(processedDicts, cleanDict)
 	}
 
@@ -391,7 +391,7 @@ func (sysVersionApi *SysVersionApi) DownloadVersionJson(c *gin.Context) {
 	if version.VersionData != nil && *version.VersionData != "" {
 		jsonData = []byte(*version.VersionData)
 	} else {
-		// 如果没有存储的JSON数据，构建一个基本的结构
+		// 如果没有存储的JSON数据,构建一个基本的结构
 		basicData := systemRes.ExportVersionResponse{
 			Version: systemReq.VersionInfo{
 				Name:        *version.VersionName,
@@ -479,7 +479,7 @@ func (sysVersionApi *SysVersionApi) ImportVersion(c *gin.Context) {
 	err = sysVersionService.CreateSysVersion(ctx, &version)
 	if err != nil {
 		global.GVA_LOG.Error("保存导入记录失败!", zap.Error(err))
-		// 这里不返回错误，因为数据已经导入成功
+		// 这里不返回错误,因为数据已经导入成功
 	}
 
 	response.OkWithMessage("导入成功", c)

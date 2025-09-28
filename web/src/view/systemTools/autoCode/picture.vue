@@ -2,7 +2,7 @@
   <div>
     <warning-bar
         href="https://www.gin-vue-admin.com/empower/"
-        title="此功能只针对授权用户开放，点我【购买授权】"
+        title="此功能只针对授权用户开放,点我【购买授权】"
     />
     <div class="gva-search-box">
       <div class="text-xl mb-2 text-gray-600">
@@ -109,7 +109,7 @@
       
       <!-- 详细描述输入框 -->
       <div class="relative">
-        <div class="text-base font-medium mb-2">详细描述（可选）</div>
+        <div class="text-base font-medium mb-2">详细描述(可选)</div>
         <el-input
             v-model="prompt"
             :maxlength="2000"
@@ -124,7 +124,7 @@
           <el-tooltip effect="light">
             <template #content>
               <div>
-                此功能仅针对授权用户开放，前往<a
+                此功能仅针对授权用户开放,前往<a
                   class="text-blue-600"
                   href="https://www.gin-vue-admin.com/empower/"
                   target="_blank"
@@ -211,7 +211,7 @@ const handleKeydown = (event) => {
   }
 }
 
-// 复制方法：把某个字符串写进剪贴板
+// 复制方法:把某个字符串写进剪贴板
 const copySnippet = (vueString) => {
   navigator.clipboard.writeText(vueString)
       .then(() => {
@@ -272,12 +272,12 @@ const loadVueComponent = async (vueCode) => {
               vue: Vue,
             },
             getFile(url) {
-              // 处理所有可能的URL格式，包括相对路径、绝对路径等
-              // 提取路径的最后部分，忽略查询参数
+              // 处理所有可能的URL格式,包括相对路径、绝对路径等
+              // 提取路径的最后部分,忽略查询参数
               const fileName = url.split('/').pop().split('?')[0]
               const componentFileName = fakePath.split('/').pop()
               
-              // 如果文件名包含我们的组件名称，或者url完全匹配fakePath
+              // 如果文件名包含我们的组件名称,或者url完全匹配fakePath
               if (fileName === componentFileName || url === fakePath || 
                   url === `./component/0.vue`) {
                 return Promise.resolve({
@@ -290,7 +290,7 @@ const loadVueComponent = async (vueCode) => {
               return Promise.reject(new Error(`找不到文件: ${url}`))
             },
             addStyle(textContent) {
-              // 不再将样式添加到document.head，而是返回样式内容
+              // 不再将样式添加到document.head,而是返回样式内容
               // 稍后会将样式添加到Shadow DOM中
               return textContent
             },
@@ -327,12 +327,12 @@ const loadVueComponent = async (vueCode) => {
       delay: 200,
       suspensible: false,
       onError(error, retry, fail) {
-        console.error('加载错误，细节:', error)
+        console.error('加载错误,细节:', error)
         fail()
       }
     })
 
-    // 创建一个包装组件，使用Shadow DOM隔离样式
+    // 创建一个包装组件,使用Shadow DOM隔离样式
     const ShadowWrapper = {
       name: 'ShadowWrapper',
       setup() {
@@ -376,7 +376,7 @@ const loadVueComponent = async (vueCode) => {
   }
 }
 
-// 当页面用途改变时，更新内容板块的选择
+// 当页面用途改变时,更新内容板块的选择
 const handlePageTypeChange = (value) => {
   if (value !== '其他' && pageTypeContentMap[value]) {
     contentBlocks.value = [...pageTypeContentMap[value]]
@@ -384,7 +384,7 @@ const handlePageTypeChange = (value) => {
 }
 
 const llmAutoFunc = async () => {
-  // 构建完整的描述，包含选项模式的选择
+  // 构建完整的描述,包含选项模式的选择
   let fullPrompt = ''
   
   // 添加页面用途
@@ -422,5 +422,5 @@ const llmAutoFunc = async () => {
   }
 }
 
-const placeholder = ref(`补充您对页面的其他要求或特殊需求，例如：特别强调的元素、参考网站、交互效果等。`)
+const placeholder = ref(`补充您对页面的其他要求或特殊需求,例如:特别强调的元素、参考网站、交互效果等。`)
 </script>

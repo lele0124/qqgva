@@ -44,7 +44,7 @@ func CheckMd5(content []byte, chunkMd5 string) (CanUpload bool) {
 	if fileMd5 == chunkMd5 {
 		return true // 可以继续上传
 	} else {
-		return false // 切片不完整，废弃
+		return false // 切片不完整,废弃
 	}
 }
 

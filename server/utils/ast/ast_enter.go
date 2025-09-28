@@ -25,7 +25,7 @@ func (vi *Visitor) Visit(node ast.Node) ast.Visitor {
 	switch n := node.(type) {
 	case *ast.GenDecl:
 		// 查找有没有import context包
-		// Notice：没有考虑没有import任何包的情况
+		// Notice:没有考虑没有import任何包的情况
 		if n.Tok == token.IMPORT && vi.ImportCode != "" {
 			vi.addImport(n)
 			// 不需要再遍历子树

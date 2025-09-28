@@ -24,7 +24,7 @@
 9. [结论](#结论)
 
 ## 简介
-`common.vue` 是 `gin-vue-admin` 项目中所有文件上传功能的基础组件，封装了通用的上传逻辑。该组件通过 props 接收配置参数（如分类 ID），利用 Element Plus 的 `el-upload` 组件实现文件选择与上传，并集成 axios 进行 HTTP 请求。它实现了文件类型校验、大小限制、上传成功/失败处理，并通过 `$emit` 向父组件传递事件。后端接口 `/fileUploadAndDownload/upload` 定义在 Go 文件中，使用 GORM 操作数据库并支持多种对象存储（OSS）。前后端通过约定的 JSON 格式 `{code, msg, data}` 进行通信。
+`common.vue` 是 `gin-vue-admin` 项目中所有文件上传功能的基础组件,封装了通用的上传逻辑。该组件通过 props 接收配置参数(如分类 ID),利用 Element Plus 的 `el-upload` 组件实现文件选择与上传,并集成 axios 进行 HTTP 请求。它实现了文件类型校验、大小限制、上传成功/失败处理,并通过 `$emit` 向父组件传递事件。后端接口 `/fileUploadAndDownload/upload` 定义在 Go 文件中,使用 GORM 操作数据库并支持多种对象存储(OSS)。前后端通过约定的 JSON 格式 `{code, msg, data}` 进行通信。
 
 ## 项目结构
 
@@ -57,7 +57,7 @@ A -- HTTP POST --> H
 
 ## 核心功能分析
 
-`common.vue` 组件作为基础上传模块，提供了可复用的文件上传能力。它通过 `props` 接收外部配置（如 `classId`），并通过 `defineEmits` 定义了 `on-success` 事件用于通知父组件上传结果。组件内部集成了文件类型和大小的前置校验逻辑，支持图片（jpg, png, svg, webp）和视频（mp4, webm）格式，并分别设置了 500KB 和 5MB 的大小限制。上传过程由 `el-upload` 触发，自动携带 JWT 令牌（x-token）和自定义数据（classId），成功后解析响应数据并通过 `$emit` 抛出文件 URL。
+`common.vue` 组件作为基础上传模块,提供了可复用的文件上传能力。它通过 `props` 接收外部配置(如 `classId`),并通过 `defineEmits` 定义了 `on-success` 事件用于通知父组件上传结果。组件内部集成了文件类型和大小的前置校验逻辑,支持图片(jpg, png, svg, webp)和视频(mp4, webm)格式,并分别设置了 500KB 和 5MB 的大小限制。上传过程由 `el-upload` 触发,自动携带 JWT 令牌(x-token)和自定义数据(classId),成功后解析响应数据并通过 `$emit` 抛出文件 URL。
 
 **Section sources**
 - [common.vue](file://web/src/components/upload/common.vue#L1-L90)
@@ -168,15 +168,15 @@ FileUploadAndDownloadService --> global.GVA_DB : GORM DB
 
 ### 响应格式约定
 
-前后端通过统一的 JSON 格式进行通信，确保接口的一致性。
+前后端通过统一的 JSON 格式进行通信,确保接口的一致性。
 
 | 字段 | 类型 | 描述 |
 |------|------|------|
-| code | int | 响应状态码，0 表示成功，非0表示失败 |
-| msg | string | 响应消息，描述操作结果 |
+| code | int | 响应状态码,0 表示成功,非0表示失败 |
+| msg | string | 响应消息,描述操作结果 |
 | data | object | 成功时返回的数据对象 |
 
-当上传成功时，`data` 字段包含一个 `file` 对象，其结构如下：
+当上传成功时,`data` 字段包含一个 `file` 对象,其结构如下:
 
 | 子字段 | 类型 | 描述 |
 |--------|------|------|
@@ -184,7 +184,7 @@ FileUploadAndDownloadService --> global.GVA_DB : GORM DB
 | file.fileName | string | 文件原始名称 |
 | file.filePath | string | 文件在服务器或OSS上的访问路径 |
 
-此格式由 `response.OkWithDetailed()` 函数生成，定义在 `response.go` 中。
+此格式由 `response.OkWithDetailed()` 函数生成,定义在 `response.go` 中。
 
 **Section sources**
 - [response.go](file://server/model/common/response/response.go#L1-L72)
@@ -222,19 +222,19 @@ exaFileModel --> gvaModel
 
 ## 性能考虑
 
-该上传组件在设计上考虑了基本的用户体验和资源消耗：
-- **客户端校验**：在上传前进行文件类型和大小检查，避免无效请求占用服务器带宽。
-- **Loading 状态**：通过 `fullscreenLoading` 变量控制加载状态，防止用户重复提交。
-- **HTTP 拦截器**：`request.js` 中的拦截器统一管理 loading 效果，避免多个请求同时触发多个 loading 弹窗。
-- **超时机制**：axios 配置了 99999ms 的超时时间，并设有 30 秒强制关闭 loading 的保护机制，防止界面卡死。
-- **OSS 支持**：后端通过 `upload.NewOss()` 支持多种对象存储，减轻本地服务器压力。
+该上传组件在设计上考虑了基本的用户体验和资源消耗:
+- **客户端校验**:在上传前进行文件类型和大小检查,避免无效请求占用服务器带宽。
+- **Loading 状态**:通过 `fullscreenLoading` 变量控制加载状态,防止用户重复提交。
+- **HTTP 拦截器**:`request.js` 中的拦截器统一管理 loading 效果,避免多个请求同时触发多个 loading 弹窗。
+- **超时机制**:axios 配置了 99999ms 的超时时间,并设有 30 秒强制关闭 loading 的保护机制,防止界面卡死。
+- **OSS 支持**:后端通过 `upload.NewOss()` 支持多种对象存储,减轻本地服务器压力。
 
-然而，对于大文件上传，当前实现缺乏分片上传和断点续传的支持，这可能影响大文件的上传成功率和效率。
+然而,对于大文件上传,当前实现缺乏分片上传和断点续传的支持,这可能影响大文件的上传成功率和效率。
 
 ## 故障排除指南
 
 | 问题现象 | 可能原因 | 解决方案 |
 |---------|---------|---------|
-| 上传按钮无反应 | 浏览器兼容性或 JavaScript 错误 | 检查浏览器控制台是否有报错，确认 Vue 和 Element Plus 正常加载 |
-| 提示"接收文件失败" | 后端无法读取 multipart/form-data | 检查请求 Content-Type 是否正确，确认后端路由 `/fileUploadAndDownload/upload` 可达 |
+| 上传按钮无反应 | 浏览器兼容性或 JavaScript 错误 | 检查浏览器控制台是否有报错,确认 Vue 和 Element Plus 正常加载 |
+| 提示"接收文件失败" | 后端无法读取 multipart/form-data | 检查请求 Content-Type 是否正确,确认后端路由 `/fileUploadAndDownload/upload` 可达 |
 | 提示"上传文件失败" | OSS 配置错误或权限不足 |

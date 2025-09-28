@@ -7,7 +7,7 @@
           <template #label>
             <span>
               创建日期
-              <el-tooltip content="搜索范围是开始日期（包含）至结束日期（不包含）">
+              <el-tooltip content="搜索范围是开始日期(包含)至结束日期(不包含)">
                 <el-icon>
                   <QuestionFilled />
                 </el-icon>
@@ -223,7 +223,7 @@
           >
             <el-icon class="el-icon--upload"><upload-filled /></el-icon>
             <div class="el-upload__text">
-              将JSON文件拖到此处，或<em>点击上传</em>
+              将JSON文件拖到此处,或<em>点击上传</em>
             </div>
             <template #tip>
               <div class="el-upload__tip">
@@ -402,11 +402,11 @@ const apiTreeProps = ref({
 const dictTreeProps = ref({
   children: 'sysDictionaryDetails',
   label: function (data) {
-    // 如果是字典主项，显示字典名称
+    // 如果是字典主项,显示字典名称
     if (data.name) {
       return data.name
     }
-    // 如果是字典详情项，显示标签
+    // 如果是字典详情项,显示标签
     if (data.label) {
       return data.label
     }
@@ -822,7 +822,7 @@ const handleFileRemove = () => {
   previewApiTreeData.value = []
 }
 
-// 计算菜单总数（递归计算所有菜单项）
+// 计算菜单总数(递归计算所有菜单项)
 const getTotalMenuCount = () => {
   if (!importPreviewData.value?.menus) return 0
   
@@ -861,14 +861,14 @@ const handleJsonContentChange = () => {
       dictionaries: data.dictionaries || []
     }
 
-    // 直接使用菜单数据，因为它已经是树形结构（包含children字段）
+    // 直接使用菜单数据,因为它已经是树形结构(包含children字段)
     if (data.menus && data.menus.length > 0) {
       previewMenuTreeData.value = data.menus
     } else {
       previewMenuTreeData.value = []
     }
 
-    // 构建API树形数据（按分组组织）
+    // 构建API树形数据(按分组组织)
     if (data.apis && data.apis.length > 0) {
       const apiGroups = {}
       data.apis.forEach(api => {
@@ -913,7 +913,7 @@ const handleImport = async () => {
   try {
     JSON.parse(importJsonContent.value)
   } catch (error) {
-    ElMessage.error('JSON格式错误，请检查输入内容')
+    ElMessage.error('JSON格式错误,请检查输入内容')
     return
   }
 
@@ -940,15 +940,15 @@ const handleImport = async () => {
 const downloadJson = async (row) => {
   try {
     const res = await downloadVersionJson({ ID: row.ID })
-    // 处理axios响应，获取实际的blob数据
-    // 当responseType为blob时，axios拦截器会返回完整的response对象
+    // 处理axios响应,获取实际的blob数据
+    // 当responseType为blob时,axios拦截器会返回完整的response对象
     let blob
     if (res instanceof Blob) {
       blob = res
     } else if (res.data instanceof Blob) {
       blob = res.data
     } else {
-      // 如果不是blob，可能是错误响应，尝试从response中获取
+      // 如果不是blob,可能是错误响应,尝试从response中获取
       blob = res
     }
 

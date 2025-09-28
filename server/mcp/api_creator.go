@@ -41,29 +41,29 @@ type ApiCreator struct{}
 // New 创建API创建工具
 func (a *ApiCreator) New() mcp.Tool {
 	return mcp.NewTool("create_api",
-		mcp.WithDescription(`创建后端API记录，用于AI编辑器自动添加API接口时自动创建对应的API权限记录。
+		mcp.WithDescription(`创建后端API记录,用于AI编辑器自动添加API接口时自动创建对应的API权限记录。
 
-**重要限制：**
-- 当使用gva_auto_generate工具且needCreatedModules=true时，模块创建会自动生成API权限，不应调用此工具
-- 仅在以下情况使用：1) 单独创建API（不涉及模块创建）；2) AI编辑器自动添加API；3) router下的文件产生路径变化时`),
+**重要限制:**
+- 当使用gva_auto_generate工具且needCreatedModules=true时,模块创建会自动生成API权限,不应调用此工具
+- 仅在以下情况使用:1) 单独创建API(不涉及模块创建)；2) AI编辑器自动添加API；3) router下的文件产生路径变化时`),
 		mcp.WithString("path",
 			mcp.Required(),
-			mcp.Description("API路径，如：/user/create"),
+			mcp.Description("API路径,如:/user/create"),
 		),
 		mcp.WithString("description",
 			mcp.Required(),
-			mcp.Description("API中文描述，如：创建用户"),
+			mcp.Description("API中文描述,如:创建用户"),
 		),
 		mcp.WithString("apiGroup",
 			mcp.Required(),
-			mcp.Description("API组名称，用于分类管理，如：用户管理"),
+			mcp.Description("API组名称,用于分类管理,如:用户管理"),
 		),
 		mcp.WithString("method",
 			mcp.Description("HTTP方法"),
 			mcp.DefaultString("POST"),
 		),
 		mcp.WithString("apis",
-			mcp.Description("批量创建API的JSON字符串，格式：[{\"path\":\"/user/create\",\"description\":\"创建用户\",\"apiGroup\":\"用户管理\",\"method\":\"POST\"}]"),
+			mcp.Description("批量创建API的JSON字符串,格式:[{\"path\":\"/user/create\",\"description\":\"创建用户\",\"apiGroup\":\"用户管理\",\"method\":\"POST\"}]"),
 		),
 	)
 }
@@ -163,7 +163,7 @@ func (a *ApiCreator) Handle(ctx context.Context, request mcp.CallToolRequest) (*
 	if len(apis) == 1 {
 		resultMessage = responses[0].Message
 	} else {
-		resultMessage = fmt.Sprintf("批量创建API完成，成功 %d 个，失败 %d 个", successCount, len(apis)-successCount)
+		resultMessage = fmt.Sprintf("批量创建API完成,成功 %d 个,失败 %d 个", successCount, len(apis)-successCount)
 	}
 
 	result := map[string]interface{}{
@@ -181,10 +181,10 @@ func (a *ApiCreator) Handle(ctx context.Context, request mcp.CallToolRequest) (*
 	}
 
 	// 添加权限分配提醒
-	permissionReminder := "\n\n⚠️ 重要提醒：\n" +
-		"API创建完成后，请前往【系统管理】->【角色管理】中为相关角色分配新创建的API权限，" +
+	permissionReminder := "\n\n⚠️ 重要提醒:\n" +
+		"API创建完成后,请前往【系统管理】->【角色管理】中为相关角色分配新创建的API权限," +
 		"以确保用户能够正常访问新接口。\n" +
-		"具体步骤：\n" +
+		"具体步骤:\n" +
 		"1. 进入角色管理页面\n" +
 		"2. 选择需要授权的角色\n" +
 		"3. 在API权限中勾选新创建的API接口\n" +
@@ -194,7 +194,7 @@ func (a *ApiCreator) Handle(ctx context.Context, request mcp.CallToolRequest) (*
 		Content: []mcp.Content{
 			mcp.TextContent{
 				Type: "text",
-				Text: fmt.Sprintf("API创建结果：\n\n%s%s", string(resultJSON), permissionReminder),
+				Text: fmt.Sprintf("API创建结果:\n\n%s%s", string(resultJSON), permissionReminder),
 			},
 		},
 	}, nil

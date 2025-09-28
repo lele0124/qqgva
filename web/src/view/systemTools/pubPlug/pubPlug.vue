@@ -2,7 +2,7 @@
   <div class="gva-form-box">
     <div class="p-4 bg-white dark:bg-slate-900">
       <WarningBar
-        title="目前只支持标准插件（通过插件模板生成的标准目录插件），非标准插件请自行打包"
+        title="目前只支持标准插件(通过插件模板生成的标准目录插件),非标准插件请自行打包"
       />
       <div class="flex items-center gap-3">
         <el-input v-model="plugName" placeholder="插件模板处填写的【插件名】" />
@@ -11,7 +11,7 @@
         <WarningBar title="穿梭框请只选择子级菜单即可" />
         <el-input
           v-model="parentMenu"
-          placeholder="请输入菜单组名，例：公告管理"
+          placeholder="请输入菜单组名,例:公告管理"
           class="mb-2"
         ></el-input>
         <el-transfer
@@ -85,7 +85,7 @@
   const parentMenu = ref('')
 
   const fmtMenu = (menus) => {
-    // 如果menu存在children，递归展开到一级
+    // 如果menu存在children,递归展开到一级
     const res = []
     menus.forEach((item) => {
       if (item.children) {

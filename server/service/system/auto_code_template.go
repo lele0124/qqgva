@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/flipped-aurora/gin-vue-admin/server/utils/autocode"
 	"go/ast"
 	"go/format"
 	"go/parser"
@@ -13,6 +12,8 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	"github.com/flipped-aurora/gin-vue-admin/server/utils/autocode"
 
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	model "github.com/flipped-aurora/gin-vue-admin/server/model/system"
@@ -370,7 +371,7 @@ func (s *autoCodeTemplate) addTemplateToAst(t string, info request.AutoFunc) err
 			st := funcDecl.Body.List[i]
 			// 使用类型断言来检查stmt是否是一个块语句
 			if blockStmt, ok := st.(*ast.BlockStmt); ok {
-				// 如果是，插入代码 跳出
+				// 如果是,插入代码 跳出
 				blockStmt.List = append(blockStmt.List, stmtNode)
 				break
 			}
@@ -380,7 +381,7 @@ func (s *autoCodeTemplate) addTemplateToAst(t string, info request.AutoFunc) err
 			st := funcDecl.Body.List[i]
 			// 使用类型断言来检查stmt是否是一个块语句
 			if blockStmt, ok := st.(*ast.BlockStmt); ok {
-				// 如果是，插入代码 跳出
+				// 如果是,插入代码 跳出
 				blockStmt.List = append(blockStmt.List, stmtNode)
 				break
 			}
@@ -435,7 +436,7 @@ func (s *autoCodeTemplate) addTemplateToFile(t string, info request.AutoFunc) er
 		}
 	}
 
-	// 打开文件，如果不存在则返回错误
+	// 打开文件,如果不存在则返回错误
 	file, err := os.OpenFile(target, os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
 		return err

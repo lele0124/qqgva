@@ -152,7 +152,7 @@
     // 获取选中的菜单项
     const menu = routerStore.asyncRouters[0]?.children.find(item => item.name === index)
 
-    // 只有当选中的菜单有子菜单时，才更新二级菜单区域
+    // 只有当选中的菜单有子菜单时,才更新二级菜单区域
     if (menu && menu.children && menu.children.length > 0) {
       updateSecondLevelMenus(index)
 
@@ -162,7 +162,7 @@
         navigateToMenuItem(firstVisibleChild.name)
       }
     } else {
-      // 如果没有子菜单，直接导航到该菜单，但不更新二级菜单区域
+      // 如果没有子菜单,直接导航到该菜单,但不更新二级菜单区域
       navigateToMenuItem(index)
     }
   }
@@ -259,31 +259,31 @@
     if (parentMenu) {
       topActive.value = parentMenu
 
-      // 只有当父菜单有子菜单时，才更新二级菜单区域
+      // 只有当父菜单有子菜单时,才更新二级菜单区域
       const menu = routerStore.asyncRouters[0]?.children.find(item => item.name === parentMenu)
       if (menu && menu.children && menu.children.length > 0) {
         updateSecondLevelMenus(parentMenu)
       } else {
-        // 如果找到的父菜单没有子菜单，保持当前一级菜单高亮，但需要显示一些二级菜单
+        // 如果找到的父菜单没有子菜单,保持当前一级菜单高亮,但需要显示一些二级菜单
         // 寻找第一个有子菜单的一级菜单来显示其子菜单
         const firstMenuWithChildren = routerStore.asyncRouters[0].children.find(
           item => !item.hidden && item.children && item.children.length > 0
         )
 
         if (firstMenuWithChildren) {
-          // 只更新二级菜单区域，但保持当前一级菜单的高亮状态
+          // 只更新二级菜单区域,但保持当前一级菜单的高亮状态
           updateSecondLevelMenus(firstMenuWithChildren.name)
         }
       }
     } else if (routerStore.asyncRouters[0]?.children?.length > 0) {
-      // 如果没有找到父菜单，保持当前路由名称作为高亮，但需要显示一些二级菜单
+      // 如果没有找到父菜单,保持当前路由名称作为高亮,但需要显示一些二级菜单
       // 寻找第一个有子菜单的一级菜单来显示其子菜单
       const firstMenuWithChildren = routerStore.asyncRouters[0].children.find(
         item => !item.hidden && item.children && item.children.length > 0
       )
 
       if (firstMenuWithChildren) {
-        // 只更新二级菜单区域，高亮状态保持为当前路由
+        // 只更新二级菜单区域,高亮状态保持为当前路由
         topActive.value = route.name
         secondLevelMenus.value = firstMenuWithChildren.children
       }

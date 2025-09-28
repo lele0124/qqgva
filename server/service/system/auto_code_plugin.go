@@ -4,6 +4,15 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"go/parser"
+	"go/printer"
+	"go/token"
+	"io"
+	"mime/multipart"
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/system"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/system/request"
@@ -13,14 +22,6 @@ import (
 	cp "github.com/otiai10/copy"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
-	"go/parser"
-	"go/printer"
-	"go/token"
-	"io"
-	"mime/multipart"
-	"os"
-	"path/filepath"
-	"strings"
 )
 
 var AutoCodePlugin = new(autoCodePlugin)
@@ -73,8 +74,8 @@ func (s *autoCodePlugin) Install(file *multipart.FileHeader) (web, server int, e
 		}
 	}
 	if len(serverPlugin) == 0 && len(webPlugin) == 0 {
-		zap.L().Error("非标准插件，请按照文档自动迁移使用")
-		return webIndex, serverIndex, errors.New("非标准插件，请按照文档自动迁移使用")
+		zap.L().Error("非标准插件,请按照文档自动迁移使用")
+		return webIndex, serverIndex, errors.New("非标准插件,请按照文档自动迁移使用")
 	}
 
 	if len(serverPlugin) != 0 {
@@ -106,8 +107,8 @@ func installation(path string, formPath string, toPath string) error {
 	var to = filepath.Join(global.GVA_CONFIG.AutoCode.Root, toPath, "plugin")
 	_, err := os.Stat(to + name)
 	if err == nil {
-		zap.L().Error("autoPath 已存在同名插件，请自行手动安装", zap.String("to", to))
-		return errors.New(toPath + "已存在同名插件，请自行手动安装")
+		zap.L().Error("autoPath 已存在同名插件,请自行手动安装", zap.String("to", to))
+		return errors.New(toPath + "已存在同名插件,请自行手动安装")
 	}
 	return cp.Copy(form, to, cp.Options{Skip: skipMacSpecialDocument})
 }

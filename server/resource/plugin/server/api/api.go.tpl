@@ -249,7 +249,7 @@ func (a *{{.Abbreviation}}) Get{{.StructName}}Public(c *gin.Context) {
     // 创建业务用Context
     ctx := c.Request.Context()
 
-    // 此接口不需要鉴权 示例为返回了一个固定的消息接口，一般本接口用于C端服务，需要自己实现业务逻辑
+    // 此接口不需要鉴权 示例为返回了一个固定的消息接口,一般本接口用于C端服务,需要自己实现业务逻辑
     service{{ .StructName }}.Get{{.StructName}}Public(ctx)
     response.OkWithDetailed(gin.H{"info": "不需要鉴权的{{.Description}}接口信息"}, "获取成功", c)
 }

@@ -261,7 +261,7 @@ func (sysExportTemplateService *SysExportTemplateService) ExportExcel(templateID
 	order := paramsValues.Get("order")
 
 	if order == "" && template.Order != "" {
-		// 如果没有order入参，这里会使用模板的默认排序
+		// 如果没有order入参,这里会使用模板的默认排序
 		order = template.Order
 	}
 
@@ -317,14 +317,14 @@ func (sysExportTemplateService *SysExportTemplateService) ExportExcel(templateID
 		for j, colCell := range row {
 			cell := fmt.Sprintf("%s%d", getColumnName(j+1), i+1)
 
- 			var sErr error
- 			if v, err := strconv.ParseFloat(colCell, 64); err == nil {
- 			    sErr = f.SetCellValue("Sheet1", cell, v)
- 			} else if v, err := strconv.ParseInt(colCell, 10, 64); err == nil {
- 			    sErr = f.SetCellValue("Sheet1", cell, v)
- 			} else {
- 			    sErr = f.SetCellValue("Sheet1", cell, colCell)
- 			}
+			var sErr error
+			if v, err := strconv.ParseFloat(colCell, 64); err == nil {
+				sErr = f.SetCellValue("Sheet1", cell, v)
+			} else if v, err := strconv.ParseInt(colCell, 10, 64); err == nil {
+				sErr = f.SetCellValue("Sheet1", cell, v)
+			} else {
+				sErr = f.SetCellValue("Sheet1", cell, colCell)
+			}
 
 			if sErr != nil {
 				return nil, "", sErr
@@ -388,7 +388,7 @@ func (sysExportTemplateService *SysExportTemplateService) ExportTemplate(templat
 	return file, template.Name, nil
 }
 
-// 辅助函数：检查表是否有deleted_at列
+// 辅助函数:检查表是否有deleted_at列
 func (s *SysExportTemplateService) hasDeletedAtColumn(tableName string) bool {
 	var count int64
 	global.GVA_DB.Raw("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = 'deleted_at'", tableName).Count(&count)
@@ -450,7 +450,7 @@ func (sysExportTemplateService *SysExportTemplateService) ImportExcel(templateID
 			var item = make(map[string]interface{})
 			for ii, value := range row {
 				if _, ok := titleKeyMap[excelTitle[ii]]; !ok {
-					continue // excel中多余的标题，在模板信息中没有对应的字段，因此key为空，必须跳过
+					continue // excel中多余的标题,在模板信息中没有对应的字段,因此key为空,必须跳过
 				}
 				key := titleKeyMap[excelTitle[ii]]
 				item[key] = value

@@ -52,7 +52,7 @@ web
  │   ├── directive              -- v-auth 注册文件
  │   ├── main.js                -- 主文件
  │   ├── permission.js          -- 路由中间件
- │   ├── pinia                  -- pinia 状态管理器，取代vuex
+ │   ├── pinia                  -- pinia 状态管理器,取代vuex
  │   │   ├── index.js           -- 入口文件
  │   │   └── modules            -- modules
  │   │       ├── dictionary.js

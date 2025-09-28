@@ -2,6 +2,7 @@ package mcpTool
 
 import (
 	"context"
+
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
@@ -17,7 +18,7 @@ type McpTool interface {
 // 工具注册表
 var toolRegister = make(map[string]McpTool)
 
-// RegisterTool 供工具在init时调用，将自己注册到工具注册表中
+// RegisterTool 供工具在init时调用,将自己注册到工具注册表中
 func RegisterTool(tool McpTool) {
 	mcpTool := tool.New()
 	toolRegister[mcpTool.Name] = tool

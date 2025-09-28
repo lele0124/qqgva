@@ -17,7 +17,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var MinioClient *Minio // 优化性能，但是不支持动态配置
+var MinioClient *Minio // 优化性能,但是不支持动态配置
 
 type Minio struct {
 	Client *minio.Client

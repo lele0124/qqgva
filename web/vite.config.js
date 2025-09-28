@@ -66,7 +66,7 @@ export default ({ mode }) => {
       }
     },
     server: {
-      // 如果使用docker-compose开发模式，设置为false
+      // 如果使用docker-compose开发模式,设置为false
       open: true,
       port: process.env.VITE_CLI_PORT,
       proxy: {

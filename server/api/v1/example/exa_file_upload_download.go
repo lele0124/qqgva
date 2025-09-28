@@ -1,6 +1,8 @@
 package example
 
 import (
+	"strconv"
+
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/example"
@@ -8,7 +10,6 @@ import (
 	exampleRes "github.com/flipped-aurora/gin-vue-admin/server/model/example/response"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
-	"strconv"
 )
 
 type FileUploadAndDownloadApi struct{}
@@ -47,7 +48,7 @@ func (b *FileUploadAndDownloadApi) EditFileName(c *gin.Context) {
 	err := c.ShouldBindJSON(&file)
 	if err != nil {
 		// 将 JSON 解析错误转换为中文提示
-		response.FailWithMessage("请求参数格式不正确，请检查数据格式", c)
+		response.FailWithMessage("请求参数格式不正确,请检查数据格式", c)
 		return
 	}
 	err = fileUploadAndDownloadService.EditFileName(file)

@@ -25,10 +25,10 @@
 9. [结论](#结论)
 
 ## 简介
-本技术文档全面解析了 `gin-vue-admin` 项目的前端 API 客户端实现，重点阐述了基于 Axios 的请求封装逻辑。文档详细说明了 `request.js` 中的 axios 实例配置、请求/响应拦截器的实现机制（包括 JWT 头部注入、统一错误处理和加载状态管理）、超时设置以及环境变量配置。同时，文档还介绍了各个 API 模块的组织结构和调用规范，并提供了安全、性能和调试方面的最佳实践。
+本技术文档全面解析了 `gin-vue-admin` 项目的前端 API 客户端实现,重点阐述了基于 Axios 的请求封装逻辑。文档详细说明了 `request.js` 中的 axios 实例配置、请求/响应拦截器的实现机制(包括 JWT 头部注入、统一错误处理和加载状态管理)、超时设置以及环境变量配置。同时,文档还介绍了各个 API 模块的组织结构和调用规范,并提供了安全、性能和调试方面的最佳实践。
 
 ## 项目结构
-前端 API 相关代码主要位于 `web/src` 目录下，遵循清晰的模块化设计。
+前端 API 相关代码主要位于 `web/src` 目录下,遵循清晰的模块化设计。
 
 ```mermaid
 graph TD
@@ -52,14 +52,14 @@ E --> I[config.js]
 - [user.js](file://web/src/api/user.js)
 
 ## 核心组件
-核心功能由 `request.js` 文件中的 axios 实例及其拦截器驱动，结合 `pinia` 状态管理来处理用户认证信息。
+核心功能由 `request.js` 文件中的 axios 实例及其拦截器驱动,结合 `pinia` 状态管理来处理用户认证信息。
 
 **本节来源**
 - [request.js](file://web/src/utils/request.js#L1-L202)
 - [user.js](file://web/src/pinia/modules/user.js#L12-L151)
 
 ## 架构概述
-系统采用分层架构，API 调用通过一个全局封装的 axios 实例进行，该实例集成了认证、加载指示和错误处理。
+系统采用分层架构,API 调用通过一个全局封装的 axios 实例进行,该实例集成了认证、加载指示和错误处理。
 
 ```mermaid
 sequenceDiagram
@@ -88,7 +88,7 @@ API模块-->>前端组件 : 返回数据
 ## 详细组件分析
 
 ### 请求封装分析
-`request.js` 是整个前端 API 通信的核心，它创建了一个预配置的 axios 实例，并通过拦截器实现了关键功能。
+`request.js` 是整个前端 API 通信的核心,它创建了一个预配置的 axios 实例,并通过拦截器实现了关键功能。
 
 #### 请求拦截器
 请求拦截器在每个请求发出前自动注入必要的头部信息。
@@ -133,7 +133,7 @@ end
 - [user.js](file://web/src/pinia/modules/user.js#L12-L151)
 
 ### API 模块组织
-API 模块按业务功能划分，每个 `.js` 文件对应一个后端控制器。
+API 模块按业务功能划分,每个 `.js` 文件对应一个后端控制器。
 
 #### 用户模块 (user.js)
 ```mermaid
@@ -208,12 +208,12 @@ REQUEST }|--|| OTHER_APIS : "被调用"
 - [.env.development](file://web/.env.development)
 
 ## 性能考虑
-- **加载状态管理**: 通过 `activeAxios` 计数器和防抖定时器 (`setTimeout`) 精确控制加载动画的显示和隐藏，避免了不必要的闪烁。
-- **强制关闭机制**: 设置了 30 秒的强制关闭定时器，防止因异常情况导致加载动画无法消失。
-- **环境配置**: 使用 Vite 的环境变量 (`import.meta.env.VITE_BASE_API`) 进行动态代理配置，无需手动修改 baseURL。
+- **加载状态管理**: 通过 `activeAxios` 计数器和防抖定时器 (`setTimeout`) 精确控制加载动画的显示和隐藏,避免了不必要的闪烁。
+- **强制关闭机制**: 设置了 30 秒的强制关闭定时器,防止因异常情况导致加载动画无法消失。
+- **环境配置**: 使用 Vite 的环境变量 (`import.meta.env.VITE_BASE_API`) 进行动态代理配置,无需手动修改 baseURL。
 
 ## 故障排除指南
-当遇到 API 调用问题时，可参考以下常见错误码：
+当遇到 API 调用问题时,可参考以下常见错误码:
 ```mermaid
 stateDiagram-v2
 [*] --> ErrorState
@@ -222,15 +222,15 @@ ErrorState --> 404 : "资源未找到"
 ErrorState --> 500 : "服务器内部错误"
 ErrorState --> network : "网络连接错误"
 note right of 401
-检查 token 是否过期，
+检查 token 是否过期,
 尝试重新登录。
 end note
 note right of 404
-检查请求路径和方法是否正确，
+检查请求路径和方法是否正确,
 确认后端路由已注册。
 end note
 note right of 500
-查看后端日志，
+查看后端日志,
 可能是服务端 panic。
 end note
 note right of network

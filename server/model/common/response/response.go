@@ -42,7 +42,7 @@ func OkWithDetailed(data interface{}, message string, c *gin.Context) {
 }
 
 func Fail(c *gin.Context) {
-	Result(ERROR, map[string]interface{}{}, "操作失败，请稍后重试或联系管理员", c)
+	Result(ERROR, map[string]interface{}{}, "操作失败,请稍后重试或联系管理员", c)
 }
 
 func FailWithMessage(message string, c *gin.Context) {

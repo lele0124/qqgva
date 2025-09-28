@@ -24,7 +24,7 @@
 9. [结论](#结论)
 
 ## 简介
-本文档详细说明了 gin-vue-admin 项目中 CORS 跨域配置中间件的工作机制。重点分析了如何从配置文件加载跨域策略、中间件对预检请求的处理逻辑，以及开发与生产环境的安全配置实践。
+本文档详细说明了 gin-vue-admin 项目中 CORS 跨域配置中间件的工作机制。重点分析了如何从配置文件加载跨域策略、中间件对预检请求的处理逻辑,以及开发与生产环境的安全配置实践。
 
 ## 项目结构
 
@@ -52,7 +52,7 @@ E --> I[router.go]
 
 ## 核心组件
 
-CORS 中间件系统由配置定义、配置加载和请求处理三部分组成。`config/cors.go` 定义了跨域策略的数据结构，`middleware/cors.go` 实现了具体的跨域处理逻辑，通过 Viper 配置管理器实现配置热更新。
+CORS 中间件系统由配置定义、配置加载和请求处理三部分组成。`config/cors.go` 定义了跨域策略的数据结构,`middleware/cors.go` 实现了具体的跨域处理逻辑,通过 Viper 配置管理器实现配置热更新。
 
 **本节来源**
 - [cors.go](file://server/config/cors.go#L1-L14)
@@ -191,16 +191,16 @@ G --> F
 - [viper.go](file://server/core/viper.go)
 
 ## 性能考虑
-CORS 中间件采用内存中的白名单匹配机制，时间复杂度为 O(n)，其中 n 为白名单条目数量。建议在生产环境中保持白名单条目精简以确保最佳性能。配置热更新功能避免了服务重启，提高了系统的可用性。
+CORS 中间件采用内存中的白名单匹配机制,时间复杂度为 O(n),其中 n 为白名单条目数量。建议在生产环境中保持白名单条目精简以确保最佳性能。配置热更新功能避免了服务重启,提高了系统的可用性。
 
 ## 故障排除指南
 
-常见跨域问题及解决方案：
+常见跨域问题及解决方案:
 
-1. **Origin不匹配**：确保前端请求的Origin头与配置中的allow-origin完全一致（包括协议和端口）
-2. **凭证模式不一致**：当AllowCredentials为true时，AllowOrigin不能为"*"，必须指定具体域名
-3. **预检请求失败**：检查AllowMethods和AllowHeaders是否包含实际使用的HTTP方法和请求头
-4. **配置未生效**：确认已在router.go中启用CorsByRules中间件而非Cors中间件
+1. **Origin不匹配**:确保前端请求的Origin头与配置中的allow-origin完全一致(包括协议和端口)
+2. **凭证模式不一致**:当AllowCredentials为true时,AllowOrigin不能为"*",必须指定具体域名
+3. **预检请求失败**:检查AllowMethods和AllowHeaders是否包含实际使用的HTTP方法和请求头
+4. **配置未生效**:确认已在router.go中启用CorsByRules中间件而非Cors中间件
 
 **本节来源**
 - [cors.go](file://server/middleware/cors.go#L30-L62)
@@ -208,4 +208,4 @@ CORS 中间件采用内存中的白名单匹配机制，时间复杂度为 O(n)�
 - [router.go](file://server/initialize/router.go#L50-L51)
 
 ## 结论
-gin-vue-admin 的 CORS 中间件提供了灵活且安全的跨域解决方案。通过配置驱动的方式，开发者可以精确控制不同环境下的跨域策略，既满足开发调试需求，又保障生产环境安全。建议在生产环境中使用strict-whitelist模式，并严格限制允许的域名、方法和头部字段。
+gin-vue-admin 的 CORS 中间件提供了灵活且安全的跨域解决方案。通过配置驱动的方式,开发者可以精确控制不同环境下的跨域策略,既满足开发调试需求,又保障生产环境安全。建议在生产环境中使用strict-whitelist模式,并严格限制允许的域名、方法和头部字段。

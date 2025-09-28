@@ -27,12 +27,12 @@
     {
       type: 'primary',
       typeTitle: '公告',
-      title: '授权费将在从六月一日起结束第一价格梯度，进入第二价格梯度。'
+      title: '授权费将在从六月一日起结束第一价格梯度,进入第二价格梯度。'
     },
     {
       type: 'success',
       typeTitle: '通知',
-      title: '授权后将进入专属飞书群，获取官方辅助。'
+      title: '授权后将进入专属飞书群,获取官方辅助。'
     },
     {
       type: 'warning',

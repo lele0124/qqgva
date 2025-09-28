@@ -27,7 +27,7 @@ func (a *info) CreateInfo(c *gin.Context) {
 	err := c.ShouldBindJSON(&info)
 	if err != nil {
 		// 将 JSON 解析错误转换为中文提示
-		response.FailWithMessage("请求参数格式不正确，请检查数据格式", c)
+		response.FailWithMessage("请求参数格式不正确,请检查数据格式", c)
 		return
 	}
 	err = serviceInfo.CreateInfo(&info)
@@ -91,7 +91,7 @@ func (a *info) UpdateInfo(c *gin.Context) {
 	err := c.ShouldBindJSON(&info)
 	if err != nil {
 		// 将 JSON 解析错误转换为中文提示
-		response.FailWithMessage("请求参数格式不正确，请检查数据格式", c)
+		response.FailWithMessage("请求参数格式不正确,请检查数据格式", c)
 		return
 	}
 	err = serviceInfo.UpdateInfo(info)
@@ -137,7 +137,7 @@ func (a *info) GetInfoList(c *gin.Context) {
 	err := c.ShouldBindQuery(&pageInfo)
 	if err != nil {
 		// 将查询参数解析错误转换为中文提示
-		response.FailWithMessage("请求参数格式不正确，请检查数据格式", c)
+		response.FailWithMessage("请求参数格式不正确,请检查数据格式", c)
 		return
 	}
 	list, total, err := serviceInfo.GetInfoInfoList(pageInfo)
@@ -181,6 +181,6 @@ func (a *info) GetInfoDataSource(c *gin.Context) {
 // @Success 200 {object} response.Response{data=object,msg=string} "获取成功"
 // @Router /info/getInfoPublic [get]
 func (a *info) GetInfoPublic(c *gin.Context) {
-	// 此接口不需要鉴权 示例为返回了一个固定的消息接口，一般本接口用于C端服务，需要自己实现业务逻辑
+	// 此接口不需要鉴权 示例为返回了一个固定的消息接口,一般本接口用于C端服务,需要自己实现业务逻辑
 	response.OkWithDetailed(gin.H{"info": "不需要鉴权的公告接口信息"}, "获取成功", c)
 }

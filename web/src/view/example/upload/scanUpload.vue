@@ -207,7 +207,7 @@ const handleImageSuccess = (res) => {
 
 <style scoped>
 
-/* 工具栏（固定在底部） */
+/* 工具栏(固定在底部) */
 .toolbar {
   @apply fixed bottom-0 m-0 rounded-none p-2.5 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] z-[1000] flex justify-between w-screen bg-slate-900;
 

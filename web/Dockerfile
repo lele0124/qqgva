@@ -1,4 +1,4 @@
-# 如果需要用 cicd ，请设置环境变量：
+# 如果需要用 cicd ,请设置环境变量:
 # variables:
 #     DOCKER_BUILDKIT: 1
 

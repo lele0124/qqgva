@@ -198,7 +198,7 @@ func (r *AutoCode) Pretreatment() error {
 	} // 新增字段模式下不关注主键
 	if r.Package == "" {
 		return errors.New("Package为空!")
-	} // 增加判断：Package不为空
+	} // 增加判断:Package不为空
 	packages := []rune(r.Package)
 	if len(packages) > 0 {
 		if packages[0] >= 97 && packages[0] <= 122 {

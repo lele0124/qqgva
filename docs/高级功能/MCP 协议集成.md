@@ -24,7 +24,7 @@
 
 ## MCP 概述
 
-MCP (Model Context Protocol) 是 gin-vue-admin 中连接 AI 模型与代码生成流程的桥梁，旨在支持智能化的上下文感知开发辅助。它通过一系列工具将自然语言需求转化为可执行的代码生成计划，从而实现从需求到功能的快速转化。
+MCP (Model Context Protocol) 是 gin-vue-admin 中连接 AI 模型与代码生成流程的桥梁,旨在支持智能化的上下文感知开发辅助。它通过一系列工具将自然语言需求转化为可执行的代码生成计划,从而实现从需求到功能的快速转化。
 
 **Section sources**
 - [mcp.go](file://server/mcp/enter.go#L1-L32)
@@ -33,11 +33,11 @@ MCP (Model Context Protocol) 是 gin-vue-admin 中连接 AI 模型与代码生�
 
 ## 核心组件协同工作流程
 
-MCP 的核心组件包括 `requirement_analyzer`、`gva_auto_generate`、`api_creator` 和 `menu_creator` 等，它们协同工作以完成从需求分析到代码生成的全过程。
+MCP 的核心组件包括 `requirement_analyzer`、`gva_auto_generate`、`api_creator` 和 `menu_creator` 等,它们协同工作以完成从需求分析到代码生成的全过程。
 
 ### 需求分析器 (requirement_analyzer)
 
-`requirement_analyzer` 是所有 MCP 工具的首选入口，负责将用户的自然语言需求转换为 AI 可理解的结构化提示词。其主要职责是接收用户的需求描述，并生成专业的 AI 提示词，要求 AI 将需求梳理为清晰的逻辑步骤。
+`requirement_analyzer` 是所有 MCP 工具的首选入口,负责将用户的自然语言需求转换为 AI 可理解的结构化提示词。其主要职责是接收用户的需求描述,并生成专业的 AI 提示词,要求 AI 将需求梳理为清晰的逻辑步骤。
 
 ```mermaid
 sequenceDiagram
@@ -54,7 +54,7 @@ AI-->>RequirementAnalyzer : 返回逻辑步骤
 
 ### 自动化模块生成器 (gva_auto_generate)
 
-`gva_auto_generate` 是核心执行工具，在 `requirement_analyzer` 分析结果后使用。它根据确认的结果执行创建操作，支持批量创建多个模块。该工具还具备自动字典创建功能，当结构体字段使用了字典类型时，系统会自动检查并创建对应的字典及默认选项。
+`gva_auto_generate` 是核心执行工具,在 `requirement_analyzer` 分析结果后使用。它根据确认的结果执行创建操作,支持批量创建多个模块。该工具还具备自动字典创建功能,当结构体字段使用了字典类型时,系统会自动检查并创建对应的字典及默认选项。
 
 ```mermaid
 flowchart TD
@@ -74,11 +74,11 @@ end
 
 ### API 创建器 (api_creator)
 
-`api_creator` 用于创建后端 API 记录，适用于单独创建 API 或 AI 编辑器自动添加 API 的场景。当使用 `gva_auto_generate` 工具且 `needCreatedModules=true` 时，模块创建会自动生成 API 权限，不应调用此工具。
+`api_creator` 用于创建后端 API 记录,适用于单独创建 API 或 AI 编辑器自动添加 API 的场景。当使用 `gva_auto_generate` 工具且 `needCreatedModules=true` 时,模块创建会自动生成 API 权限,不应调用此工具。
 
 ### 菜单创建器 (menu_creator)
 
-`menu_creator` 用于创建前端菜单记录，适用于单独创建菜单或 AI 编辑器自动添加前端页面的场景。同样地，当使用 `gva_auto_generate` 工具且 `needCreatedModules=true` 时，模块创建会自动生成菜单项，不应调用此工具。
+`menu_creator` 用于创建前端菜单记录,适用于单独创建菜单或 AI 编辑器自动添加前端页面的场景。同样地,当使用 `gva_auto_generate` 工具且 `needCreatedModules=true` 时,模块创建会自动生成菜单项,不应调用此工具。
 
 **Section sources**
 - [gva_auto_generate.go](file://server/mcp/gva_auto_generate.go#L1-L1756)
@@ -87,7 +87,7 @@ end
 
 ## 执行计划指令格式与流程
 
-执行计划 (`ExecutionPlan`) 结构体包含了创建包和模块所需的所有信息。完整的结构体定义如下：
+执行计划 (`ExecutionPlan`) 结构体包含了创建包和模块所需的所有信息。完整的结构体定义如下:
 
 ```go
 type ExecutionPlan struct {
@@ -114,7 +114,7 @@ type SysAutoCodePackageCreate struct {
 }
 ```
 
-#### AutoCode 结构体（核心字段）
+#### AutoCode 结构体(核心字段)
 
 ```go
 type AutoCode struct {
@@ -142,7 +142,7 @@ type AutoCode struct {
 }
 ```
 
-#### AutoCodeField 结构体（字段定义）
+#### AutoCodeField 结构体(字段定义)
 
 ```go
 type AutoCodeField struct {
@@ -172,7 +172,7 @@ type AutoCodeField struct {
 }
 ```
 
-#### DataSource 结构体（关联表配置）
+#### DataSource 结构体(关联表配置)
 
 ```go
 type DataSource struct {
@@ -190,7 +190,7 @@ type DataSource struct {
 
 ## 前端 MCP 控制台交互
 
-前端 MCP 控制台 (`mcp.vue`) 提供了一个用户友好的界面，允许开发者提交请求并展示生成结果。通过这个控制台，用户可以输入工具名称、描述以及参数列表，并最终生成相应的代码。
+前端 MCP 控制台 (`mcp.vue`) 提供了一个用户友好的界面,允许开发者提交请求并展示生成结果。通过这个控制台,用户可以输入工具名称、描述以及参数列表,并最终生成相应的代码。
 
 ```mermaid
 sequenceDiagram
@@ -209,7 +209,7 @@ Backend-->>Frontend : 展示生成结果
 
 ## 配置启用与安全考虑
 
-要启用 MCP 功能，需要在配置文件中正确设置相关参数，如 MCP 名称、版本、SSE 路径等。此外，还需确保服务器的安全性，防止未经授权的访问。
+要启用 MCP 功能,需要在配置文件中正确设置相关参数,如 MCP 名称、版本、SSE 路径等。此外,还需确保服务器的安全性,防止未经授权的访问。
 
 **Section sources**
 - [mcp.go](file://server/config/mcp.go#L1-L10)
@@ -217,7 +217,7 @@ Backend-->>Frontend : 展示生成结果
 
 ## 对比优势与调试技巧
 
-相较于传统的自动代码生成器，MCP 具有更高的智能化水平和灵活性。它不仅能够解析复杂的自然语言需求，还能通过多步推理生成高质量的代码。为了帮助开发者更好地理解和调试 MCP 的决策过程，建议利用日志分析方法来跟踪每个步骤的执行情况。
+相较于传统的自动代码生成器,MCP 具有更高的智能化水平和灵活性。它不仅能够解析复杂的自然语言需求,还能通过多步推理生成高质量的代码。为了帮助开发者更好地理解和调试 MCP 的决策过程,建议利用日志分析方法来跟踪每个步骤的执行情况。
 
 **Section sources**
 - [gva_auto_generate.go](file://server/mcp/gva_auto_generate.go#L1-L1756)

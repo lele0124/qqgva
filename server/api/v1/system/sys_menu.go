@@ -128,7 +128,7 @@ func (a *AuthorityMenuApi) AddBaseMenu(c *gin.Context) {
 	err := c.ShouldBindJSON(&menu)
 	if err != nil {
 		// 将 JSON 解析错误转换为中文提示
-		response.FailWithMessage("请求参数格式不正确，请检查数据格式", c)
+		response.FailWithMessage("请求参数格式不正确,请检查数据格式", c)
 		return
 	}
 	err = utils.Verify(menu, utils.MenuVerify)
@@ -144,7 +144,7 @@ func (a *AuthorityMenuApi) AddBaseMenu(c *gin.Context) {
 	err = menuService.AddBaseMenu(menu)
 	if err != nil {
 		global.GVA_LOG.Error("添加失败!", zap.Error(err))
-		response.FailWithMessage("添加失败："+err.Error(), c)
+		response.FailWithMessage("添加失败:"+err.Error(), c)
 		return
 	}
 	response.OkWithMessage("添加成功", c)
@@ -194,7 +194,7 @@ func (a *AuthorityMenuApi) UpdateBaseMenu(c *gin.Context) {
 	err := c.ShouldBindJSON(&menu)
 	if err != nil {
 		// 将 JSON 解析错误转换为中文提示
-		response.FailWithMessage("请求参数格式不正确，请检查数据格式", c)
+		response.FailWithMessage("请求参数格式不正确,请检查数据格式", c)
 		return
 	}
 	err = utils.Verify(menu, utils.MenuVerify)
@@ -230,7 +230,7 @@ func (a *AuthorityMenuApi) GetBaseMenuById(c *gin.Context) {
 	err := c.ShouldBindJSON(&idInfo)
 	if err != nil {
 		// 将 JSON 解析错误转换为中文提示
-		response.FailWithMessage("请求参数格式不正确，请检查数据格式", c)
+		response.FailWithMessage("请求参数格式不正确,请检查数据格式", c)
 		return
 	}
 	err = utils.Verify(idInfo, utils.IdVerify)

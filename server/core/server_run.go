@@ -42,7 +42,7 @@ func initServer(address string, router *gin.Engine, readTimeout, writeTimeout ti
 	quit := make(chan os.Signal, 1)
 	// kill (无参数) 默认发送 syscall.SIGTERM
 	// kill -2 发送 syscall.SIGINT
-	// kill -9 发送 syscall.SIGKILL，但是无法被捕获，所以不需要添加
+	// kill -9 发送 syscall.SIGKILL,但是无法被捕获,所以不需要添加
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	zap.L().Info("关闭WEB服务...")

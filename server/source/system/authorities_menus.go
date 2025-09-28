@@ -48,7 +48,7 @@ func (i *initMenuAuthority) InitializeData(ctx context.Context) (next context.Co
 	}
 	next = ctx
 
-	// 构建菜单ID映射，方便快速查找
+	// 构建菜单ID映射,方便快速查找
 	menuMap := make(map[uint]sysModel.SysBaseMenu)
 	for _, menu := range allMenus {
 		menuMap[menu.ID] = menu

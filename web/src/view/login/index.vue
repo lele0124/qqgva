@@ -206,10 +206,10 @@
         return false
       }
 
-      // 通过验证，请求登陆
+      // 通过验证,请求登陆
       const flag = await login()
 
-      // 登陆失败，刷新验证码
+      // 登陆失败,刷新验证码
       if (!flag) {
         await loginVerify()
         return false
@@ -230,7 +230,7 @@
       } else {
         ElMessage({
           type: 'info',
-          message: '已配置数据库信息，无法初始化'
+          message: '已配置数据库信息,无法初始化'
         })
       }
     }

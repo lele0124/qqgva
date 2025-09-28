@@ -148,7 +148,7 @@ export const llmAuto = (data) => {
     loadingOption: {
       lock: true,
       fullscreen: true,
-      text: `小淼正在思考，请稍候...`
+      text: `小淼正在思考,请稍候...`
     }
   })
 }

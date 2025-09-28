@@ -24,7 +24,7 @@
     <RichEdit v-model="formData.{{.FieldJson}}"/>
           {{- end }}
           {{- if eq .FieldType "json" }}
-    // 此字段为json结构，可以前端自行控制展示和数据绑定模式 需绑定json的key为 formData.{{.FieldJson}} 后端会按照json的类型进行存取
+    // 此字段为json结构,可以前端自行控制展示和数据绑定模式 需绑定json的key为 formData.{{.FieldJson}} 后端会按照json的类型进行存取
     {{"{{"}} formData.{{.FieldJson}} {{"}}"}}
           {{- end }}
            {{- if eq .FieldType "array" }}
@@ -229,7 +229,7 @@ getDataSourceFunc()
           <SelectFile v-model="formData.{{ .FieldJson }}" />
        {{- end }}
        {{- if eq .FieldType "json" }}
-          // 此字段为json结构，可以前端自行控制展示和数据绑定模式 需绑定json的key为 formData.{{.FieldJson}} 后端会按照json的类型进行存取
+          // 此字段为json结构,可以前端自行控制展示和数据绑定模式 需绑定json的key为 formData.{{.FieldJson}} 后端会按照json的类型进行存取
           {{"{{"}} formData.{{.FieldJson}} {{"}}"}}
        {{- end }}
        {{- if eq .FieldType "array" }}

@@ -156,7 +156,7 @@ func LoginToken(user system.Login) (token string, claims systemReq.CustomClaims,
 	// 使用类型断言获取用户的Name字段
 	if sysUser, ok = user.(*system.SysUser); ok {
 		name = sysUser.Name
-		// 如果Name为空，尝试使用NickName或Username
+		// 如果Name为空,尝试使用NickName或Username
 		if name == "" {
 			name = sysUser.NickName
 			if name == "" {
@@ -164,10 +164,10 @@ func LoginToken(user system.Login) (token string, claims systemReq.CustomClaims,
 			}
 		}
 	} else {
-		// 即使不是SysUser类型，我们也尝试使用接口方法获取用户名信息
+		// 即使不是SysUser类型,我们也尝试使用接口方法获取用户名信息
 		name = user.GetUsername()
 	}
-	
+
 	// 创建claims
 	baseClaims := systemReq.BaseClaims{
 		UUID:        user.GetUUID(),

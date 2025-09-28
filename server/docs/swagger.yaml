@@ -85,10 +85,10 @@ definitions:
         description: 验证码长度
         type: integer
       open-captcha:
-        description: 防爆破验证码开启此数，0代表每次登录都需要验证码，其他数字代表错误密码次数，如3代表错误三次后出现验证码
+        description: 防爆破验证码开启此数,0代表每次登录都需要验证码,其他数字代表错误密码次数,如3代表错误三次后出现验证码
         type: integer
       open-captcha-timeout:
-        description: 防爆破验证码超时时间，单位：s(秒)
+        description: 防爆破验证码超时时间,单位:s(秒)
         type: integer
     type: object
   config.CloudflareR2:
@@ -248,7 +248,7 @@ definitions:
         type: string
       engine:
         default: InnoDB
-        description: 数据库引擎，默认InnoDB
+        description: 数据库引擎,默认InnoDB
         type: string
       log-mode:
         description: 是否开启Gorm全局日志
@@ -275,7 +275,7 @@ definitions:
         description: 数据库前缀
         type: string
       singular:
-        description: 是否开启全局禁用复数，true表示开启
+        description: 是否开启全局禁用复数,true表示开启
         type: boolean
       username:
         description: 数据库账号
@@ -291,7 +291,7 @@ definitions:
         type: string
       engine:
         default: InnoDB
-        description: 数据库引擎，默认InnoDB
+        description: 数据库引擎,默认InnoDB
         type: string
       log-mode:
         description: 是否开启Gorm全局日志
@@ -318,7 +318,7 @@ definitions:
         description: 数据库前缀
         type: string
       singular:
-        description: 是否开启全局禁用复数，true表示开启
+        description: 是否开启全局禁用复数,true表示开启
         type: boolean
       username:
         description: 数据库账号
@@ -334,7 +334,7 @@ definitions:
         type: string
       engine:
         default: InnoDB
-        description: 数据库引擎，默认InnoDB
+        description: 数据库引擎,默认InnoDB
         type: string
       log-mode:
         description: 是否开启Gorm全局日志
@@ -361,7 +361,7 @@ definitions:
         description: 数据库前缀
         type: string
       singular:
-        description: 是否开启全局禁用复数，true表示开启
+        description: 是否开启全局禁用复数,true表示开启
         type: boolean
       username:
         description: 数据库账号
@@ -377,7 +377,7 @@ definitions:
         type: string
       engine:
         default: InnoDB
-        description: 数据库引擎，默认InnoDB
+        description: 数据库引擎,默认InnoDB
         type: string
       log-mode:
         description: 是否开启Gorm全局日志
@@ -404,7 +404,7 @@ definitions:
         description: 数据库前缀
         type: string
       singular:
-        description: 是否开启全局禁用复数，true表示开启
+        description: 是否开启全局禁用复数,true表示开启
         type: boolean
       username:
         description: 数据库账号
@@ -544,7 +544,7 @@ definitions:
         type: boolean
       engine:
         default: InnoDB
-        description: 数据库引擎，默认InnoDB
+        description: 数据库引擎,默认InnoDB
         type: string
       log-mode:
         description: 是否开启Gorm全局日志
@@ -571,7 +571,7 @@ definitions:
         description: 数据库前缀
         type: string
       singular:
-        description: 是否开启全局禁用复数，true表示开启
+        description: 是否开启全局禁用复数,true表示开启
         type: boolean
       type:
         type: string
@@ -589,7 +589,7 @@ definitions:
         type: string
       engine:
         default: InnoDB
-        description: 数据库引擎，默认InnoDB
+        description: 数据库引擎,默认InnoDB
         type: string
       log-mode:
         description: 是否开启Gorm全局日志
@@ -616,7 +616,7 @@ definitions:
         description: 数据库前缀
         type: string
       singular:
-        description: 是否开启全局禁用复数，true表示开启
+        description: 是否开启全局禁用复数,true表示开启
         type: boolean
       username:
         description: 数据库账号
@@ -825,7 +825,7 @@ definitions:
         description: 服务器地址 例如 smtp.qq.com  请前往QQ或者你要发邮件的邮箱查看其smtp协议
         type: string
       is-loginauth:
-        description: 是否LoginAuth   是否使用LoginAuth认证方式（适用于IBM、微软邮箱服务器等）
+        description: 是否LoginAuth   是否使用LoginAuth认证方式(适用于IBM、微软邮箱服务器等)
         type: boolean
       is-ssl:
         description: 是否SSL   是否开启SSL
@@ -840,7 +840,7 @@ definitions:
         description: 密钥    用于登录的密钥 最好不要用邮箱密码 去邮箱smtp申请一个用于登录的密钥
         type: string
       to:
-        description: 收件人:多个以英文逗号分隔 例：a@qq.com b@qq.com 正式开发中请把此项目作为参数使用
+        description: 收件人:多个以英文逗号分隔 例:a@qq.com b@qq.com 正式开发中请把此项目作为参数使用
         type: string
     type: object
   model.Info:
@@ -1211,17 +1211,17 @@ definitions:
   request.ImportVersionRequest:
     properties:
       apis:
-        description: API数据，直接复用SysApi
+        description: API数据,直接复用SysApi
         items:
           $ref: '#/definitions/system.SysApi'
         type: array
       dictionaries:
-        description: 字典数据，直接复用SysDictionary
+        description: 字典数据,直接复用SysDictionary
         items:
           $ref: '#/definitions/system.SysDictionary'
         type: array
       menus:
-        description: 菜单数据，直接复用SysBaseMenu
+        description: 菜单数据,直接复用SysBaseMenu
         items:
           $ref: '#/definitions/system.SysBaseMenu'
         type: array
@@ -1624,7 +1624,7 @@ definitions:
         description: 自动关闭tab
         type: boolean
       defaultMenu:
-        description: 是否是基础路由（开发中）
+        description: 是否是基础路由(开发中)
         type: boolean
       icon:
         description: 菜单图标
@@ -1801,7 +1801,7 @@ definitions:
         description: 描述
         type: string
       name:
-        description: 字典名（中）
+        description: 字典名(中)
         type: string
       status:
         description: 状态
@@ -1811,7 +1811,7 @@ definitions:
           $ref: '#/definitions/system.SysDictionaryDetail'
         type: array
       type:
-        description: 字典名（英）
+        description: 字典名(英)
         type: string
       updatedAt:
         description: 更新时间
@@ -4462,7 +4462,7 @@ paths:
         in: query
         name: desc
         type: string
-      - description: 字典名（中）
+      - description: 字典名(中)
         in: query
         name: name
         type: string
@@ -4470,7 +4470,7 @@ paths:
         in: query
         name: status
         type: boolean
-      - description: 字典名（英）
+      - description: 字典名(英)
         in: query
         name: type
         type: string

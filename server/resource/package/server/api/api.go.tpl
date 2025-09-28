@@ -39,7 +39,7 @@ func ({{.Abbreviation}}Api *{{.StructName}}Api) Create{{.StructName}}(c *gin.Con
 	var {{.Abbreviation}} {{.Package}}.{{.StructName}}
 	err := c.ShouldBindJSON(&{{.Abbreviation}})
 	if err != nil {
-		response.FailWithMessage("请求参数格式不正确，请检查数据格式", c)
+		response.FailWithMessage("请求参数格式不正确,请检查数据格式", c)
 		return
 	}
 	{{- if .AutoCreateResource }}
@@ -252,7 +252,7 @@ func ({{.Abbreviation}}Api *{{.StructName}}Api) Get{{.StructName}}Public(c *gin.
     ctx := c.Request.Context()
 
     // 此接口不需要鉴权
-    // 示例为返回了一个固定的消息接口，一般本接口用于C端服务，需要自己实现业务逻辑
+    // 示例为返回了一个固定的消息接口,一般本接口用于C端服务,需要自己实现业务逻辑
     {{.Abbreviation}}Service.Get{{.StructName}}Public(ctx)
     response.OkWithDetailed(gin.H{
        "info": "不需要鉴权的{{.Description}}接口信息",

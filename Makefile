@@ -67,7 +67,7 @@ images: build build-image-web build-image-server
 doc:
 	@cd server && swag init
 
-#插件快捷打包： make plugin PLUGIN="这里是插件文件夹名称,默认为email"
+#插件快捷打包: make plugin PLUGIN="这里是插件文件夹名称,默认为email"
 plugin:
 	if [ -d ".plugin" ];then rm -rf .plugin ; else echo "OK!"; fi && mkdir -p .plugin/${PLUGIN}/{server/plugin,web/plugin} \
 	&& if [ -d "server/plugin/${PLUGIN}" ];then cp -r server/plugin/${PLUGIN} .plugin/${PLUGIN}/server/plugin/ ; else echo "OK!"; fi \

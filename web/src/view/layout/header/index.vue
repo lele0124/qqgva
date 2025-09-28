@@ -75,7 +75,7 @@
           <el-dropdown-menu>
             <el-dropdown-item>
               <span class="font-bold">
-                当前角色：{{ userStore.userInfo.authority.authorityName }}
+                当前角色:{{ userStore.userInfo.authority.authorityName }}
               </span>
             </el-dropdown-item>
             <template v-if="userStore.userInfo.authorities">
@@ -86,7 +86,7 @@
                 :key="item.authorityId"
                 @click="changeUserAuth(item.authorityId)"
               >
-                <span> 切换为：{{ item.authorityName }} </span>
+                <span> 切换为:{{ item.authorityName }} </span>
               </el-dropdown-item>
             </template>
             <el-dropdown-item icon="avatar" @click="toPerson">

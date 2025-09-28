@@ -1,4 +1,4 @@
-// 监听 window 的 resize 事件，返回当前窗口的宽高
+// 监听 window 的 resize 事件,返回当前窗口的宽高
 import { shallowRef } from 'vue'
 import { tryOnMounted, useEventListener } from '@vueuse/core'
 

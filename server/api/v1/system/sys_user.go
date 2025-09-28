@@ -1,8 +1,8 @@
 package system
 
 import (
-	"strings"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
@@ -55,7 +55,7 @@ func (b *BaseApi) Login(c *gin.Context) {
 		return
 	}
 
-	// 支持用户名或手机号登录，统一使用username字段
+	// 支持用户名或手机号登录,统一使用username字段
 	u := &system.SysUser{Username: l.Username, Password: l.Password}
 	user, err := userService.Login(u)
 	if err != nil {
@@ -140,7 +140,7 @@ func (b *BaseApi) Register(c *gin.Context) {
 	err := c.ShouldBindJSON(&r)
 	if err != nil {
 		// 将 JSON 解析错误转换为中文提示
-		response.FailWithMessage("请求参数格式不正确，请检查数据格式", c)
+		response.FailWithMessage("请求参数格式不正确,请检查数据格式", c)
 		return
 	}
 	err = utils.Verify(r, utils.RegisterVerify)
@@ -154,7 +154,7 @@ func (b *BaseApi) Register(c *gin.Context) {
 			AuthorityId: v,
 		})
 	}
-	// 获取Enable值，默认为1(启用)
+	// 获取Enable值,默认为1(启用)
 	enable := r.Enable
 	if enable == 0 {
 		enable = 1
@@ -167,13 +167,13 @@ func (b *BaseApi) Register(c *gin.Context) {
 	if err != nil {
 		global.GVA_LOG.Error("注册失败!", zap.Error(err))
 		if strings.Contains(err.Error(), "手机号") {
-			response.FailWithDetailed(systemRes.SysUserResponse{User: userReturn}, "注册失败：该手机号码已被使用，请更换其他手机号码", c)
+			response.FailWithDetailed(systemRes.SysUserResponse{User: userReturn}, "注册失败:该手机号码已被使用,请更换其他手机号码", c)
 		} else if strings.Contains(err.Error(), "用户名") {
-			response.FailWithDetailed(systemRes.SysUserResponse{User: userReturn}, "注册失败：该用户名已被占用，请更换其他用户名", c)
+			response.FailWithDetailed(systemRes.SysUserResponse{User: userReturn}, "注册失败:该用户名已被占用,请更换其他用户名", c)
 		} else if strings.Contains(err.Error(), "邮箱") {
-			response.FailWithDetailed(systemRes.SysUserResponse{User: userReturn}, "注册失败：该邮箱已被使用，请更换其他邮箱", c)
+			response.FailWithDetailed(systemRes.SysUserResponse{User: userReturn}, "注册失败:该邮箱已被使用,请更换其他邮箱", c)
 		} else {
-			response.FailWithDetailed(systemRes.SysUserResponse{User: userReturn}, "注册失败：系统繁忙，请稍后重试或联系管理员", c)
+			response.FailWithDetailed(systemRes.SysUserResponse{User: userReturn}, "注册失败:系统繁忙,请稍后重试或联系管理员", c)
 		}
 		return
 	}
@@ -205,7 +205,7 @@ func (b *BaseApi) ChangePassword(c *gin.Context) {
 	err = userService.ChangePassword(u, req.NewPassword)
 	if err != nil {
 		global.GVA_LOG.Error("修改失败!", zap.Error(err))
-		response.FailWithMessage("修改失败，原密码与当前账户不符", c)
+		response.FailWithMessage("修改失败,原密码与当前账户不符", c)
 		return
 	}
 	response.OkWithMessage("修改成功", c)
@@ -399,9 +399,9 @@ func (b *BaseApi) SetUserInfo(c *gin.Context) {
 	if err != nil {
 		global.GVA_LOG.Error("设置失败!", zap.Error(err))
 		if strings.Contains(err.Error(), "用户名") {
-			response.FailWithMessage("设置失败，用户名不允许重复", c)
+			response.FailWithMessage("设置失败,用户名不允许重复", c)
 		} else if strings.Contains(err.Error(), "手机号") {
-			response.FailWithMessage("设置失败，手机号码不允许重复", c)
+			response.FailWithMessage("设置失败,手机号码不允许重复", c)
 		} else {
 			response.FailWithMessage("设置失败", c)
 		}
@@ -441,9 +441,9 @@ func (b *BaseApi) SetSelfInfo(c *gin.Context) {
 	if err != nil {
 		global.GVA_LOG.Error("设置失败!", zap.Error(err))
 		if strings.Contains(err.Error(), "用户名") {
-			response.FailWithMessage("设置失败，用户名不允许重复", c)
+			response.FailWithMessage("设置失败,用户名不允许重复", c)
 		} else if strings.Contains(err.Error(), "手机号") {
-			response.FailWithMessage("设置失败，手机号码不允许重复", c)
+			response.FailWithMessage("设置失败,手机号码不允许重复", c)
 		} else {
 			response.FailWithMessage("设置失败", c)
 		}

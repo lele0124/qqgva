@@ -96,7 +96,7 @@
       width="600px"
     >
       <el-form :inline="true" :model="formData" label-width="80px">
-        <el-form-item label="选项：">
+        <el-form-item label="选项:">
           <el-checkbox v-model="formData.deleteApi" label="删除接口" />
           <el-checkbox v-model="formData.deleteMenu" label="删除菜单" />
           <el-checkbox
@@ -144,13 +144,13 @@
         <el-form
           v-loading="aiLoading"
           label-position="top"
-          element-loading-text="小淼正在思考，请稍候..."
+          element-loading-text="小淼正在思考,请稍候..."
           :model="autoFunc"
           label-width="80px"
         >
           <el-row :gutter="12">
             <el-col :span="8">
-              <el-form-item label="包名：">
+              <el-form-item label="包名:">
                 <el-input
                     v-model="autoFunc.package"
                     placeholder="请输入包名"
@@ -159,7 +159,7 @@
               </el-form-item>
             </el-col>
             <el-col :span="8">
-              <el-form-item label="结构体名：">
+              <el-form-item label="结构体名:">
                 <el-input
                     v-model="autoFunc.structName"
                     placeholder="请输入结构体名"
@@ -168,7 +168,7 @@
               </el-form-item>
             </el-col>
             <el-col :span="8">
-              <el-form-item label="前端文件名：">
+              <el-form-item label="前端文件名:">
                 <el-input
                     v-model="autoFunc.packageName"
                     placeholder="请输入文件名"
@@ -179,7 +179,7 @@
           </el-row>
           <el-row :gutter="12">
             <el-col :span="8">
-              <el-form-item label="后端文件名：">
+              <el-form-item label="后端文件名:">
                 <el-input
                     v-model="autoFunc.humpPackageName"
                     placeholder="请输入文件名"
@@ -188,7 +188,7 @@
               </el-form-item>
             </el-col>
             <el-col :span="8">
-              <el-form-item label="描述：">
+              <el-form-item label="描述:">
                 <el-input
                     v-model="autoFunc.description"
                     placeholder="请输入描述"
@@ -197,7 +197,7 @@
               </el-form-item>
             </el-col>
             <el-col :span="8">
-              <el-form-item label="缩写：">
+              <el-form-item label="缩写:">
                 <el-input
                     v-model="autoFunc.abbreviation"
                     placeholder="请输入缩写"
@@ -206,10 +206,10 @@
               </el-form-item>
             </el-col>
           </el-row>
-          <el-form-item label="是否AI填充：">
+          <el-form-item label="是否AI填充:">
             <el-switch v-model="autoFunc.isAi" />
             <span class="text-sm text-red-600 p-2"
-              >当前ai帮写存在不稳定因素，生成代码后请注意手动调整部分内容</span
+              >当前ai帮写存在不稳定因素,生成代码后请注意手动调整部分内容</span
             >
           </el-form-item>
           <template v-if="autoFunc.isAi">
@@ -217,7 +217,7 @@
               <div class="relative w-full">
                 <el-input
                   type="textarea"
-                  placeholder="AI帮写功能，输入提示信息，自动生成代码"
+                  placeholder="AI帮写功能,输入提示信息,自动生成代码"
                   v-model="autoFunc.prompt"
                   :rows="5"
                   @input="autoFunc.router = autoFunc.router.replace(/\//g, '')"
@@ -256,7 +256,7 @@
             </el-form-item>
           </template>
 
-          <el-form-item label="方法介绍：">
+          <el-form-item label="方法介绍:">
             <div class="flex w-full gap-2">
               <el-input
                 class="flex-1"
@@ -268,14 +268,14 @@
               >
             </div>
           </el-form-item>
-          <el-form-item label="方法名：">
+          <el-form-item label="方法名:">
             <el-input
               @blur="autoFunc.funcName = toUpperCase(autoFunc.funcName)"
               v-model="autoFunc.funcName"
               placeholder="请输入方法名"
             />
           </el-form-item>
-          <el-form-item label="方法：">
+          <el-form-item label="方法:">
             <el-select v-model="autoFunc.method" placeholder="请选择方法">
               <el-option
                 v-for="item in ['GET', 'POST', 'PUT', 'DELETE']"
@@ -285,7 +285,7 @@
               />
             </el-select>
           </el-form-item>
-          <el-form-item label="是否鉴权：">
+          <el-form-item label="是否鉴权:">
             <el-switch
               v-model="autoFunc.isAuth"
               active-text="是"
@@ -426,7 +426,7 @@
         !autoFunc.value.serverFunc ||
         !autoFunc.value.jsFunc
       ) {
-        ElMessage.error('请先使用AI帮写完成基础代码，如果生成失败请重新调用')
+        ElMessage.error('请先使用AI帮写完成基础代码,如果生成失败请重新调用')
         return
       }
     }
@@ -481,7 +481,7 @@
 
   // 打开弹窗
   const openDialog = (row) => {
-    dialogFormTitle.value = '回滚：' + row.structName
+    dialogFormTitle.value = '回滚:' + row.structName
     formData.value.id = row.ID
     dialogFormVisible.value = true
   }
@@ -501,7 +501,7 @@
   const deleteTableCheck = (flag) => {
     if (flag) {
       ElMessageBox.confirm(
-        `此操作将删除自动创建的文件和api（会删除表！！！）, 是否继续?`,
+        `此操作将删除自动创建的文件和api(会删除表!!!), 是否继续?`,
         '提示',
         {
           closeOnClickModal: false,
@@ -513,7 +513,7 @@
       )
         .then(() => {
           ElMessageBox.confirm(
-            `此操作将删除自动创建的文件和api（会删除表！！！）, 请继续确认！！！`,
+            `此操作将删除自动创建的文件和api(会删除表!!!), 请继续确认!!!`,
             '会删除表',
             {
               closeOnClickModal: false,
@@ -593,7 +593,7 @@
         autoFunc.value.router = routerArr[routerArr.length - 1]
         autoFunc.value.funcDesc = autoFunc.value.prompt
       } catch (_) {
-        ElMessage.error('小淼忙碌，请重新调用')
+        ElMessage.error('小淼忙碌,请重新调用')
       }
     }
   }
@@ -613,7 +613,7 @@
         autoFunc.value.router = aiData.router
         autoFunc.value.prompt = autoFunc.value.funcDesc
       } catch (_) {
-        ElMessage.error('小淼开小差了，请重新调用')
+        ElMessage.error('小淼开小差了,请重新调用')
       }
     }
   }

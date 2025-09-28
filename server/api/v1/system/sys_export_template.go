@@ -64,7 +64,7 @@ func (sysExportTemplateApi *SysExportTemplateApi) CreateSysExportTemplate(c *gin
 	err := c.ShouldBindJSON(&sysExportTemplate)
 	if err != nil {
 		// 将 JSON 解析错误转换为中文提示
-		response.FailWithMessage("请求参数格式不正确，请检查数据格式", c)
+		response.FailWithMessage("请求参数格式不正确,请检查数据格式", c)
 		return
 	}
 	verify := utils.Rules{
@@ -144,7 +144,7 @@ func (sysExportTemplateApi *SysExportTemplateApi) UpdateSysExportTemplate(c *gin
 	err := c.ShouldBindJSON(&sysExportTemplate)
 	if err != nil {
 		// 将 JSON 解析错误转换为中文提示
-		response.FailWithMessage("请求参数格式不正确，请检查数据格式", c)
+		response.FailWithMessage("请求参数格式不正确,请检查数据格式", c)
 		return
 	}
 	verify := utils.Rules{

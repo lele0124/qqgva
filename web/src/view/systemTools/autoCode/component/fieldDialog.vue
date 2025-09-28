@@ -155,7 +155,7 @@
     </el-form>
     <el-collapse v-model="activeNames">
       <el-collapse-item
-        title="数据源配置（此配置为高级配置，如编程基础不牢，可能导致自动化代码不可用）"
+        title="数据源配置(此配置为高级配置,如编程基础不牢,可能导致自动化代码不可用)"
         name="1"
       >
         <el-row :gutter="8">
@@ -239,9 +239,9 @@
                     font-size: 13px;
                   "
                 >
-                  类型：{{ item.type }}
+                  类型:{{ item.type }}
                   <block v-if="item.comment != ''"
-                    >，字段说明：{{ item.comment }}</block
+                    >,字段说明:{{ item.comment }}</block
                   >
                 </span>
               </el-option>
@@ -275,9 +275,9 @@
                     font-size: 13px;
                   "
                 >
-                  类型：{{ item.type }}
+                  类型:{{ item.type }}
                   <span v-if="item.comment != ''"
-                    >，字段说明：{{ item.comment }}</span
+                    >,字段说明:{{ item.comment }}</span
                   >
                 </span>
               </el-option>
@@ -412,7 +412,7 @@
   const associationChange = (val) => {
     if (val === 2) {
       ElMessageBox.confirm(
-        '一对多关联模式下，数据类型会改变为数组，后端表现为json，具体表现为数组模式，是否继续？',
+        '一对多关联模式下,数据类型会改变为数组,后端表现为json,具体表现为数组模式,是否继续？',
         '提示',
         {
           confirmButtonText: '继续',
@@ -454,7 +454,7 @@
       let list = res.data.tables // 确保这里正确获取到 tables 数组
       dbTableList.value = list.map((item) => ({
         tableName: item.tableName,
-        value: item.tableName // 这里假设 value 也是 tableName，如果不同请调整
+        value: item.tableName // 这里假设 value 也是 tableName,如果不同请调整
       }))
     }
     clearAccress()

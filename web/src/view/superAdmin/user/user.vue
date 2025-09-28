@@ -222,7 +222,7 @@
         :model="userInfo"
         label-width="80px"
       >
-        <!-- 统一显示ID和UUID字段，仅在编辑模式下显示 -->
+        <!-- 统一显示ID和UUID字段,仅在编辑模式下显示 -->
         <div v-if="dialogFlag === 'edit'" class="form-row">
           <div class="flex items-start space-x-4">
             <el-form-item label="ID" class="id-field-small flex-1">
@@ -342,7 +342,7 @@
           </el-form-item>
         </div>
         
-        <!-- 将时间相关的只读字段移到表单最下方，并统一显示方式 -->
+        <!-- 将时间相关的只读字段移到表单最下方,并统一显示方式 -->
         <div v-if="dialogFlag === 'edit'" class="form-row">
           <el-form-item label="更新时间" prop="UpdatedAt" class="form-half bold-label">
             <el-input :value="formatDate(userInfo.UpdatedAt)" disabled />
@@ -510,7 +510,7 @@
     }).catch(() => {
       ElMessage({
         type: 'error',
-        message: '复制失败，请手动复制'
+        message: '复制失败,请手动复制'
       })
     })
   }
@@ -615,7 +615,7 @@
     enable: 1,
     originSetting: '',
     operatorName: '',
-    operatorId: '' // 修改为小写id，与后端保持一致
+    operatorId: '' // 修改为小写id,与后端保持一致
   })
 
   const rules = ref({
@@ -705,7 +705,7 @@
       enable: 1, // 默认启用
       originSetting: '',
       operatorName: '',
-      operatorId: '' // 修改为小写id，与后端保持一致
+      operatorId: '' // 修改为小写id,与后端保持一致
     }
     addUserDialog.value = true
   }
@@ -738,7 +738,7 @@
   const openEdit = (row) => {
     dialogFlag.value = 'edit'
     userInfo.value = JSON.parse(JSON.stringify(row))
-    // 处理originSetting字段，如果是对象则转换为格式化的JSON字符串
+    // 处理originSetting字段,如果是对象则转换为格式化的JSON字符串
     if (userInfo.value.originSetting && typeof userInfo.value.originSetting === 'object') {
       userInfo.value.originSetting = JSON.stringify(userInfo.value.originSetting, null, 2)
     }

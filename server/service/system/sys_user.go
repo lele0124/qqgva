@@ -36,29 +36,29 @@ func (userService *UserService) Register(u system.SysUser, operatorId uint, oper
 	// 设置操作人信息
 	u.OperatorId = operatorId
 	u.OperatorName = operatorName
-    
+
 	// 使用事务确保检查和创建操作的原子性
 	err = global.GVA_DB.Transaction(func(tx *gorm.DB) error {
 		var user system.SysUser
-		// 判断用户名是否注册（排除已软删除的用户）
+		// 判断用户名是否注册(排除已软删除的用户)
 		if !errors.Is(tx.Where("username = ? AND deleted_at IS NULL", u.Username).First(&user).Error, gorm.ErrRecordNotFound) {
 			return errors.New("用户名已注册")
 		}
-		// 检查手机号是否已被注册（排除已软删除的用户）
+		// 检查手机号是否已被注册(排除已软删除的用户)
 		if u.Phone != "" {
 			if !errors.Is(tx.Where("phone = ? AND deleted_at IS NULL", u.Phone).First(&user).Error, gorm.ErrRecordNotFound) {
 				return errors.New("手机号已被注册")
 			}
 		}
-		// 邮箱唯一性检查（如果提供了邮箱）
+		// 邮箱唯一性检查(如果提供了邮箱)
 		if u.Email != "" {
 			if !errors.Is(tx.Where("email = ? AND deleted_at IS NULL", u.Email).First(&user).Error, gorm.ErrRecordNotFound) {
 				return errors.New("邮箱已被注册")
 			}
 		}
 		// 附加uuid 密码hash加密 注册
-	u.Password = utils.BcryptHash(u.Password)
-	u.UUID = uuid.New()
+		u.Password = utils.BcryptHash(u.Password)
+		u.UUID = uuid.New()
 		// 创建用户
 		if err := tx.Create(&u).Error; err != nil {
 			// 捕获唯一约束冲突错误并提供更友好的错误信息
@@ -269,7 +269,7 @@ func (userService *UserService) DeleteUser(id int, operatorId uint, operatorName
 		updateErr := tx.Model(&system.SysUser{}).
 			Where("id = ?", id).
 			Updates(map[string]interface{}{
-				"operator_id":  operatorId,
+				"operator_id":   operatorId,
 				"operator_name": operatorName,
 			}).Error
 		if updateErr != nil {
@@ -293,7 +293,7 @@ func (userService *UserService) DeleteUser(id int, operatorId uint, operatorName
 //@return: err error
 
 func (userService *UserService) SetUserInfo(req system.SysUser, operatorId uint, operatorName string) error {
-	// 使用事务处理，确保数据一致性
+	// 使用事务处理,确保数据一致性
 	return global.GVA_DB.Transaction(func(tx *gorm.DB) error {
 		// 检查用户名是否已被其他用户使用
 		if req.Username != "" {
@@ -306,11 +306,11 @@ func (userService *UserService) SetUserInfo(req system.SysUser, operatorId uint,
 			}
 			if count > 0 {
 				// 找到了使用相同用户名的其他用户
-			return errors.New("用户名已被其他用户使用")
+				return errors.New("用户名已被其他用户使用")
 			}
 		}
 
-		// 检查手机号是否已被其他用户使用（排除已软删除的用户）
+		// 检查手机号是否已被其他用户使用(排除已软删除的用户)
 		if req.Phone != "" {
 			var count int64
 			err := tx.Model(&system.SysUser{}).
@@ -321,7 +321,7 @@ func (userService *UserService) SetUserInfo(req system.SysUser, operatorId uint,
 			}
 			if count > 0 {
 				// 找到了使用相同手机号的其他用户
-			return errors.New("手机号已被其他用户使用")
+				return errors.New("手机号已被其他用户使用")
 			}
 		}
 
@@ -330,15 +330,15 @@ func (userService *UserService) SetUserInfo(req system.SysUser, operatorId uint,
 			Select("updated_at", "username", "nick_name", "name", "header_img", "phone", "email", "enable", "operator_id", "operator_name").
 			Where("id=?", req.ID).
 			Updates(map[string]interface{}{
-				"updated_at":   time.Now(),
-				"username":     req.Username,
-				"nick_name":    req.NickName,
-				"name":         req.Name,
-				"header_img":   req.HeaderImg,
-				"phone":        req.Phone,
-				"email":        req.Email,
-				"enable":       req.Enable,
-				"operator_id":  operatorId,
+				"updated_at":    time.Now(),
+				"username":      req.Username,
+				"nick_name":     req.NickName,
+				"name":          req.Name,
+				"header_img":    req.HeaderImg,
+				"phone":         req.Phone,
+				"email":         req.Email,
+				"enable":        req.Enable,
+				"operator_id":   operatorId,
 				"operator_name": operatorName,
 			}).Error
 	})
@@ -351,7 +351,7 @@ func (userService *UserService) SetUserInfo(req system.SysUser, operatorId uint,
 //@return: err error, user model.SysUser
 
 func (userService *UserService) SetSelfInfo(req system.SysUser) error {
-	// 使用事务处理，确保数据一致性
+	// 使用事务处理,确保数据一致性
 	return global.GVA_DB.Transaction(func(tx *gorm.DB) error {
 		// 检查用户名是否已被其他用户使用
 		if req.Username != "" {
@@ -361,13 +361,13 @@ func (userService *UserService) SetSelfInfo(req system.SysUser) error {
 				// 找到了使用相同用户名的其他用户
 				return errors.New("用户名已被其他用户使用")
 			}
-			// 如果err不是记录不存在的错误，则返回该错误
+			// 如果err不是记录不存在的错误,则返回该错误
 			if !errors.Is(err, gorm.ErrRecordNotFound) {
 				return err
 			}
 		}
 
-		// 检查手机号是否已被其他用户使用（排除已软删除的用户）
+		// 检查手机号是否已被其他用户使用(排除已软删除的用户)
 		if req.Phone != "" {
 			var existingUser system.SysUser
 			err := tx.Where("phone = ? AND id != ? AND deleted_at IS NULL", req.Phone, req.ID).First(&existingUser).Error
@@ -375,7 +375,7 @@ func (userService *UserService) SetSelfInfo(req system.SysUser) error {
 				// 找到了使用相同手机号的其他用户
 				return errors.New("手机号已被其他用户使用")
 			}
-			// 如果err不是记录不存在的错误，则返回该错误
+			// 如果err不是记录不存在的错误,则返回该错误
 			if !errors.Is(err, gorm.ErrRecordNotFound) {
 				return err
 			}

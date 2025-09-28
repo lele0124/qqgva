@@ -20,7 +20,7 @@ func init() {
 
 // MenuCreateRequest 菜单创建请求结构
 type MenuCreateRequest struct {
-	ParentId    uint                   `json:"parentId"`    // 父菜单ID，0表示根菜单
+	ParentId    uint                   `json:"parentId"`    // 父菜单ID,0表示根菜单
 	Path        string                 `json:"path"`        // 路由path
 	Name        string                 `json:"name"`        // 路由name
 	Hidden      bool                   `json:"hidden"`      // 是否在列表隐藏
@@ -38,7 +38,7 @@ type MenuCreateRequest struct {
 
 // MenuParameterRequest 菜单参数请求结构
 type MenuParameterRequest struct {
-	Type  string `json:"type"`  // 参数类型：params或query
+	Type  string `json:"type"`  // 参数类型:params或query
 	Key   string `json:"key"`   // 参数key
 	Value string `json:"value"` // 参数值
 }
@@ -64,32 +64,32 @@ type MenuCreator struct{}
 // New 创建菜单创建工具
 func (m *MenuCreator) New() mcp.Tool {
 	return mcp.NewTool("create_menu",
-		mcp.WithDescription(`创建前端菜单记录，用于AI编辑器自动添加前端页面时自动创建对应的菜单项。
+		mcp.WithDescription(`创建前端菜单记录,用于AI编辑器自动添加前端页面时自动创建对应的菜单项。
 
-**重要限制：**
-- 当使用gva_auto_generate工具且needCreatedModules=true时，模块创建会自动生成菜单项，不应调用此工具
-- 仅在以下情况使用：1) 单独创建菜单（不涉及模块创建）；2) AI编辑器自动添加前端页面时`),
+**重要限制:**
+- 当使用gva_auto_generate工具且needCreatedModules=true时,模块创建会自动生成菜单项,不应调用此工具
+- 仅在以下情况使用:1) 单独创建菜单(不涉及模块创建)；2) AI编辑器自动添加前端页面时`),
 		mcp.WithNumber("parentId",
-			mcp.Description("父菜单ID，0表示根菜单"),
+			mcp.Description("父菜单ID,0表示根菜单"),
 			mcp.DefaultNumber(0),
 		),
 		mcp.WithString("path",
 			mcp.Required(),
-			mcp.Description("路由path，如：userList"),
+			mcp.Description("路由path,如:userList"),
 		),
 		mcp.WithString("name",
 			mcp.Required(),
-			mcp.Description("路由name，用于Vue Router，如：userList"),
+			mcp.Description("路由name,用于Vue Router,如:userList"),
 		),
 		mcp.WithBoolean("hidden",
 			mcp.Description("是否在菜单列表中隐藏"),
 		),
 		mcp.WithString("component",
 			mcp.Required(),
-			mcp.Description("对应的前端Vue组件路径，如：view/user/list.vue"),
+			mcp.Description("对应的前端Vue组件路径,如:view/user/list.vue"),
 		),
 		mcp.WithNumber("sort",
-			mcp.Description("菜单排序号，数字越小越靠前"),
+			mcp.Description("菜单排序号,数字越小越靠前"),
 			mcp.DefaultNumber(1),
 		),
 		mcp.WithString("title",
@@ -113,10 +113,10 @@ func (m *MenuCreator) New() mcp.Tool {
 			mcp.Description("高亮菜单名称"),
 		),
 		mcp.WithString("parameters",
-			mcp.Description("路由参数JSON字符串，格式：[{\"type\":\"params\",\"key\":\"id\",\"value\":\"1\"}]"),
+			mcp.Description("路由参数JSON字符串,格式:[{\"type\":\"params\",\"key\":\"id\",\"value\":\"1\"}]"),
 		),
 		mcp.WithString("menuBtn",
-			mcp.Description("菜单按钮JSON字符串，格式：[{\"name\":\"add\",\"desc\":\"新增\"}]"),
+			mcp.Description("菜单按钮JSON字符串,格式:[{\"name\":\"add\",\"desc\":\"新增\"}]"),
 		),
 	)
 }
@@ -267,10 +267,10 @@ func (m *MenuCreator) Handle(ctx context.Context, request mcp.CallToolRequest) (
 	}
 
 	// 添加权限分配提醒
-	permissionReminder := "\n\n⚠️ 重要提醒：\n" +
-		"菜单创建完成后，请前往【系统管理】->【角色管理】中为相关角色分配新创建的菜单权限，" +
+	permissionReminder := "\n\n⚠️ 重要提醒:\n" +
+		"菜单创建完成后,请前往【系统管理】->【角色管理】中为相关角色分配新创建的菜单权限," +
 		"以确保用户能够正常访问新菜单。\n" +
-		"具体步骤：\n" +
+		"具体步骤:\n" +
 		"1. 进入角色管理页面\n" +
 		"2. 选择需要授权的角色\n" +
 		"3. 在菜单权限中勾选新创建的菜单项\n" +
@@ -280,7 +280,7 @@ func (m *MenuCreator) Handle(ctx context.Context, request mcp.CallToolRequest) (
 		Content: []mcp.Content{
 			mcp.TextContent{
 				Type: "text",
-				Text: fmt.Sprintf("菜单创建结果：\n\n%s%s", string(resultJSON), permissionReminder),
+				Text: fmt.Sprintf("菜单创建结果:\n\n%s%s", string(resultJSON), permissionReminder),
 			},
 		},
 	}, nil

@@ -3,7 +3,7 @@
     <div class="gva-table-box">
       <el-divider content-position="left">大文件上传</el-divider>
       <form id="fromCont" method="post">
-        <!-- 新增按钮容器，使用 Flexbox 对齐按钮 -->
+        <!-- 新增按钮容器,使用 Flexbox 对齐按钮 -->
         <div class="button-container">
           <div class="fileUpload" @click="inputChange">
             <span class="takeFile">选择文件</span>
@@ -43,7 +43,7 @@
         </transition>
       </div>
       <div class="tips">
-        此版本为先行体验功能测试版，样式美化和性能优化正在进行中，上传切片文件和合成的完整文件分别再QMPlusserver目录的breakpointDir文件夹和fileDir文件夹
+        此版本为先行体验功能测试版,样式美化和性能优化正在进行中,上传切片文件和合成的完整文件分别再QMPlusserver目录的breakpointDir文件夹和fileDir文件夹
       </div>
     </div>
   </div>
@@ -89,7 +89,7 @@ const choseFile = async (e) => {
     fileR.onload = async (e) => {
       // 读成arrayBuffer的回调 e 为方法自带参数 相当于 dom的e 流存在e.target.result 中
       const blob = e.target.result
-      const spark = new SparkMD5.ArrayBuffer() // 创建md5制造工具 （md5用于检测文件一致性 这里不懂就打电话问我）
+      const spark = new SparkMD5.ArrayBuffer() // 创建md5制造工具 (md5用于检测文件一致性 这里不懂就打电话问我)
       spark.append(blob) // 文件流丢进工具
       fileMd5.value = spark.end() // 工具结束 产生一个a 总文件的md5
       const FileSliceCap = 1 * 1024 * 1024 // 分片字节数
@@ -118,7 +118,7 @@ const choseFile = async (e) => {
       const res = await findFile(params)
       // 全部切完以后 发一个请求给后端 拉当前文件后台存储的切片信息 用于检测有多少上传成功的切片
       const finishList = res.data.file.ExaFileChunk // 上传成功的切片
-      const IsFinish = res.data.file.IsFinish // 是否是同文件不同命 （文件md5相同 文件名不同 则默认是同一个文件但是不同文件名 此时后台数据库只需要拷贝一下数据库文件即可 不需要上传文件 即秒传功能）
+      const IsFinish = res.data.file.IsFinish // 是否是同文件不同命 (文件md5相同 文件名不同 则默认是同一个文件但是不同文件名 此时后台数据库只需要拷贝一下数据库文件即可 不需要上传文件 即秒传功能)
       if (!IsFinish) {
         // 当是断点续传时候
         waitUpLoad.value = formDataList.value.filter((all) => {
@@ -149,9 +149,9 @@ const getFile = () => {
   if (percentage.value === 100) {
     ElMessage.success('上传已完成!')  // 添加提示消息
     percentageFlage.value = false
-    return // 如果进度已完成，阻止继续执行后续代码
+    return // 如果进度已完成,阻止继续执行后续代码
   }
-  // 如果文件未上传完成，继续上传切片
+  // 如果文件未上传完成,继续上传切片
   sliceFile() // 上传切片
 }
 

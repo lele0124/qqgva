@@ -33,16 +33,16 @@ const showLoading = (
   }
 
   timer = setTimeout(() => {
-    // 再次检查activeAxios状态，防止竞态条件
+    // 再次检查activeAxios状态,防止竞态条件
     if (activeAxios > 0 && !isLoadingVisible) {
       if (!option.target) option.target = loadDom
       loadingInstance = ElLoading.service(option)
       isLoadingVisible = true
 
-      // 设置强制关闭定时器，防止loading永远不关闭（30秒超时）
+      // 设置强制关闭定时器,防止loading永远不关闭(30秒超时)
       forceCloseTimer = setTimeout(() => {
         if (isLoadingVisible && loadingInstance) {
-          console.warn('Loading强制关闭：超时30秒')
+          console.warn('Loading强制关闭:超时30秒')
           loadingInstance.close()
           isLoadingVisible = false
           activeAxios = 0 // 重置计数器
@@ -71,7 +71,7 @@ const closeLoading = () => {
   }
 }
 
-// 全局重置loading状态的函数，用于异常情况
+// 全局重置loading状态的函数,用于异常情况
 const resetLoading = () => {
   activeAxios = 0
   isLoadingVisible = false
@@ -191,7 +191,7 @@ service.interceptors.response.use(
   }
 )
 
-// 监听页面卸载事件，确保loading被正确清理
+// 监听页面卸载事件,确保loading被正确清理
 if (typeof window !== 'undefined') {
   window.addEventListener('beforeunload', resetLoading)
   window.addEventListener('unload', resetLoading)

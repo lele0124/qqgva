@@ -4182,7 +4182,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "字典名（中）",
+                        "description": "字典名(中)",
                         "name": "name",
                         "in": "query"
                     },
@@ -4194,7 +4194,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "字典名（英）",
+                        "description": "字典名(英)",
                         "name": "type",
                         "in": "query"
                     },
@@ -7166,11 +7166,11 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "open-captcha": {
-                    "description": "防爆破验证码开启此数，0代表每次登录都需要验证码，其他数字代表错误密码次数，如3代表错误三次后出现验证码",
+                    "description": "防爆破验证码开启此数,0代表每次登录都需要验证码,其他数字代表错误密码次数,如3代表错误三次后出现验证码",
                     "type": "integer"
                 },
                 "open-captcha-timeout": {
-                    "description": "防爆破验证码超时时间，单位：s(秒)",
+                    "description": "防爆破验证码超时时间,单位:s(秒)",
                     "type": "integer"
                 }
             }
@@ -7400,7 +7400,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "engine": {
-                    "description": "数据库引擎，默认InnoDB",
+                    "description": "数据库引擎,默认InnoDB",
                     "type": "string",
                     "default": "InnoDB"
                 },
@@ -7437,7 +7437,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "singular": {
-                    "description": "是否开启全局禁用复数，true表示开启",
+                    "description": "是否开启全局禁用复数,true表示开启",
                     "type": "boolean"
                 },
                 "username": {
@@ -7458,7 +7458,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "engine": {
-                    "description": "数据库引擎，默认InnoDB",
+                    "description": "数据库引擎,默认InnoDB",
                     "type": "string",
                     "default": "InnoDB"
                 },
@@ -7495,7 +7495,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "singular": {
-                    "description": "是否开启全局禁用复数，true表示开启",
+                    "description": "是否开启全局禁用复数,true表示开启",
                     "type": "boolean"
                 },
                 "username": {
@@ -7516,7 +7516,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "engine": {
-                    "description": "数据库引擎，默认InnoDB",
+                    "description": "数据库引擎,默认InnoDB",
                     "type": "string",
                     "default": "InnoDB"
                 },
@@ -7553,7 +7553,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "singular": {
-                    "description": "是否开启全局禁用复数，true表示开启",
+                    "description": "是否开启全局禁用复数,true表示开启",
                     "type": "boolean"
                 },
                 "username": {
@@ -7574,7 +7574,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "engine": {
-                    "description": "数据库引擎，默认InnoDB",
+                    "description": "数据库引擎,默认InnoDB",
                     "type": "string",
                     "default": "InnoDB"
                 },
@@ -7611,7 +7611,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "singular": {
-                    "description": "是否开启全局禁用复数，true表示开启",
+                    "description": "是否开启全局禁用复数,true表示开启",
                     "type": "boolean"
                 },
                 "username": {
@@ -7823,7 +7823,7 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "engine": {
-                    "description": "数据库引擎，默认InnoDB",
+                    "description": "数据库引擎,默认InnoDB",
                     "type": "string",
                     "default": "InnoDB"
                 },
@@ -7860,7 +7860,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "singular": {
-                    "description": "是否开启全局禁用复数，true表示开启",
+                    "description": "是否开启全局禁用复数,true表示开启",
                     "type": "boolean"
                 },
                 "type": {
@@ -7884,7 +7884,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "engine": {
-                    "description": "数据库引擎，默认InnoDB",
+                    "description": "数据库引擎,默认InnoDB",
                     "type": "string",
                     "default": "InnoDB"
                 },
@@ -7921,7 +7921,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "singular": {
-                    "description": "是否开启全局禁用复数，true表示开启",
+                    "description": "是否开启全局禁用复数,true表示开启",
                     "type": "boolean"
                 },
                 "username": {
@@ -8219,7 +8219,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "is-loginauth": {
-                    "description": "是否LoginAuth   是否使用LoginAuth认证方式（适用于IBM、微软邮箱服务器等）",
+                    "description": "是否LoginAuth   是否使用LoginAuth认证方式(适用于IBM、微软邮箱服务器等)",
                     "type": "boolean"
                 },
                 "is-ssl": {
@@ -8239,7 +8239,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "to": {
-                    "description": "收件人:多个以英文逗号分隔 例：a@qq.com b@qq.com 正式开发中请把此项目作为参数使用",
+                    "description": "收件人:多个以英文逗号分隔 例:a@qq.com b@qq.com 正式开发中请把此项目作为参数使用",
                     "type": "string"
                 }
             }
@@ -8762,21 +8762,21 @@ const docTemplate = `{
             ],
             "properties": {
                 "apis": {
-                    "description": "API数据，直接复用SysApi",
+                    "description": "API数据,直接复用SysApi",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/system.SysApi"
                     }
                 },
                 "dictionaries": {
-                    "description": "字典数据，直接复用SysDictionary",
+                    "description": "字典数据,直接复用SysDictionary",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/system.SysDictionary"
                     }
                 },
                 "menus": {
-                    "description": "菜单数据，直接复用SysBaseMenu",
+                    "description": "菜单数据,直接复用SysBaseMenu",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/system.SysBaseMenu"
@@ -9363,7 +9363,7 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "defaultMenu": {
-                    "description": "是否是基础路由（开发中）",
+                    "description": "是否是基础路由(开发中)",
                     "type": "boolean"
                 },
                 "icon": {
@@ -9614,7 +9614,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "name": {
-                    "description": "字典名（中）",
+                    "description": "字典名(中)",
                     "type": "string"
                 },
                 "status": {
@@ -9628,7 +9628,7 @@ const docTemplate = `{
                     }
                 },
                 "type": {
-                    "description": "字典名（英）",
+                    "description": "字典名(英)",
                     "type": "string"
                 },
                 "updatedAt": {

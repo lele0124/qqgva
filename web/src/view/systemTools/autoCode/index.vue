@@ -2,7 +2,7 @@
   <div>
     <warning-bar
       href="https://www.bilibili.com/video/BV1kv4y1g7nT?p=3"
-      title="此功能为开发环境使用，不建议发布到生产，具体使用效果请点我观看。"
+      title="此功能为开发环境使用,不建议发布到生产,具体使用效果请点我观看。"
     />
     <div class="gva-search-box" v-if="!isAdd">
       <div class="text-lg mb-2 text-gray-600">
@@ -19,7 +19,7 @@
           type="textarea"
           :rows="5"
           :maxlength="2000"
-          :placeholder="`现已完全免费\n试试复制一张图片然后按下ctrl+v或者commend+v\n试试描述你的表，让AI帮你完成。\n此功能需要到插件市场个人中心获取自己的AI-Path，把AI-Path填入config.yaml下的autocode-->ai-path，重启项目即可使用。\n按下 Ctrl+Enter 或 Cmd+Enter 直接生成`"
+          :placeholder="`现已完全免费\n试试复制一张图片然后按下ctrl+v或者commend+v\n试试描述你的表,让AI帮你完成。\n此功能需要到插件市场个人中心获取自己的AI-Path,把AI-Path填入config.yaml下的autocode-->ai-path,重启项目即可使用。\n按下 Ctrl+Enter 或 Cmd+Enter 直接生成`"
           resize="none"
           @focus="handleFocus"
           @blur="handleBlur"
@@ -34,7 +34,7 @@
                   href="https://plugin.gin-vue-admin.com/#/layout/userInfo/center"
                   target="_blank"
               >插件市场个人中心</a
-              >申请AIPath，填入config.yaml的ai-path属性即可使用。
+              >申请AIPath,填入config.yaml的ai-path属性即可使用。
               </div>
             </template>
             <el-button
@@ -59,7 +59,7 @@
                   href="https://plugin.gin-vue-admin.com/#/layout/userInfo/center"
                   target="_blank"
                   >插件市场个人中心</a
-                >申请AIPath，填入config.yaml的ai-path属性即可使用。
+                >申请AIPath,填入config.yaml的ai-path属性即可使用。
               </div>
             </template>
             <el-button
@@ -90,7 +90,7 @@
             <el-form-item label="业务库" prop="selectDBtype" class="w-full">
               <template #label>
                 <el-tooltip
-                  content="注：需要提前到db-list自行配置多数据库，如未配置需配置后重启服务方可使用。（此处可选择对应库表，可理解为从哪个库选择表）"
+                  content="注:需要提前到db-list自行配置多数据库,如未配置需配置后重启服务方可使用。(此处可选择对应库表,可理解为从哪个库选择表)"
                   placement="bottom"
                   effect="light"
                 >
@@ -236,7 +236,7 @@
             <el-form-item label="表名" prop="tableName" class="w-full">
               <el-input
                 v-model="form.tableName"
-                placeholder="指定表名（非必填）"
+                placeholder="指定表名(非必填)"
               />
             </el-form-item>
           </el-col>
@@ -296,7 +296,7 @@
             <el-form-item label="业务库" prop="businessDB" class="w-full">
               <template #label>
                 <el-tooltip
-                  content="注：需要提前到db-list自行配置多数据库，此项为空则会使用gva本库创建自动化代码(global.GVA_DB),填写后则会创建指定库的代码(global.MustGetGlobalDBByDBName(dbname))"
+                  content="注:需要提前到db-list自行配置多数据库,此项为空则会使用gva本库创建自动化代码(global.GVA_DB),填写后则会创建指定库的代码(global.MustGetGlobalDBByDBName(dbname))"
                   placement="bottom"
                   effect="light"
                 >
@@ -352,7 +352,7 @@
               <el-row :gutter="20">
                 <el-col :span="3">
                   <el-tooltip
-                      content="注：会自动在结构体global.Model其中包含主键和软删除相关操作配置"
+                      content="注:会自动在结构体global.Model其中包含主键和软删除相关操作配置"
                       placement="top"
                       effect="light"
                   >
@@ -363,7 +363,7 @@
                 </el-col>
                 <el-col :span="3">
                   <el-tooltip
-                      content="注：会自动产生页面内的按钮权限配置，若不在角色管理中进行按钮分配则按钮不可见"
+                      content="注:会自动产生页面内的按钮权限配置,若不在角色管理中进行按钮分配则按钮不可见"
                       placement="top"
                       effect="light"
                   >
@@ -391,7 +391,7 @@
               <el-row :gutter="20">
                 <el-col :span="3">
                   <el-tooltip
-                      content="注：把自动生成的API注册进数据库"
+                      content="注:把自动生成的API注册进数据库"
                       placement="top"
                       effect="light"
                   >
@@ -402,7 +402,7 @@
                 </el-col>
                 <el-col :span="3">
                   <el-tooltip
-                      content="注：把自动生成的菜单注册进数据库"
+                      content="注:把自动生成的菜单注册进数据库"
                       placement="top"
                       effect="light"
                   >
@@ -413,7 +413,7 @@
                 </el-col>
                 <el-col :span="3">
                   <el-tooltip
-                      content="注：自动同步数据库表结构，如果不需要可以选择关闭"
+                      content="注:自动同步数据库表结构,如果不需要可以选择关闭"
                       placement="top"
                       effect="light"
                   >
@@ -431,7 +431,7 @@
               <el-row :gutter="20">
                 <el-col :span="3">
                   <el-tooltip
-                      content="注：会自动在结构体添加 created_by updated_by deleted_by，方便用户进行资源权限控制"
+                      content="注:会自动在结构体添加 created_by updated_by deleted_by,方便用户进行资源权限控制"
                       placement="top"
                       effect="light"
                   >
@@ -442,7 +442,7 @@
                 </el-col>
                 <el-col :span="3">
                   <el-tooltip
-                      content="注：使用基础模板将不会生成任何结构体和CURD,仅仅配置enter等属性方便自行开发非CURD逻辑"
+                      content="注:使用基础模板将不会生成任何结构体和CURD,仅仅配置enter等属性方便自行开发非CURD逻辑"
                       placement="top"
                       effect="light"
                   >
@@ -462,7 +462,7 @@
                     <el-form-item label="树型结构">
                       <div class="flex items-center gap-4">
                         <el-tooltip
-                            content="注：会自动创建parentID来进行父子关系关联,仅支持主键为int类型"
+                            content="注:会自动创建parentID来进行父子关系关联,仅支持主键为int类型"
                             placement="top"
                             effect="light"
                         >
@@ -919,7 +919,7 @@
 
     if (form.value.fields.length > 0) {
       const res = await ElMessageBox.confirm(
-        'AI生成会清空当前数据，是否继续?',
+        'AI生成会清空当前数据,是否继续?',
         '提示',
         {
           confirmButtonText: '确定',
@@ -1013,19 +1013,19 @@
       value: 'enum'
     },
     {
-      label: '单图片（字符串）',
+      label: '单图片(字符串)',
       value: 'picture'
     },
     {
-      label: '多图片（json字符串）',
+      label: '多图片(json字符串)',
       value: 'pictures'
     },
     {
-      label: '视频（字符串）',
+      label: '视频(字符串)',
       value: 'video'
     },
     {
-      label: '文件（json字符串）',
+      label: '文件(json字符串)',
       value: 'file'
     },
     {
@@ -1156,7 +1156,7 @@
     packageName: [
       {
         required: true,
-        message: '文件名称：sysXxxxXxxx',
+        message: '文件名称:sysXxxxXxxx',
         trigger: 'blur'
       }
     ],
@@ -1170,7 +1170,7 @@
   const useGva = (e) => {
     if (e && form.value.fields.length) {
       ElMessageBox.confirm(
-        '如果您开启GVA默认结构，会自动添加ID,CreatedAt,UpdatedAt,DeletedAt字段，此行为将自动清除您目前在下方创建的重名字段，是否继续？',
+        '如果您开启GVA默认结构,会自动添加ID,CreatedAt,UpdatedAt,DeletedAt字段,此行为将自动清除您目前在下方创建的重名字段,是否继续？',
         '注意',
         {
           confirmButtonText: '继续',
@@ -1351,7 +1351,7 @@
         form.value.fields?.forEach((item) => {
           item.fieldName = toUpperCase(item.fieldName)
           if (item.fieldType === 'enum') {
-            // 判断一下 item.dataTypeLong 按照,切割后的每个元素是否都使用 '' 包裹，如果没包 则修改为包裹起来的 然后再转为字符串赋值给 item.dataTypeLong
+            // 判断一下 item.dataTypeLong 按照,切割后的每个元素是否都使用 '' 包裹,如果没包 则修改为包裹起来的 然后再转为字符串赋值给 item.dataTypeLong
             item.dataTypeLong = item.dataTypeLong.replace(/[\[\]{}()]/g, '')
             const arr = item.dataTypeLong.split(',')
             arr.forEach((ele, index) => {
@@ -1382,7 +1382,7 @@
           }
           ElMessage({
             type: 'success',
-            message: '自动化代码创建成功，自动移动成功'
+            message: '自动化代码创建成功,自动移动成功'
           })
           clearCatch()
         }

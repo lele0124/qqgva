@@ -2,11 +2,12 @@ package system
 
 import (
 	"errors"
+	"strconv"
+
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/request"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/system"
 	"gorm.io/gorm"
-	"strconv"
 )
 
 //@author: [piexlmax](https://github.com/piexlmax)
@@ -137,7 +138,7 @@ func (menuService *MenuService) AddBaseMenu(menu system.SysBaseMenu) error {
 	return global.GVA_DB.Transaction(func(tx *gorm.DB) error {
 		// 检查name是否重复
 		if !errors.Is(tx.Where("name = ?", menu.Name).First(&system.SysBaseMenu{}).Error, gorm.ErrRecordNotFound) {
-			return errors.New("存在重复name，请修改name")
+			return errors.New("存在重复name,请修改name")
 		}
 
 		if menu.ParentId != 0 {
@@ -157,7 +158,7 @@ func (menuService *MenuService) AddBaseMenu(menu system.SysBaseMenu) error {
 				return err
 			}
 
-			// 如果父菜单原本是叶子菜单（没有子菜单），现在要变成枝干菜单，需要清空其权限分配
+			// 如果父菜单原本是叶子菜单(没有子菜单),现在要变成枝干菜单,需要清空其权限分配
 			if existingChildrenCount == 0 {
 				// 检查父菜单是否被其他角色设置为首页
 				var defaultRouterCount int64
@@ -166,7 +167,7 @@ func (menuService *MenuService) AddBaseMenu(menu system.SysBaseMenu) error {
 					return err
 				}
 				if defaultRouterCount > 0 {
-					return errors.New("父菜单已被其他角色的首页占用，请先释放父菜单的首页权限")
+					return errors.New("父菜单已被其他角色的首页占用,请先释放父菜单的首页权限")
 				}
 
 				// 清空父菜单的所有权限分配

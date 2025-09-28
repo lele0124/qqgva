@@ -118,7 +118,7 @@
         </div>
       </template>
 
-      <warning-bar title="新增菜单，需要在角色管理内配置权限才可使用" />
+      <warning-bar title="新增菜单,需要在角色管理内配置权限才可使用" />
       
       <!-- 基础信息区域 -->
       <div class="border-b border-gray-200">
@@ -140,7 +140,7 @@
                 />
                 <div class="form-tip">
                   <el-icon><InfoFilled /></el-icon>
-                  <span>如果菜单包含子菜单，请创建router-view二级路由页面或者</span>
+                  <span>如果菜单包含子菜单,请创建router-view二级路由页面或者</span>
                   <el-button
                     size="small"
                     type="text"
@@ -286,7 +286,7 @@
                     <div class="label-with-tooltip">
                       <span>高亮菜单</span>
                       <el-tooltip
-                        content="注：当到达此路由时候，指定左侧菜单指定name会处于活跃状态（亮起），可为空，为空则为本路由Name。"
+                        content="注:当到达此路由时候,指定左侧菜单指定name会处于活跃状态(亮起),可为空,为空则为本路由Name。"
                         placement="top"
                         effect="light"
                       >
@@ -333,7 +333,7 @@
                      <div class="label-with-tooltip">
                        <span>是否为基础页面</span>
                        <el-tooltip
-                         content="此项选择为是，则不会展示左侧菜单以及顶部信息。"
+                         content="此项选择为是,则不会展示左侧菜单以及顶部信息。"
                          placement="top"
                          effect="light"
                        >
@@ -357,7 +357,7 @@
                      <div class="label-with-tooltip">
                        <span>路由切换动画</span>
                        <el-tooltip
-                         content="如果设置了路由切换动画，在本路由下的动画优先级高于全局动画切换优先级。"
+                         content="如果设置了路由切换动画,在本路由下的动画优先级高于全局动画切换优先级。"
                          placement="top"
                          effect="light"
                        >
@@ -700,7 +700,7 @@
         if (res.code === 0) {
           ElMessage({
             type: 'success',
-            message: isEdit.value ? '编辑成功' : '添加成功，请到角色管理页面分配权限'
+            message: isEdit.value ? '编辑成功' : '添加成功,请到角色管理页面分配权限'
           })
           getTableData()
         }
@@ -752,7 +752,7 @@
       })
   }
 
-  // 添加菜单方法，id为 0则为添加根菜单
+  // 添加菜单方法,id为 0则为添加根菜单
   const isEdit = ref(false)
   const dialogTitle = ref('新增菜单')
   const addMenu = (id) => {

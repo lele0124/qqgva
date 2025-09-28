@@ -26,8 +26,8 @@ type DictionaryGenerateRequest struct {
 	DictType    string             `json:"dictType"`    // 字典类型
 	FieldDesc   string             `json:"fieldDesc"`   // 字段描述
 	Options     []DictionaryOption `json:"options"`     // AI生成的字典选项
-	DictName    string             `json:"dictName"`    // 字典名称（可选）
-	Description string             `json:"description"` // 字典描述（可选）
+	DictName    string             `json:"dictName"`    // 字典名称(可选)
+	Description string             `json:"description"` // 字典描述(可选)
 }
 
 // DictionaryGenerateResponse 字典生成响应
@@ -44,18 +44,18 @@ func (d *DictionaryOptionsGenerator) New() mcp.Tool {
 		mcp.WithDescription("智能生成字典选项并自动创建字典和字典详情"),
 		mcp.WithString("dictType",
 			mcp.Required(),
-			mcp.Description("字典类型，用于标识字典的唯一性"),
+			mcp.Description("字典类型,用于标识字典的唯一性"),
 		),
 		mcp.WithString("fieldDesc",
 			mcp.Required(),
-			mcp.Description("字段描述，用于AI理解字段含义"),
+			mcp.Description("字段描述,用于AI理解字段含义"),
 		),
 		mcp.WithString("options",
 			mcp.Required(),
-			mcp.Description("字典选项JSON字符串，格式：[{\"label\":\"显示名\",\"value\":\"值\",\"sort\":1}]"),
+			mcp.Description("字典选项JSON字符串,格式:[{\"label\":\"显示名\",\"value\":\"值\",\"sort\":1}]"),
 		),
 		mcp.WithString("dictName",
-			mcp.Description("字典名称，如果不提供将自动生成"),
+			mcp.Description("字典名称,如果不提供将自动生成"),
 		),
 		mcp.WithString("description",
 			mcp.Description("字典描述"),
@@ -72,24 +72,24 @@ func (d *DictionaryOptionsGenerator) Name() string {
 func (d *DictionaryOptionsGenerator) Description() string {
 	return `字典选项生成工具 - 让AI生成并创建字典选项
 
-此工具允许AI根据字典类型和字段描述生成合适的字典选项，并自动创建字典和字典详情。
+此工具允许AI根据字典类型和字段描述生成合适的字典选项,并自动创建字典和字典详情。
 
-参数说明：
-- dictType: 字典类型（必填）
-- fieldDesc: 字段描述（必填）
-- options: AI生成的字典选项数组（必填）
+参数说明:
+- dictType: 字典类型(必填)
+- fieldDesc: 字段描述(必填)
+- options: AI生成的字典选项数组(必填)
   - label: 选项标签
   - value: 选项值
   - sort: 排序号
-- dictName: 字典名称（可选，默认根据fieldDesc生成）
-- description: 字典描述（可选）
+- dictName: 字典名称(可选,默认根据fieldDesc生成)
+- description: 字典描述(可选)
 
-使用场景：
-1. 在创建模块时，如果字段需要字典类型，AI可以根据字段描述智能生成合适的选项
-2. 支持各种业务场景的字典选项生成，如状态、类型、等级等
-3. 自动创建字典和字典详情，无需手动配置
+使用场景:
+1. 在创建模块时,如果字段需要字典类型,AI可以根据字段描述智能生成合适的选项
+2. 支持各种业务场景的字典选项生成,如状态、类型、等级等
+3. 自动创建字典和字典详情,无需手动配置
 
-示例调用：
+示例调用:
 {
   "dictType": "user_status",
   "fieldDesc": "用户状态",
@@ -109,11 +109,11 @@ func (d *DictionaryOptionsGenerator) InputSchema() map[string]interface{} {
 		"properties": map[string]interface{}{
 			"dictType": map[string]interface{}{
 				"type":        "string",
-				"description": "字典类型，用于标识字典的唯一性",
+				"description": "字典类型,用于标识字典的唯一性",
 			},
 			"fieldDesc": map[string]interface{}{
 				"type":        "string",
-				"description": "字段描述，用于生成字典名称和理解字典用途",
+				"description": "字段描述,用于生成字典名称和理解字典用途",
 			},
 			"options": map[string]interface{}{
 				"type":        "array",
@@ -123,15 +123,15 @@ func (d *DictionaryOptionsGenerator) InputSchema() map[string]interface{} {
 					"properties": map[string]interface{}{
 						"label": map[string]interface{}{
 							"type":        "string",
-							"description": "选项标签，显示给用户的文本",
+							"description": "选项标签,显示给用户的文本",
 						},
 						"value": map[string]interface{}{
 							"type":        "string",
-							"description": "选项值，存储在数据库中的值",
+							"description": "选项值,存储在数据库中的值",
 						},
 						"sort": map[string]interface{}{
 							"type":        "integer",
-							"description": "排序号，用于控制选项显示顺序",
+							"description": "排序号,用于控制选项显示顺序",
 						},
 					},
 					"required": []string{"label", "value", "sort"},
@@ -139,11 +139,11 @@ func (d *DictionaryOptionsGenerator) InputSchema() map[string]interface{} {
 			},
 			"dictName": map[string]interface{}{
 				"type":        "string",
-				"description": "字典名称，可选，默认根据fieldDesc生成",
+				"description": "字典名称,可选,默认根据fieldDesc生成",
 			},
 			"description": map[string]interface{}{
 				"type":        "string",
-				"description": "字典描述，可选",
+				"description": "字典描述,可选",
 			},
 		},
 		"required": []string{"dictType", "fieldDesc", "options"},
@@ -209,7 +209,7 @@ func (d *DictionaryOptionsGenerator) Handle(ctx context.Context, request mcp.Cal
 		Content: []mcp.Content{
 			mcp.TextContent{
 				Type: "text",
-				Text: fmt.Sprintf("字典选项生成结果：\n\n%s", string(resultJSON)),
+				Text: fmt.Sprintf("字典选项生成结果:\n\n%s", string(resultJSON)),
 			},
 		},
 	}, nil
@@ -226,7 +226,7 @@ func (d *DictionaryOptionsGenerator) createDictionaryWithOptions(ctx context.Con
 	if exists {
 		return &DictionaryGenerateResponse{
 			Success:      false,
-			Message:      fmt.Sprintf("字典 %s 已存在，跳过创建", req.DictType),
+			Message:      fmt.Sprintf("字典 %s 已存在,跳过创建", req.DictType),
 			DictType:     req.DictType,
 			OptionsCount: 0,
 		}, nil
@@ -282,7 +282,7 @@ func (d *DictionaryOptionsGenerator) createDictionaryWithOptions(ctx context.Con
 
 	return &DictionaryGenerateResponse{
 		Success:      true,
-		Message:      fmt.Sprintf("成功创建字典 %s，包含 %d 个选项", req.DictType, successCount),
+		Message:      fmt.Sprintf("成功创建字典 %s,包含 %d 个选项", req.DictType, successCount),
 		DictType:     req.DictType,
 		OptionsCount: successCount,
 	}, nil

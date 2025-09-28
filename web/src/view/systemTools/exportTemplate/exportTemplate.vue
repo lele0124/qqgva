@@ -1,7 +1,7 @@
 <template>
   <div>
     <WarningBar
-      title="本功能提供同步的表格导出功能，大数据量的异步表格导出功能，可以选择点我定制"
+      title="本功能提供同步的表格导出功能,大数据量的异步表格导出功能,可以选择点我定制"
       href="https://flipped-aurora.feishu.cn/docx/KwjxdnvatozgwIxGV0rcpkZSn4d"
     />
     <div class="gva-search-box">
@@ -18,7 +18,7 @@
             <span>
               创建日期
               <el-tooltip
-                content="搜索范围是开始日期（包含）至结束日期（不包含）"
+                content="搜索范围是开始日期(包含)至结束日期(不包含)"
               >
                 <el-icon><QuestionFilled /></el-icon>
               </el-tooltip>
@@ -201,7 +201,7 @@
         <el-form-item label="业务库" prop="dbName">
           <template #label>
             <el-tooltip
-              content="注：需要提前到db-list自行配置多数据库，如未配置需配置后重启服务方可使用。若无法选择，请到config.yaml中设置disabled:false，选择导入导出的目标库。"
+              content="注:需要提前到db-list自行配置多数据库,如未配置需配置后重启服务方可使用。若无法选择,请到config.yaml中设置disabled:false,选择导入导出的目标库。"
               placement="bottom"
               effect="light"
             >
@@ -256,7 +256,7 @@
               v-model="prompt"
               :clearable="true"
               :rows="5"
-              placeholder="试试描述你要做的导出功能让AI帮你完成，在此之前请选择你需要导出的表所在的业务库，如不做选择，则默认使用gva库"
+              placeholder="试试描述你要做的导出功能让AI帮你完成,在此之前请选择你需要导出的表所在的业务库,如不做选择,则默认使用gva库"
             />
             <el-button
               class="absolute bottom-2 right-2"
@@ -453,7 +453,7 @@
     name: 'ExportTemplate'
   })
 
-  const templatePlaceholder = `模板信息格式：key标识数据库column列名称（在join模式下需要写为 table.column），value标识导出excel列名称，如key为数据库关键字或函数，请按照关键字的处理模式处理，当前以mysql为例，如下：
+  const templatePlaceholder = `模板信息格式:key标识数据库column列名称(在join模式下需要写为 table.column),value标识导出excel列名称,如key为数据库关键字或函数,请按照关键字的处理模式处理,当前以mysql为例,如下:
 {
   "table_column1":"第一列",
   "table_column3":"第三列",
@@ -465,7 +465,7 @@
 JOINS模式下不支持导入
 `
 
-  // 自动化生成的字典（可能为空）以及字段
+  // 自动化生成的字典(可能为空)以及字段
   const formData = ref({
     name: '',
     tableName: '',
@@ -732,10 +732,10 @@ JOINS模式下不支持导入
           formData.value.templateID = aiData.templateID
           return
         }
-        ElMessage.warning('AI自动补全失败，已调整为逻辑填写')
+        ElMessage.warning('AI自动补全失败,已调整为逻辑填写')
       }
 
-      // 把返回值的data.columns做尊换，制作一组JSON数据，columnName做key，columnComment做value
+      // 把返回值的data.columns做尊换,制作一组JSON数据,columnName做key,columnComment做value
       const templateInfo = {}
       res.data.columns.forEach((item) => {
         templateInfo[item.columnName] = item.columnComment || item.columnName
@@ -848,7 +848,7 @@ JOINS模式下不支持导入
     })
   }
 
-  // 行为控制标记（弹窗内部需要增还是改）
+  // 行为控制标记(弹窗内部需要增还是改)
   const type = ref('')
 
   // 复制
@@ -943,7 +943,7 @@ JOINS模式下不支持导入
     } catch (_) {
       ElMessage({
         type: 'error',
-        message: '模板信息格式不正确，请检查'
+        message: '模板信息格式不正确,请检查'
       })
       return
     }

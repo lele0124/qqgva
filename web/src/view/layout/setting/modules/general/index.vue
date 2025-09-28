@@ -142,7 +142,7 @@
             <div class="flex-1">
               <h4 class="text-xl font-semibold text-gray-900 dark:text-white mb-3">Gin-Vue-Admin</h4>
               <p class="text-sm text-gray-600 dark:text-gray-400 mb-5 leading-relaxed">
-                基于 Vue3 + Gin 的全栈开发基础平台，提供完整的后台管理解决方案
+                基于 Vue3 + Gin 的全栈开发基础平台,提供完整的后台管理解决方案
               </p>
               <div class="flex items-center gap-3 text-sm">
                 <a

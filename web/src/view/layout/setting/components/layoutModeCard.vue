@@ -91,7 +91,7 @@ const layoutModes = [
   {
     value: 'normal',
     label: '经典布局',
-    description: '左侧导航，顶部标题栏',
+    description: '左侧导航,顶部标题栏',
     containerClass: '',
     showSidebar: true,
     sidebarClass: 'w-1/4',

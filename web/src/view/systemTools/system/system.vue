@@ -48,7 +48,7 @@
             <el-input-number v-model.number="config.system['iplimit-time']" />
           </el-form-item>
           <el-tooltip
-            content="请修改完成后，注意一并修改前端env环境下的VITE_BASE_PATH"
+            content="请修改完成后,注意一并修改前端env环境下的VITE_BASE_PATH"
             placement="top-start"
           >
             <el-form-item label="全局路由前缀">
@@ -181,7 +181,7 @@
           <el-form-item label="接收者邮箱">
             <el-input
               v-model="config.email.to"
-              placeholder="可多个，以逗号分隔"
+              placeholder="可多个,以逗号分隔"
             />
           </el-form-item>
           <el-form-item label="端口">

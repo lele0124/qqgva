@@ -46,7 +46,7 @@ func (t *{{.Name | title}}) New() mcp.Tool {
               {{- else if eq .Type "boolean"}}
               mcp.DefaultBoolean({{if or (eq .Default "true") (eq .Default "True")}}true{{else}}false{{end}}),
               {{- else if eq .Type "array"}}
-              // 注意：数组默认值需要在后端代码中预处理为正确的格式
+              // 注意:数组默认值需要在后端代码中预处理为正确的格式
               // mcp.DefaultArray({{.Default}}),
               {{- end}}
             {{- end}}

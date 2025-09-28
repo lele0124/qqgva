@@ -66,7 +66,7 @@ export const useUserStore = defineStore('user', () => {
     try {
       loadingInstance.value = ElLoading.service({
         fullscreen: true,
-        text: '登录中，请稍候...'
+        text: '登录中,请稍候...'
       })
 
       const res = await login(loginInfo)
@@ -74,7 +74,7 @@ export const useUserStore = defineStore('user', () => {
       if (res.code !== 0) {
         return false
       }
-      // 登陆成功，设置用户信息和权限相关信息
+      // 登陆成功,设置用户信息和权限相关信息
       setUserInfo(res.data.user)
       setToken(res.data.token)
 
@@ -94,7 +94,7 @@ export const useUserStore = defineStore('user', () => {
       }
 
       if (!router.hasRoute(userInfo.value.authority.defaultRouter)) {
-        ElMessage.error('不存在可以登陆的首页，请联系管理员进行配置')
+        ElMessage.error('不存在可以登陆的首页,请联系管理员进行配置')
       } else {
         await router.replace({ name: userInfo.value.authority.defaultRouter })
       }
@@ -102,7 +102,7 @@ export const useUserStore = defineStore('user', () => {
       const isWindows = /windows/i.test(navigator.userAgent)
       window.localStorage.setItem('osType', isWindows ? 'WIN' : 'MAC')
 
-      // 全部操作均结束，关闭loading并返回
+      // 全部操作均结束,关闭loading并返回
       return true
     } catch (error) {
       console.error('LoginIn error:', error)
@@ -122,7 +122,7 @@ export const useUserStore = defineStore('user', () => {
 
     await ClearStorage()
 
-    // 把路由定向到登录页，无需等待直接reload
+    // 把路由定向到登录页,无需等待直接reload
     router.push({ name: 'Login', replace: true })
     window.location.reload()
   }

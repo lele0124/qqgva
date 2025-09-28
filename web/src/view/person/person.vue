@@ -106,7 +106,7 @@
               class="flex items-center gap-1 lg:gap-3 text-gray-600 dark:text-gray-300"
             >
               <el-icon class="text-blue-500"><phone /></el-icon>
-              <span class="font-medium">手机号码：</span>
+              <span class="font-medium">手机号码:</span>
               <span>{{ userStore.userInfo.phone || '未设置' }}</span>
               <el-button
                 link
@@ -121,7 +121,7 @@
               class="flex items-center gap-1 lg:gap-3 text-gray-600 dark:text-gray-300"
             >
               <el-icon class="text-green-500"><message /></el-icon>
-              <span class="font-medium flex-shrink-0">邮箱地址：</span>
+              <span class="font-medium flex-shrink-0">邮箱地址:</span>
               <span>{{ userStore.userInfo.email || '未设置' }}</span>
               <el-button
                 link
@@ -136,7 +136,7 @@
               class="flex items-center gap-1 lg:gap-3 text-gray-600 dark:text-gray-300"
             >
               <el-icon class="text-purple-500"><lock /></el-icon>
-              <span class="font-medium">账号密码：</span>
+              <span class="font-medium">账号密码:</span>
               <span>已设置</span>
               <el-button
                 link
@@ -419,7 +419,7 @@
           newPassword: pwdModify.value.newPassword
         }).then((res) => {
           if (res.code === 0) {
-            ElMessage.success('修改密码成功！')
+            ElMessage.success('修改密码成功!')
           }
           showPassword.value = false
         })
@@ -545,25 +545,25 @@
     {
       timestamp: '2024-01-10',
       title: '完成项目里程碑',
-      content: '成功完成第三季度主要项目开发任务，获得团队一致好评',
+      content: '成功完成第三季度主要项目开发任务,获得团队一致好评',
       type: 'primary'
     },
     {
       timestamp: '2024-01-11',
       title: '代码审核完成',
-      content: '完成核心模块代码审核，提出多项改进建议并获采纳',
+      content: '完成核心模块代码审核,提出多项改进建议并获采纳',
       type: 'success'
     },
     {
       timestamp: '2024-01-12',
       title: '技术分享会',
-      content: '主持团队技术分享会，分享前端性能优化经验',
+      content: '主持团队技术分享会,分享前端性能优化经验',
       type: 'warning'
     },
     {
       timestamp: '2024-01-13',
       title: '新功能上线',
-      content: '成功上线用户反馈的新特性，显著提升用户体验',
+      content: '成功上线用户反馈的新特性,显著提升用户体验',
       type: 'danger'
     }
   ]

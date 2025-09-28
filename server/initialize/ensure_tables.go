@@ -2,6 +2,7 @@ package initialize
 
 import (
 	"context"
+
 	adapter "github.com/casbin/gorm-adapter/v3"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/example"
 	sysModel "github.com/flipped-aurora/gin-vue-admin/server/model/system"
@@ -66,8 +67,8 @@ func (e *ensureTables) MigrateTable(ctx context.Context) (context.Context, error
 	}
 	for _, t := range tables {
 		_ = db.AutoMigrate(&t)
-		// 视图 authority_menu 会被当成表来创建，引发冲突错误（更新版本的gorm似乎不会）
-		// 由于 AutoMigrate() 基本无需考虑错误，因此显式忽略
+		// 视图 authority_menu 会被当成表来创建,引发冲突错误(更新版本的gorm似乎不会)
+		// 由于 AutoMigrate() 基本无需考虑错误,因此显式忽略
 	}
 	return ctx, nil
 }

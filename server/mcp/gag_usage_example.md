@@ -2,14 +2,14 @@
 
 ## 新的工作流程
 
-现在GAG工具支持三步工作流程：
+现在GAG工具支持三步工作流程:
 1. `analyze` - 分析现有模块信息
 2. `confirm` - 请求用户确认创建计划
-3. `execute` - 执行创建操作（需要用户确认）
+3. `execute` - 执行创建操作(需要用户确认)
 
 ## 使用示例
 
-### 第一步：分析
+### 第一步:分析
 ```json
 {
   "action": "analyze",
@@ -17,7 +17,7 @@
 }
 ```
 
-### 第二步：确认（支持批量创建多个模块）
+### 第二步:确认(支持批量创建多个模块)
 ```json
 {
   "action": "confirm",
@@ -168,7 +168,7 @@
 }
 ```
 
-### 第三步：执行（需要确认参数）
+### 第三步:执行(需要确认参数)
 ```json
 {
   "action": "execute",
@@ -184,22 +184,22 @@
 
 - `packageConfirm`: 当`needCreatedPackage`为true时必需
   - "yes": 确认创建包
-  - "no": 取消创建包（停止后续处理）
+  - "no": 取消创建包(停止后续处理)
 
 - `modulesConfirm`: 当`needCreatedModules`为true时必需
   - "yes": 确认创建模块
-  - "no": 取消创建模块（停止后续处理）
+  - "no": 取消创建模块(停止后续处理)
 
 ## 取消操作的行为
 
-1. 如果用户在`packageConfirm`中选择"no"，系统将停止所有后续处理
-2. 如果用户在`modulesConfirm`中选择"no"，系统将停止模块创建
-3. 任何取消操作都会返回相应的取消消息，不会执行任何创建操作
+1. 如果用户在`packageConfirm`中选择"no",系统将停止所有后续处理
+2. 如果用户在`modulesConfirm`中选择"no",系统将停止模块创建
+3. 任何取消操作都会返回相应的取消消息,不会执行任何创建操作
 
 ## 注意事项
 
 1. 必须先调用`confirm`来获取确认信息
 2. 在`execute`时必须提供相应的确认参数
 3. 确认参数的值必须是"yes"或"no"
-4. 如果不需要创建包或模块，则不需要提供对应的确认参数
-5. 字段类型支持：string（字符串）,richtext（富文本）,int（整型）,bool（布尔值）,float64（浮点型）,time.Time（时间）,enum（枚举）,picture（单图片，字符串）,pictures（多图片，json字符串）,video（视频，字符串）,file（文件，json字符串）,json（JSON）,array（数组）
+4. 如果不需要创建包或模块,则不需要提供对应的确认参数
+5. 字段类型支持:string(字符串),richtext(富文本),int(整型),bool(布尔值),float64(浮点型),time.Time(时间),enum(枚举),picture(单图片,字符串),pictures(多图片,json字符串),video(视频,字符串),file(文件,json字符串),json(JSON),array(数组)

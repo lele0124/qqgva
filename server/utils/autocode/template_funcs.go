@@ -2,13 +2,14 @@ package autocode
 
 import (
 	"fmt"
-	systemReq "github.com/flipped-aurora/gin-vue-admin/server/model/system/request"
 	"slices"
 	"strings"
 	"text/template"
+
+	systemReq "github.com/flipped-aurora/gin-vue-admin/server/model/system/request"
 )
 
-// GetTemplateFuncMap 返回模板函数映射，用于在模板中使用
+// GetTemplateFuncMap 返回模板函数映射,用于在模板中使用
 func GetTemplateFuncMap() template.FuncMap {
 	return template.FuncMap{
 		"title":                    strings.Title,
@@ -46,7 +47,7 @@ func GenerateField(field systemReq.AutoCodeField) string {
 
 	gormTag += "column:" + field.ColumnName + ";"
 
-	// 对于int类型，根据DataTypeLong决定具体的Go类型，不使用size标签
+	// 对于int类型,根据DataTypeLong决定具体的Go类型,不使用size标签
 	if field.DataTypeLong != "" && field.FieldType != "enum" && field.FieldType != "int" {
 		gormTag += fmt.Sprintf("size:%s;", field.DataTypeLong)
 	}
@@ -86,7 +87,7 @@ func GenerateField(field systemReq.AutoCodeField) string {
 		tagContent := fmt.Sprintf(`json:"%s" form:"%s" gorm:"%s"`,
 			field.FieldJson, field.FieldJson, gormTag)
 
-		// 对于int类型，根据DataTypeLong决定具体的Go类型
+		// 对于int类型,根据DataTypeLong决定具体的Go类型
 		var fieldType string
 		if field.FieldType == "int" {
 			switch field.DataTypeLong {
@@ -150,7 +151,7 @@ func GenerateSearchConditions(fields []*systemReq.AutoCodeField) string {
 			} else {
 				condition = fmt.Sprintf(`
     if info.%s != "" {
-        // TODO 数据类型为复杂类型，请根据业务需求自行实现复杂类型的查询业务
+        // TODO 数据类型为复杂类型,请根据业务需求自行实现复杂类型的查询业务
     }`, field.FieldName)
 			}
 
@@ -260,7 +261,7 @@ func GenerateSearchFormItem(field systemReq.AutoCodeField) string {
 `
 			result += fmt.Sprintf(`      %s
 `, field.FieldDesc)
-			result += `      <el-tooltip content="搜索范围是开始日期（包含）至结束日期（不包含）">
+			result += `      <el-tooltip content="搜索范围是开始日期(包含)至结束日期(不包含)">
 `
 			result += `        <el-icon><QuestionFilled /></el-icon>
 `
@@ -507,7 +508,7 @@ func GenerateFormItem(field systemReq.AutoCodeField) string {
 `, field.FieldJson)
 
 		case "json":
-			result += fmt.Sprintf(`    // 此字段为json结构，可以前端自行控制展示和数据绑定模式 需绑定json的key为 formData.%s 后端会按照json的类型进行存取
+			result += fmt.Sprintf(`    // 此字段为json结构,可以前端自行控制展示和数据绑定模式 需绑定json的key为 formData.%s 后端会按照json的类型进行存取
 `, field.FieldJson)
 			result += fmt.Sprintf(`    {{ formData.%s }}
 `, field.FieldJson)
@@ -690,7 +691,7 @@ func GenerateSearchField(field systemReq.AutoCodeField) string {
 	var result string
 
 	if field.FieldSearchType == "" {
-		return "" // 如果没有搜索类型，返回空字符串
+		return "" // 如果没有搜索类型,返回空字符串
 	}
 
 	if field.FieldSearchType == "BETWEEN" || field.FieldSearchType == "NOT BETWEEN" {

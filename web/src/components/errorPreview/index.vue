@@ -71,28 +71,28 @@ const presetErrors = {
     type: '服务器发生内部错误',
     icon: 'server',
     color: 'text-red-500',
-    tips: '此类错误内容常见于后台panic，请先查看后台日志，如果影响您正常使用可强制登出清理缓存'
+    tips: '此类错误内容常见于后台panic,请先查看后台日志,如果影响您正常使用可强制登出清理缓存'
   },
   404: {
     title: '资源未找到',
     type: 'Not Found',
     icon: 'warn',
     color: 'text-orange-500',
-    tips: '此类错误多为接口未注册（或未重启）或者请求路径（方法）与api路径（方法）不符--如果为自动化代码请检查是否存在空格'
+    tips: '此类错误多为接口未注册(或未重启)或者请求路径(方法)与api路径(方法)不符--如果为自动化代码请检查是否存在空格'
   },
   401: {
     title: '身份认证失败',
     type: '身份令牌无效',
     icon: 'lock',
     color: 'text-purple-500',
-    tips: '您的身份认证已过期或无效，请重新登录。'
+    tips: '您的身份认证已过期或无效,请重新登录。'
   },
   'network': {
     title: '网络错误',
     type: 'Network Error',
     icon: 'fa-wifi-slash',
     color: 'text-gray-500',
-    tips: '无法连接到服务器，请检查您的网络连接。'
+    tips: '无法连接到服务器,请检查您的网络连接。'
   }
 };
 

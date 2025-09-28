@@ -63,7 +63,7 @@
       pass = false
     }
     if (!isLt500K && isImage) {
-      ElMessage.error('未压缩的上传图片大小不能超过 500KB，请使用压缩上传')
+      ElMessage.error('未压缩的上传图片大小不能超过 500KB,请使用压缩上传')
       fullscreenLoading.value = false
       pass = false
     }

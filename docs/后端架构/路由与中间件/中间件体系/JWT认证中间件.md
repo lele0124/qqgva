@@ -27,12 +27,12 @@
 11. [性能优化建议](#性能优化建议)
 
 ## 简介
-本项目采用JWT（JSON Web Token）作为主要的用户身份认证机制，通过中间件实现无状态的身份校验。整个流程包括Token生成、解析、验证、刷新及黑名单管理，并与Casbin权限控制系统深度集成，确保安全性和灵活性。
+本项目采用JWT(JSON Web Token)作为主要的用户身份认证机制,通过中间件实现无状态的身份校验。整个流程包括Token生成、解析、验证、刷新及黑名单管理,并与Casbin权限控制系统深度集成,确保安全性和灵活性。
 
 ## 核心组件分析
 
 ### JWT中间件结构
-JWT中间件位于`server/middleware/jwt.go`，其核心函数为`JWTAuth()`，返回一个Gin框架的处理器函数，用于在HTTP请求链中执行身份验证逻辑。
+JWT中间件位于`server/middleware/jwt.go`,其核心函数为`JWTAuth()`,返回一个Gin框架的处理器函数,用于在HTTP请求链中执行身份验证逻辑。
 
 ```mermaid
 flowchart TD
@@ -66,13 +66,13 @@ Next --> End([响应返回])
 ## JWT解析与验证流程
 
 ### 解析流程详解
-当客户端发起请求时，中间件首先尝试从请求头`x-token`或Cookie中获取JWT字符串。若两者均不存在，则判定为未登录状态。
+当客户端发起请求时,中间件首先尝试从请求头`x-token`或Cookie中获取JWT字符串。若两者均不存在,则判定为未登录状态。
 
-#### 关键步骤：
-1. **获取Token**：调用`utils.GetToken(c)`优先读取Header，若失败则尝试从Cookie读取。
-2. **黑名单校验**：使用`isBlacklist(token)`检查该Token是否已被加入全局缓存黑名单。
-3. **签名验证**：通过`j.ParseToken(token)`进行JWT标准验证，包含签名有效性、过期时间等。
-4. **错误分类处理**：区分Token过期、签名无效、格式错误等异常情况并返回相应提示。
+#### 关键步骤:
+1. **获取Token**:调用`utils.GetToken(c)`优先读取Header,若失败则尝试从Cookie读取。
+2. **黑名单校验**:使用`isBlacklist(token)`检查该Token是否已被加入全局缓存黑名单。
+3. **签名验证**:通过`j.ParseToken(token)`进行JWT标准验证,包含签名有效性、过期时间等。
+4. **错误分类处理**:区分Token过期、签名无效、格式错误等异常情况并返回相应提示。
 
 ```mermaid
 sequenceDiagram
@@ -116,23 +116,23 @@ Middleware->>Client : 继续执行后续Handler
 ## Token过期处理与自动刷新机制
 
 ### 缓冲时间设计
-系统引入“缓冲时间”（BufferTime）概念，在Token即将过期前自动签发新Token，避免用户突然掉线。
+系统引入“缓冲时间”(BufferTime)概念,在Token即将过期前自动签发新Token,避免用户突然掉线。
 
-#### 刷新条件判断：
+#### 刷新条件判断:
 ```go
 if claims.ExpiresAt.Unix()-time.Now().Unix() < claims.BufferTime {
     // 触发刷新逻辑
 }
 ```
 
-#### 自动刷新流程：
-1. 计算新的过期时间：`time.Now().Add(dr)`
+#### 自动刷新流程:
+1. 计算新的过期时间:`time.Now().Add(dr)`
 2. 使用旧Token和现有Claims生成新Token
-3. 将新Token写入响应Header：`new-token` 和 `new-expires-at`
+3. 将新Token写入响应Header:`new-token` 和 `new-expires-at`
 4. 更新客户端Cookie中的Token
-5. 若启用多点登录，则同步更新Redis中用户的最新活跃Token
+5. 若启用多点登录,则同步更新Redis中用户的最新活跃Token
 
-此机制实现了无缝续签体验，同时保持安全性。
+此机制实现了无缝续签体验,同时保持安全性。
 
 **Section sources**
 - [jwt.go](file://server/middleware/jwt.go#L60-L75)
@@ -141,7 +141,7 @@ if claims.ExpiresAt.Unix()-time.Now().Unix() < claims.BufferTime {
 ## 黑名单拦截机制
 
 ### 黑名单数据模型
-定义于`server/model/system/sys_jwt_blacklist.go`，结构如下：
+定义于`server/model/system/sys_jwt_blacklist.go`,结构如下:
 
 ```go
 type JwtBlacklist struct {
@@ -151,7 +151,7 @@ type JwtBlacklist struct {
 ```
 
 ### 拦截实现方式
-当前版本使用内存缓存`global.BlackCache`进行快速查询，而非直接查询数据库，提升性能。
+当前版本使用内存缓存`global.BlackCache`进行快速查询,而非直接查询数据库,提升性能。
 
 ```go
 func isBlacklist(jwt string) bool {
@@ -160,8 +160,8 @@ func isBlacklist(jwt string) bool {
 }
 ```
 
-#### 主动作废流程：
-用户登出或管理员强制下线时，调用`JsonInBlacklist`接口将当前Token加入黑名单：
+#### 主动作废流程:
+用户登出或管理员强制下线时,调用`JsonInBlacklist`接口将当前Token加入黑名单:
 
 ```go
 func (j *JwtApi) JsonInBlacklist(c *gin.Context) {
@@ -182,7 +182,7 @@ func (j *JwtApi) JsonInBlacklist(c *gin.Context) {
 ## 用户身份信息提取
 
 ### Claims结构定义
-位于`server/model/system/request/jwt.go`，包含基础信息与注册声明：
+位于`server/model/system/request/jwt.go`,包含基础信息与注册声明:
 
 ```go
 type CustomClaims struct {
@@ -202,13 +202,13 @@ type BaseClaims struct {
 ```
 
 ### 上下文传递
-验证成功后，中间件将解析出的`claims`对象存入Gin上下文：
+验证成功后,中间件将解析出的`claims`对象存入Gin上下文:
 
 ```go
 c.Set("claims", claims)
 ```
 
-后续业务逻辑可通过`c.Get("claims")`获取用户身份信息，如权限ID、用户名等，用于个性化服务或权限判断。
+后续业务逻辑可通过`c.Get("claims")`获取用户身份信息,如权限ID、用户名等,用于个性化服务或权限判断。
 
 **Section sources**
 - [jwt.go](file://server/model/system/request/jwt.go#L10-L22)
@@ -224,7 +224,7 @@ x-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.xxxxx
 ```
 
 ### 响应中携带新Token
-当触发自动刷新时，响应头会包含：
+当触发自动刷新时,响应头会包含:
 ```http
 HTTP/1.1 200 OK
 new-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.yyyyy

@@ -2,13 +2,14 @@ package system
 
 import (
 	"context"
+	"os"
+	"path/filepath"
+	"text/template"
+
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/system/request"
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	"github.com/flipped-aurora/gin-vue-admin/server/utils/autocode"
-	"os"
-	"path/filepath"
-	"text/template"
 )
 
 func (s *autoCodeTemplate) CreateMcp(ctx context.Context, info request.AutoMcpTool) (toolFilePath string, err error) {
@@ -34,7 +35,7 @@ func (s *autoCodeTemplate) CreateMcp(ctx context.Context, info request.AutoMcpTo
 	}
 	defer f.Close()
 
-	// 执行模板，将内容写入文件
+	// 执行模板,将内容写入文件
 	err = files.Execute(f, info)
 	if err != nil {
 		return

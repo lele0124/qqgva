@@ -2,10 +2,11 @@ package system
 
 import (
 	"fmt"
-	"github.com/flipped-aurora/gin-vue-admin/server/model/common"
-	"github.com/goccy/go-json"
 	"io"
 	"strings"
+
+	"github.com/flipped-aurora/gin-vue-admin/server/model/common"
+	"github.com/goccy/go-json"
 
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
@@ -111,7 +112,7 @@ func (autoApi *AutoCodeApi) LLMAuto(c *gin.Context) {
 	err := c.ShouldBindJSON(&llm)
 	if err != nil {
 		// 将 JSON 解析错误转换为中文提示
-		response.FailWithMessage("请求参数格式不正确，请检查数据格式", c)
+		response.FailWithMessage("请求参数格式不正确,请检查数据格式", c)
 		return
 	}
 	if global.GVA_CONFIG.AutoCode.AiPath == "" {

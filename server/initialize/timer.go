@@ -2,6 +2,7 @@ package initialize
 
 import (
 	"fmt"
+
 	"github.com/flipped-aurora/gin-vue-admin/server/task"
 
 	"github.com/robfig/cron/v3"
@@ -19,7 +20,7 @@ func Timer() {
 			if err != nil {
 				fmt.Println("timer error:", err)
 			}
-		}, "定时清理数据库【日志，黑名单】内容", option...)
+		}, "定时清理数据库【日志,黑名单】内容", option...)
 		if err != nil {
 			fmt.Println("add timer error:", err)
 		}

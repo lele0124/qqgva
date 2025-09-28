@@ -2,6 +2,7 @@ package system
 
 import (
 	"fmt"
+
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/system/request"
@@ -30,10 +31,10 @@ func (a *AutoCodePluginApi) Install(c *gin.Context) {
 	webStr := "web插件安装成功"
 	serverStr := "server插件安装成功"
 	if web == -1 {
-		webStr = "web端插件未成功安装，请按照文档自行解压安装，如果为纯后端插件请忽略此条提示"
+		webStr = "web端插件未成功安装,请按照文档自行解压安装,如果为纯后端插件请忽略此条提示"
 	}
 	if server == -1 {
-		serverStr = "server端插件未成功安装，请按照文档自行解压安装，如果为纯前端插件请忽略此条提示"
+		serverStr = "server端插件未成功安装,请按照文档自行解压安装,如果为纯前端插件请忽略此条提示"
 	}
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
@@ -83,7 +84,7 @@ func (a *AutoCodePluginApi) InitMenu(c *gin.Context) {
 	err := c.ShouldBindJSON(&menuInfo)
 	if err != nil {
 		// 将 JSON 解析错误转换为中文提示
-		response.FailWithMessage("请求参数格式不正确，请检查数据格式", c)
+		response.FailWithMessage("请求参数格式不正确,请检查数据格式", c)
 		return
 	}
 	err = autoCodePluginService.InitMenu(menuInfo)
@@ -108,7 +109,7 @@ func (a *AutoCodePluginApi) InitAPI(c *gin.Context) {
 	err := c.ShouldBindJSON(&apiInfo)
 	if err != nil {
 		// 将 JSON 解析错误转换为中文提示
-		response.FailWithMessage("请求参数格式不正确，请检查数据格式", c)
+		response.FailWithMessage("请求参数格式不正确,请检查数据格式", c)
 		return
 	}
 	err = autoCodePluginService.InitAPI(apiInfo)

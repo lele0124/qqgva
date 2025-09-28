@@ -92,7 +92,7 @@ func (apiService *ApiService) SyncApi() (newApis, deleteApis, ignoreApis []syste
 		}
 	}
 
-	//对比数据库中的api和内存中的api，如果数据库中的api不存在于内存中，则把api放入删除数组，如果内存中的api不存在于数据库中，则把api放入新增数组
+	//对比数据库中的api和内存中的api,如果数据库中的api不存在于内存中,则把api放入删除数组,如果内存中的api不存在于数据库中,则把api放入新增数组
 	for i := range cacheApis {
 		var flag bool
 		// 如果存在于内存不存在于api数组中

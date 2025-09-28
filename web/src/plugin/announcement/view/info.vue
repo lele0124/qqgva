@@ -14,7 +14,7 @@
             <span>
               创建日期
               <el-tooltip
-                content="搜索范围是开始日期（包含）至结束日期（不包含）"
+                content="搜索范围是开始日期(包含)至结束日期(不包含)"
               >
                 <el-icon><QuestionFilled /></el-icon>
               </el-tooltip>
@@ -250,7 +250,7 @@
   // 控制更多查询条件显示/隐藏状态
   const showAllQuery = ref(false)
 
-  // 自动化生成的字典（可能为空）以及字段
+  // 自动化生成的字典(可能为空)以及字段
   const formData = ref({
     title: '',
     content: '',
@@ -414,7 +414,7 @@
     })
   }
 
-  // 行为控制标记（弹窗内部需要增还是改）
+  // 行为控制标记(弹窗内部需要增还是改)
   const type = ref('')
 
   // 更新行

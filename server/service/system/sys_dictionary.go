@@ -20,7 +20,7 @@ var DictionaryServiceApp = new(DictionaryService)
 
 func (dictionaryService *DictionaryService) CreateSysDictionary(sysDictionary system.SysDictionary) (err error) {
 	if (!errors.Is(global.GVA_DB.First(&system.SysDictionary{}, "type = ?", sysDictionary.Type).Error, gorm.ErrRecordNotFound)) {
-		return errors.New("存在相同的type，不允许创建")
+		return errors.New("存在相同的type,不允许创建")
 	}
 	err = global.GVA_DB.Create(&sysDictionary).Error
 	return err
@@ -72,7 +72,7 @@ func (dictionaryService *DictionaryService) UpdateSysDictionary(sysDictionary *s
 	}
 	if dict.Type != sysDictionary.Type {
 		if !errors.Is(global.GVA_DB.First(&system.SysDictionary{}, "type = ?", sysDictionary.Type).Error, gorm.ErrRecordNotFound) {
-			return errors.New("存在相同的type，不允许创建")
+			return errors.New("存在相同的type,不允许创建")
 		}
 	}
 	err = global.GVA_DB.Model(&dict).Updates(sysDictionaryMap).Error

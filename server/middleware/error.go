@@ -13,7 +13,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// GinRecovery recover掉项目可能出现的panic，并使用zap记录相关日志
+// GinRecovery recover掉项目可能出现的panic,并使用zap记录相关日志
 func GinRecovery(stack bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {

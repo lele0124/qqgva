@@ -58,7 +58,7 @@ func OperationRecord() gin.HandlerFunc {
 		if claims != nil && claims.BaseClaims.ID != 0 {
 			userId = int(claims.BaseClaims.ID)
 			userName = claims.BaseClaims.Name
-			// 如果Name为空，尝试使用Username
+			// 如果Name为空,尝试使用Username
 			if userName == "" {
 				userName = claims.BaseClaims.Username
 			}
@@ -77,7 +77,7 @@ func OperationRecord() gin.HandlerFunc {
 			Body:   "",
 			UserID: userId,
 		}
-		// 如果有用户名，设置到UserName字段
+		// 如果有用户名,设置到UserName字段
 		if userName != "" {
 			record.UserName = userName
 		}
@@ -122,10 +122,10 @@ func OperationRecord() gin.HandlerFunc {
 				record.Body = "超出记录长度"
 			}
 		}
-	
-	if err := global.GVA_DB.Create(&record).Error; err != nil {
-		global.GVA_LOG.Error("create operation record error:", zap.Error(err))
-	}
+
+		if err := global.GVA_DB.Create(&record).Error; err != nil {
+			global.GVA_LOG.Error("create operation record error:", zap.Error(err))
+		}
 	}
 }
 

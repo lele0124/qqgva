@@ -193,7 +193,7 @@ const openTestDialog = (tool) => {
   if (tool.inputSchema && tool.inputSchema.properties) {
     Object.keys(tool.inputSchema.properties).forEach(propName => {
       const propDetails = tool.inputSchema.properties[propName]
-      // 设置默认值，优先使用 schema 中的 default，否则根据类型给初始值
+      // 设置默认值,优先使用 schema 中的 default,否则根据类型给初始值
       if (propDetails.default !== undefined) {
         testParamsForm[propName] = propDetails.default
       } else if (propDetails.type === 'boolean') {
@@ -201,7 +201,7 @@ const openTestDialog = (tool) => {
       } else if (propDetails.type === 'number') {
         testParamsForm[propName] = null // 或者 0
       } else if (propDetails.type === 'object' || propDetails.type === 'array') {
-        testParamsForm[propName] = '' // 对象和数组类型，默认为空字符串，提示用户输入JSON
+        testParamsForm[propName] = '' // 对象和数组类型,默认为空字符串,提示用户输入JSON
       } else {
         testParamsForm[propName] = ''
       }

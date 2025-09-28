@@ -299,7 +299,7 @@ const editFileNameFunc = async (row) => {
  * 导入URL
  */
 const importUrlFunc = () => {
-  ElMessageBox.prompt('格式：文件名|链接或者仅链接。', '导入', {
+  ElMessageBox.prompt('格式:文件名|链接或者仅链接。', '导入', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     inputType: 'textarea',

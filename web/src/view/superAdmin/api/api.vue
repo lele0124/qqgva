@@ -139,7 +139,7 @@
       :show-close="false"
     >
       <warning-bar
-        title="同步API，不输入路由分组将不会被自动同步，如果api不需要参与鉴权，可以按忽略按钮进行忽略。"
+        title="同步API,不输入路由分组将不会被自动同步,如果api不需要参与鉴权,可以按忽略按钮进行忽略。"
       />
       <template #header>
         <div class="flex justify-between items-center">
@@ -162,7 +162,7 @@
       <h4>
         新增路由
         <span class="text-xs text-gray-500 mx-2 font-normal"
-          >存在于当前路由中，但是不存在于api表</span
+          >存在于当前路由中,但是不存在于api表</span
         >
         <el-button type="primary" size="small" @click="apiCompletion">
           <el-icon size="18">
@@ -256,7 +256,7 @@
       <h4>
         已删除路由
         <span class="text-xs text-gray-500 ml-2 font-normal"
-          >已经不存在于当前项目的路由中，确定同步后会自动从apis表删除</span
+          >已经不存在于当前项目的路由中,确定同步后会自动从apis表删除</span
         >
       </h4>
       <el-table :data="syncApiData.deleteApis">
@@ -295,7 +295,7 @@
       <h4>
         忽略路由
         <span class="text-xs text-gray-500 ml-2 font-normal"
-          >忽略路由不参与api同步，常见为不需要进行鉴权行为的路由</span
+          >忽略路由不参与api同步,常见为不需要进行鉴权行为的路由</span
         >
       </h4>
       <el-table :data="syncApiData.ignoreApis">
@@ -360,7 +360,7 @@
         </div>
       </template>
 
-      <warning-bar title="新增API，需要在角色管理内配置权限才可使用" />
+      <warning-bar title="新增API,需要在角色管理内配置权限才可使用" />
       <el-form ref="apiForm" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="路径" prop="path">
           <el-input v-model="form.path" autocomplete="off" />
@@ -536,7 +536,7 @@
     if (res.code === 0) {
       ElMessage({
         type: 'success',
-        message: '添加成功，请到角色管理页面分配权限',
+        message: '添加成功,请到角色管理页面分配权限',
         showClose: true
       })
       syncApiData.value.newApis = syncApiData.value.newApis.filter(

@@ -112,7 +112,7 @@ func Gt(mark string) string {
 //@author: [piexlmax](https://github.com/piexlmax)
 //@function: Verify
 //@description: 校验方法
-//@param: st interface{}, roleMap Rules(入参实例，规则map)
+//@param: st interface{}, roleMap Rules(入参实例,规则map)
 //@return: err error
 
 func Verify(st interface{}, roleMap Rules) (err error) {

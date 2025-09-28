@@ -3,6 +3,12 @@ package system
 import (
 	"context"
 	"fmt"
+	"go/token"
+	"os"
+	"path/filepath"
+	"strings"
+	"text/template"
+
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	common "github.com/flipped-aurora/gin-vue-admin/server/model/common/request"
 	model "github.com/flipped-aurora/gin-vue-admin/server/model/system"
@@ -11,12 +17,7 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/utils/ast"
 	"github.com/flipped-aurora/gin-vue-admin/server/utils/autocode"
 	"github.com/pkg/errors"
-	"go/token"
 	"gorm.io/gorm"
-	"os"
-	"path/filepath"
-	"strings"
-	"text/template"
 )
 
 var AutoCodePackage = new(autoCodePackage)
@@ -186,7 +187,7 @@ func (s *autoCodePackage) All(ctx context.Context) (entities []model.SysAutoCode
 				PackageName: pluginDir[i].Name(),
 				Template:    "plugin",
 				Label:       pluginDir[i].Name() + "插件",
-				Desc:        "系统自动读取" + pluginDir[i].Name() + "插件，使用前请确认是否为v2版本插件",
+				Desc:        "系统自动读取" + pluginDir[i].Name() + "插件,使用前请确认是否为v2版本插件",
 				Module:      global.GVA_CONFIG.AutoCode.Module,
 			}
 			plugin = append(plugin, pluginPackage)

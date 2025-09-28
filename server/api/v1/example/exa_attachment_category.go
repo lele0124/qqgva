@@ -46,7 +46,7 @@ func (a *AttachmentCategoryApi) AddCategory(c *gin.Context) {
 
 	if err := attachmentCategoryService.AddCategory(&req); err != nil {
 		global.GVA_LOG.Error("创建/更新失败!", zap.Error(err))
-		response.FailWithMessage("创建/更新失败："+err.Error(), c)
+		response.FailWithMessage("创建/更新失败:"+err.Error(), c)
 		return
 	}
 	response.OkWithMessage("创建/更新成功", c)

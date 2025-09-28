@@ -70,18 +70,18 @@
         :rules="rules"
         label-width="110px"
       >
-        <el-form-item label="字典名（中）" prop="name">
+        <el-form-item label="字典名(中)" prop="name">
           <el-input
             v-model="formData.name"
-            placeholder="请输入字典名（中）"
+            placeholder="请输入字典名(中)"
             clearable
             :style="{ width: '100%' }"
           />
         </el-form-item>
-        <el-form-item label="字典名（英）" prop="type">
+        <el-form-item label="字典名(英)" prop="type">
           <el-input
             v-model="formData.type"
-            placeholder="请输入字典名（英）"
+            placeholder="请输入字典名(英)"
             clearable
             :style="{ width: '100%' }"
           />
@@ -140,14 +140,14 @@
     name: [
       {
         required: true,
-        message: '请输入字典名（中）',
+        message: '请输入字典名(中)',
         trigger: 'blur'
       }
     ],
     type: [
       {
         required: true,
-        message: '请输入字典名（英）',
+        message: '请输入字典名(英)',
         trigger: 'blur'
       }
     ],

@@ -32,7 +32,7 @@ const formatRouter = (routes, routeMap, parent) => {
 const KeepAliveFilter = (routes) => {
   routes &&
     routes.forEach((item) => {
-      // 子菜单中有 keep-alive 的，父菜单也必须 keep-alive，否则无效。这里将子菜单中有 keep-alive 的父菜单也加入。
+      // 子菜单中有 keep-alive 的,父菜单也必须 keep-alive,否则无效。这里将子菜单中有 keep-alive 的父菜单也加入。
       if (
         (item.children && item.children.some((ch) => ch.meta.keepAlive)) ||
         item.meta.keepAlive
@@ -58,7 +58,7 @@ export const useRouterStore = defineStore('router', () => {
     
     history.forEach((item) => {
       // 2. 为所有history中的路由强制启用keep-alive
-      // 通过routeMap获取路由信息，然后通过pathInfo获取组件名
+      // 通过routeMap获取路由信息,然后通过pathInfo获取组件名
       const routeInfo = routeMap[item.name]
       if (routeInfo && routeInfo.meta && routeInfo.meta.path) {
         const componentName = pathInfo[routeInfo.meta.path]
@@ -67,7 +67,7 @@ export const useRouterStore = defineStore('router', () => {
         }
       }
       
-      // 3. 如果子路由在tabs中打开，父路由也需要keepAlive
+      // 3. 如果子路由在tabs中打开,父路由也需要keepAlive
       if (nameMap[item.name]) {
         keepArrTemp.push(nameMap[item.name])
       }
@@ -117,7 +117,7 @@ export const useRouterStore = defineStore('router', () => {
 
   watchEffect(() => {
     let topActive = sessionStorage.getItem('topActive')
-    // 初始化菜单内容，防止重复添加
+    // 初始化菜单内容,防止重复添加
     topMenu.value = [];
     asyncRouters.value[0]?.children.forEach((item) => {
       if (item.hidden) return

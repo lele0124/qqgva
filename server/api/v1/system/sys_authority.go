@@ -47,8 +47,8 @@ func (a *AuthorityApi) CreateAuthority(c *gin.Context) {
 	}
 	err = casbinService.FreshCasbin()
 	if err != nil {
-		global.GVA_LOG.Error("创建成功，权限刷新失败。", zap.Error(err))
-		response.FailWithMessage("创建成功，权限刷新失败。"+err.Error(), c)
+		global.GVA_LOG.Error("创建成功,权限刷新失败。", zap.Error(err))
+		response.FailWithMessage("创建成功,权限刷新失败。"+err.Error(), c)
 		return
 	}
 	response.OkWithDetailed(systemRes.SysAuthorityResponse{Authority: authBack}, "创建成功", c)

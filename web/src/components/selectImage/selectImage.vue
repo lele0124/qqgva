@@ -28,7 +28,7 @@
       />
     </div>
 
-    <el-drawer v-model="drawer" title="媒体库 | 点击“文件名”可以编辑，选择的类别即是上传的类别" :size="880">
+    <el-drawer v-model="drawer" title="媒体库 | 点击“文件名”可以编辑,选择的类别即是上传的类别" :size="880">
       <div class="flex">
         <div class="w-64" style="border-right: solid 1px var(--el-border-color);">
           <el-scrollbar style="height: calc(100vh - 110px)">

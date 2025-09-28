@@ -3,8 +3,9 @@ package client
 import (
 	"context"
 	"fmt"
-	"github.com/mark3labs/mcp-go/mcp"
 	"testing"
+
+	"github.com/mark3labs/mcp-go/mcp"
 )
 
 // 测试 MCP 客户端连接
@@ -37,7 +38,7 @@ func TestTools(t *testing.T) {
 		}
 
 		if len(result.Content) != 1 {
-			t.Errorf("应该有且仅返回1条信息，但是现在有 %d", len(result.Content))
+			t.Errorf("应该有且仅返回1条信息,但是现在有 %d", len(result.Content))
 		}
 		if content, ok := result.Content[0].(mcp.TextContent); ok {
 			t.Logf("成功返回信息%s", content.Text)
@@ -80,7 +81,7 @@ func TestTools(t *testing.T) {
 		}
 
 		if len(result.Content) != 1 {
-			t.Errorf("应该有且仅返回1条信息，但是现在有 %d", len(result.Content))
+			t.Errorf("应该有且仅返回1条信息,但是现在有 %d", len(result.Content))
 		}
 		if content, ok := result.Content[0].(mcp.TextContent); ok {
 			t.Logf("成功返回信息%s", content.Text)

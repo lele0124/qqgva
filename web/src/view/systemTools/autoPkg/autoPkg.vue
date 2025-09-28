@@ -2,7 +2,7 @@
   <div>
     <warning-bar
       href="https://www.bilibili.com/video/BV1kv4y1g7nT?p=3"
-      title="此功能为开发环境使用，不建议发布到生产，具体使用效果请看视频https://www.bilibili.com/video/BV1kv4y1g7nT?p=3"
+      title="此功能为开发环境使用,不建议发布到生产,具体使用效果请看视频https://www.bilibili.com/video/BV1kv4y1g7nT?p=3"
     />
     <div class="gva-table-box">
       <div class="gva-btn-list gap-3 flex items-center">
@@ -49,7 +49,7 @@
 
     <el-drawer v-model="dialogFormVisible" size="40%" :show-close="false">
       <warning-bar
-        title="模板package会创建集成于项目本体中的代码包，模板plugin会创建插件包"
+        title="模板package会创建集成于项目本体中的代码包,模板plugin会创建插件包"
       />
       <el-form ref="pkgForm" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="包名" prop="packageName">
@@ -184,7 +184,7 @@
 
   const deleteApiFunc = async (row) => {
     ElMessageBox.confirm(
-      '此操作仅删除数据库中的pkg存储，后端相应目录结构请自行删除与数据库保持一致！',
+      '此操作仅删除数据库中的pkg存储,后端相应目录结构请自行删除与数据库保持一致!',
       '提示',
       {
         confirmButtonText: '确定',

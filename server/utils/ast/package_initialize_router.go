@@ -74,7 +74,7 @@ func (a *PackageInitializeRouter) Rollback(file *ast.File) error {
 					exprNum--
 					// 从语句列表中移除。
 					funcDecl.Body.List[i].(*ast.BlockStmt).List = append(funcDecl.Body.List[i].(*ast.BlockStmt).List[:ii], funcDecl.Body.List[i].(*ast.BlockStmt).List[ii+1:]...)
-					// 如果不再存在任何调用，则删除导入和变量。
+					// 如果不再存在任何调用,则删除导入和变量。
 					if exprNum == 0 {
 						funcDecl.Body.List = append(funcDecl.Body.List[:i], funcDecl.Body.List[i+1:]...)
 					}

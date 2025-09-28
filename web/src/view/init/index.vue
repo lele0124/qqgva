@@ -40,13 +40,13 @@
             3.请您确认是否了解后续的配置流程
           </p>
           <p class="text-gray-600 dark:text-gray-300 mb-2">
-            4.如果您使用mysql数据库，请确认数据库引擎为<span
+            4.如果您使用mysql数据库,请确认数据库引擎为<span
               class="text-red-600 font-bold text-3xl ml-2"
               >innoDB</span
             >
           </p>
           <p class="text-gray-600 dark:text-gray-300 mb-2">
-            注：开发组不为文档中书写过的内容提供无偿服务
+            注:开发组不为文档中书写过的内容提供无偿服务
           </p>
           <p class="flex items-center justify-between mt-8">
             <el-button type="primary" size="large" @click="goDoc">
@@ -99,7 +99,7 @@
           <el-form-item v-if="form.dbType !== 'sqlite'" label="password">
             <el-input
               v-model="form.password"
-              placeholder="请输入数据库密码（没有则为空）"
+              placeholder="请输入数据库密码(没有则为空)"
             />
           </el-form-item>
           <el-form-item label="dbName">
@@ -262,7 +262,7 @@
 
     const loading = ElLoading.service({
       lock: true,
-      text: '正在初始化数据库，请稍候',
+      text: '正在初始化数据库,请稍候',
       spinner: 'loading',
       background: 'rgba(0, 0, 0, 0.7)'
     })
@@ -277,7 +277,7 @@
         
         // 显示AI助手配置提示弹窗
         ElMessageBox.confirm(
-          '已经完成基础数据库初始化！建议先进行编辑器AI助手配置，以获得更好的开发体验。',
+          '已经完成基础数据库初始化!建议先进行编辑器AI助手配置,以获得更好的开发体验。',
           '配置完成',
           {
             confirmButtonText: '查看AI配置文档',
@@ -286,11 +286,11 @@
             center: true
           }
         ).then(() => {
-          // 点击确认按钮，打开AI配置文档
+          // 点击确认按钮,打开AI配置文档
           window.open('https://www.gin-vue-admin.com/guide/server/mcp.html', '_blank')
           router.push({ name: 'Login' })
         }).catch(() => {
-          // 点击取消按钮或关闭弹窗，直接跳转到登录页
+          // 点击取消按钮或关闭弹窗,直接跳转到登录页
           router.push({ name: 'Login' })
         })
       }

@@ -58,7 +58,7 @@
       const label = data[path]
       const parts = path.split('/').filter(Boolean)
 
-      // 如果第一个部分是 'src'，则从第二个部分开始处理
+      // 如果第一个部分是 'src',则从第二个部分开始处理
       const startIndex = parts[0] === 'src' ? 1 : 0
 
       let currentLevel = result
@@ -77,7 +77,7 @@
         }
 
         if (i === parts.length - 1) {
-          // 如果是路径的最后一部分，设置标签并移除 children
+          // 如果是路径的最后一部分,设置标签并移除 children
           node.label = label
           delete node.children
         }
@@ -108,7 +108,7 @@
       return
     }
 
-    // 编辑的时候，根据路径判断是选择框还是输入框
+    // 编辑的时候,根据路径判断是选择框还是输入框
     if (pathInfo[`/src/${value}`]) {
       activeComponent.value = value.split('/').filter(Boolean)
       tempPath.value = ''

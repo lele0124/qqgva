@@ -61,7 +61,7 @@ func (*Local) UploadFile(file *multipart.FileHeader) (string, string, error) {
 	}
 	defer out.Close() // 创建文件 defer 关闭
 
-	_, copyErr := io.Copy(out, f) // 传输（拷贝）文件
+	_, copyErr := io.Copy(out, f) // 传输(拷贝)文件
 	if copyErr != nil {
 		global.GVA_LOG.Error("function io.Copy() failed", zap.Any("err", copyErr.Error()))
 		return "", "", errors.New("function io.Copy() failed, err:" + copyErr.Error())
