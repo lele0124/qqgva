@@ -37,39 +37,58 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column align="left" type="selection" width="55" />
-        <el-table-column align="left" label="操作人" width="140">
-          <template #default="scope">
-            <div>
-              {{ scope.row.user.userName }}({{ scope.row.user.nickName }})
-            </div>
-          </template>
+        <el-table-column align="left" label="记录ID" prop="ID" width="80" />
+        <el-table-column align="left" label="创建时间" width="180">
+          <template #default="scope">{{ formatDate(scope.row.CreatedAt) }}</template>
         </el-table-column>
-        <el-table-column align="left" label="日期" width="180">
-          <template #default="scope">{{
-            formatDate(scope.row.CreatedAt)
-          }}</template>
-        </el-table-column>
-        <el-table-column align="left" label="状态码" prop="status" width="120">
-          <template #default="scope">
-            <div>
-              <el-tag type="success">{{ scope.row.status }}</el-tag>
-            </div>
-          </template>
+        <el-table-column align="left" label="更新时间" width="180">
+          <template #default="scope">{{ formatDate(scope.row.UpdatedAt) }}</template>
         </el-table-column>
         <el-table-column align="left" label="请求IP" prop="ip" width="120" />
-        <el-table-column
-          align="left"
-          label="请求方法"
-          prop="method"
-          width="120"
-        />
-        <el-table-column
-          align="left"
-          label="请求路径"
-          prop="path"
-          width="240"
-        />
-        <el-table-column align="left" label="请求" prop="path" width="80">
+        <el-table-column align="left" label="请求方法" prop="method" width="100" />
+        <el-table-column align="left" label="请求路径" prop="path" min-width="200" />
+        <el-table-column align="left" label="状态码" prop="status" width="100">
+          <template #default="scope">
+            <div>
+              <el-tag :type="getStatusCodeTagType(scope.row.status)">{{ scope.row.status }}</el-tag>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column align="left" label="请求延迟(ms)" width="120">
+          <template #default="scope">{{ formatLatency(scope.row.latency) }}</template>
+        </el-table-column>
+        <el-table-column align="left" label="用户ID" prop="user_id" width="100" />
+        <el-table-column align="left" label="用户名称" prop="user_name" width="120" />
+        <el-table-column align="left" label="用户代理" width="300">
+          <template #default="scope">
+            <el-popover
+              placement="top-start"
+              :width="400"
+              trigger="hover"
+            >
+              <div>{{ scope.row.agent }}</div>
+              <template #reference>
+                <span class="truncate-text">{{ scope.row.agent }}</span>
+              </template>
+            </el-popover>
+          </template>
+        </el-table-column>
+        <el-table-column align="left" label="错误信息" width="120">
+          <template #default="scope">
+            <el-popover
+              v-if="scope.row.error_message"
+              placement="left-start"
+              :width="400"
+            >
+              <div class="error-message-box">{{ scope.row.error_message }}</div>
+              <template #reference>
+                <el-tag type="danger">错误</el-tag>
+              </template>
+            </el-popover>
+            <span v-else>无</span>
+          </template>
+        </el-table-column>
+        <el-table-column align="left" label="请求体" width="80">
           <template #default="scope">
             <div>
               <el-popover
@@ -81,15 +100,14 @@
                   <pre>{{ fmtBody(scope.row.body) }}</pre>
                 </div>
                 <template #reference>
-                  <el-icon style="cursor: pointer"><warning /></el-icon>
+                  <el-icon style="cursor: pointer"><Warning /></el-icon>
                 </template>
               </el-popover>
-
               <span v-else>无</span>
             </div>
           </template>
         </el-table-column>
-        <el-table-column align="left" label="响应" prop="path" width="80">
+        <el-table-column align="left" label="响应体" width="80">
           <template #default="scope">
             <div>
               <el-popover
@@ -101,7 +119,29 @@
                   <pre>{{ fmtBody(scope.row.resp) }}</pre>
                 </div>
                 <template #reference>
-                  <el-icon style="cursor: pointer"><warning /></el-icon>
+                  <el-icon style="cursor: pointer"><Warning /></el-icon>
+                </template>
+              </el-popover>
+              <span v-else>无</span>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column align="left" label="用户详情" width="120">
+          <template #default="scope">
+            <div>
+              <el-popover
+                v-if="scope.row.user"
+                placement="left-start"
+                :width="400"
+              >
+                <div class="user-info-box">
+                  <p><strong>用户名:</strong> {{ scope.row.user.userName }}</p>
+                  <p><strong>昵称:</strong> {{ scope.row.user.nickName }}</p>
+                  <p><strong>UUID:</strong> {{ scope.row.user.uuid }}</p>
+                  <p><strong>权限ID:</strong> {{ scope.row.user.authorityId }}</p>
+                </div>
+                <template #reference>
+                  <el-button type="primary" size="small" link>详情</el-button>
                 </template>
               </el-popover>
               <span v-else>无</span>
@@ -144,6 +184,7 @@
   import { formatDate } from '@/utils/format'
   import { ref } from 'vue'
   import { ElMessage, ElMessageBox } from 'element-plus'
+  import { Warning } from '@element-plus/icons-vue'
 
   defineOptions({
     name: 'SysOperationRecord'
@@ -248,6 +289,25 @@
       return value
     }
   }
+  
+  // 根据HTTP状态码返回不同的标签类型
+  const getStatusCodeTagType = (status) => {
+    if (status >= 200 && status < 300) {
+      return 'success'
+    } else if (status >= 400 && status < 500) {
+      return 'warning'
+    } else if (status >= 500) {
+      return 'danger'
+    }
+    return 'info'
+  }
+  
+  // 格式化延迟时间，假设单位是纳秒
+  const formatLatency = (latency) => {
+    if (!latency) return '0'
+    // 转换为毫秒
+    return (latency / 1000000).toFixed(2)
+  }
 </script>
 
 <style lang="scss">
@@ -273,5 +333,24 @@
   }
   .popover-box::-webkit-scrollbar {
     display: none; /* Chrome Safari */
+  }
+  .truncate-text {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .error-message-box {
+    background: #fef0f0;
+    color: #f56c6c;
+    padding: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  .user-info-box {
+    background: #f0f9ff;
+    color: #2c3e50;
+    padding: 10px;
   }
 </style>
