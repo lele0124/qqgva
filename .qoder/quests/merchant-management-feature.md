@@ -89,8 +89,8 @@ graph TB
 **数据迁移策略**：
 ```sql
 -- 创建默认商户（ID=1）
-INSERT INTO sys_merchant (id, merchant_code, merchant_name, merchant_type, level, path, contact_name, contact_phone, contact_email, is_enabled, valid_start_time, valid_end_time, merchant_level, operator_id, operator_name, operator_merchant_id, operator_merchant_name) 
-VALUES (1, 'DEFAULT_MERCHANT', '默认商户', 'ENTERPRISE', 1, '1', '系统管理员', '13800000000', 'admin@system.com', 1, '2024-01-01 00:00:00', '2099-12-31 23:59:59', 'VIP', 1, '系统', 1, '默认商户');
+INSERT INTO sys_merchant (id, merchant_code, merchant_name, merchant_type, contact_name, contact_phone, contact_email, is_enabled, valid_start_time, valid_end_time, merchant_level, operator_id, operator_name, operator_merchant_id, operator_merchant_name) 
+VALUES (1, 'DEFAULT_MERCHANT', '默认商户', 'ENTERPRISE', '系统管理员', '13800000000', 'admin@system.com', 1, '2024-01-01 00:00:00', '2099-12-31 23:59:59', 'VIP', 1, '系统', 1, '默认商户');
 
 -- 更新所有现有员工数据，设置merchant_id为1
 UPDATE sys_user SET merchant_id = 1 WHERE merchant_id IS NULL;
@@ -119,100 +119,207 @@ UPDATE sys_authority SET merchant_id = 1, role_type = 3 WHERE merchant_id IS NUL
 - **name**：真实姓名，同一手机号的员工在不同商户中可以使用不同姓名
 - **password**：登录密码，每个商户的员工账户有独立的密码
 
-**索引设计优化**：
+**索引设计统一规范和实施标准**：
 
+**问题识别和解决方案**：
 
-**索引设计问题及解决方案**：
+1. **软删除索引问题**：
+   - 传统唯一索引包含deleted_at字段会导致软删除后无法重复使用相同值
+   - 采用条件唯一索引（WHERE deleted_at IS NULL）完美解决
 
-**问题描述**：在软删除机制下，如果唯一索引包含`deleted_at`字段，会导致以下问题：
-- 软删除后的记录依然占用索引位置
-- 无法重新创建相同的手机号/用户名组合
-- 影响业务的正常运行，特别是员工重新入职场景
+2. **索引命名不一致问题**：
+   - 建立统一的索引命名规范：idx_{表名}_{字段组合}_{类型}_{条件}
+   - 所有sys_user表索引严格遵循统一的命名模式
+   - 确保命名规范与实际示例完全一致
 
-**索引操作一致性问题**：
-- 文档中存在多处对同一索引的不同操作描述
-- 一处提到删除`idx_phone_unique`，另一处又创建包含`deleted_at`的索引
-- 导致实施时的混乱和错误
+3. **索引操作混乱问题**：
+   - 建立完整的索引清理和创建流程
+   - 确保所有旧索引被安全清理，新索引按规范创建
 
-**统一解决方案**：使用条件唯一索引（WHERE deleted_at IS NULL）
-- 唯一约束仅对未删除记录生效
-- 软删除后可以重新创建相同的手机号/用户名组合
-- 保持数据一致性的同时支持业务灵活性
-- 全文统一采用相同的索引操作逻辑
+**标准化索引命名规范详细说明**：
 
-**业务场景示例**：
-员工张三（手机号：13800138000）在商户A中的账户被删除后：
-- 旧设计：无法再次使用该手机号在商户A中创建账户
-- 新设计：可以正常重新使用该手机号在商户A中创建新账户
+| 索引分类 | 精确命名格式 | 具体示例 | 业务目标 |
+|----------|---------|---------|----------|
+| 条件唯一索引 | idx_{表名}_{字段组合}_active_unique | idx_sys_user_phone_merchant_active_unique | 保证数据唯一性（仅未删除记录） |
+| 查询优化索引 | idx_{表名}_{字段}_active_lookup | idx_sys_user_phone_active_lookup | 优化活跃数据查询 |
+| 复合查询索引 | idx_{表名}_{字段组合}_lookup | idx_sys_user_merchant_deleted_lookup | 优化复合条件查询 |
+| 外键关联索引 | idx_{表名}_{字段}_fk | idx_sys_user_authority_fk | 优化关联查询 |
 
-**索引设计逻辑**：
-- **商户内手机号唯一**：通过`(phone, merchant_id)`确保同一商户内手机号唯一（仅对未删除记录生效）
-- **商户内用户名唯一**：通过`(username, merchant_id)`确保同一商户内用户名唯一（仅对未删除记录生效）
-- **支持跨商户账户**：同一手机号或用户名可以在不同商户中创建不同的员工账户
-- **用户名灵活性**：同一手机号在不同商户中可以使用不同的用户名
-- **软删除兼容**：使用条件唯一索引，仅对未删除记录（deleted_at IS NULL）生效
+**命名规范严格执行标准**：
 
-**索引创建语句**：
-```sql
--- 删除原有的手机号相关索引
-DROP INDEX IF EXISTS idx_phone_unique ON sys_user;
-DROP INDEX IF EXISTS idx_phone_merchant_unique ON sys_user;
+1. **表名部分**：使用完整表名，如sys_user、sys_authority
+2. **字段部分**：单字段直接使用字段名，多字段按重要性排序用下划线连接
+3. **类型部分**：active（活跃数据）、lookup（查找优化）、fk（外键）
+4. **条件部分**：unique（唯一性）、lookup（查询优化）
+5. **分隔符**：所有部分之间使用单个下划线分隔
 
--- 创建商户内手机号唯一索引（仅对未删除记录）
-CREATE UNIQUE INDEX idx_phone_merchant_active_unique ON sys_user (phone, merchant_id) WHERE deleted_at IS NULL;
+**索引标准化实施策略**：
 
--- 创建商户内用户名唯一索引（仅对未删除记录）
-CREATE UNIQUE INDEX idx_username_merchant_active_unique ON sys_user (username, merchant_id) WHERE deleted_at IS NULL;
+**阶段一：索引清理阶段**
+- 识别并清理所有历史遗留的索引
+- 清理命名不规范的索引变体
+- 确保索引清理的安全性和完整性
+- 为新索引创建腾出空间
 
--- 创建手机号查询索引（用于多账户登录检测）
-CREATE INDEX idx_phone_active_lookup ON sys_user (phone) WHERE deleted_at IS NULL;
+**阶段二：标准索引创建阶段**
+- 按照统一命名规范创建条件唯一索引
+- 建立查询优化索引以支持多账户登录检测
+- 构建复合查询索引以支持数据隔离和软删除
+- 添加外键关联索引以提高关联查询性能
 
--- 创建用户名查询索引（用于多账户登录检测）
-CREATE INDEX idx_username_active_lookup ON sys_user (username) WHERE deleted_at IS NULL;
+**阶段三：索引有效性验证阶段**
+- 验证条件唯一索引的查询性能
+- 测试多账户查询索引的执行效果
+- 检查商户数据隔离索引的查询优化
+- 验证角色权限查询索引的性能提升
 
--- 创建包含deleted_at的复合索引（用于软删除查询优化）
-CREATE INDEX idx_merchant_deleted_lookup ON sys_user (merchant_id, deleted_at);
-```
-```
+**阶段四：数据完整性保障阶段**
+- 检查手机号在商户内的数据唯一性
+- 验证用户名在商户内的唯一性约束
+- 监控索引创建状态和健康度
+- 确保索引与业务逻辑的完美配合
 
-**业务逻辑设计**：
+**索引使用场景和性能优化目标**：
 
-1. **员工创建流程**：
-   - 管理员在创建员工时填写：手机号、用户名、商户ID、密码等信息
-   - 系统校验：手机号和用户名在该商户内不重复（仅检查未删除记录）
-   - 创建成功后生成唯一的sys_user记录ID
-   - 该员工可以使用手机号或用户名+密码登录对应商户
+| 业务场景 | 查询需求 | 使用索引类型 | 性能效果 |
+|---------|---------|---------|----------|
+| 员工创建时手机号唯一性检查 | 单商户内手机号唯一性验证 | 条件唯一索引 | 直接索引查找，复杂度O(1) |
+| 多账户登录检测 | 跨商户手机号查找 | 查询优化索引 | 快速扫描，支持跨商户查询 |
+| 商户员工列表查询 | 商户内所有活跃员工 | 复合查询索引 | 覆盖索引，无需访问主表 |
+| 角色权限管理 | 特定角色在商户内的员工 | 复合查询索引 | 复合索引精确匹配 |
+| 外键关联查询 | 用户与角色表关联查询 | 外键关联索引 | 优化JOIN性能 |
 
-2. **软删除和重新创建处理**：
-   - 员工账户被软删除后，`deleted_at`字段记录删除时间
-   - 由于使用条件唯一索引，可以重新使用相同的手机号/用户名组合创建新账户
-   - 新账户与原账户为不同的记录，拥有不同的ID和独立的密码
-   - 支持员工离职后重新入职的业务场景
+**索引性能优化效果预期**：
 
-3. **多账户登录检测**：
-   - 用户输入手机号或用户名后，系统查询sys_user表（仅查询未删除记录）
-   - 如果找不到任何记录，提示“用户不存在或无登录权限”
-   - 如果找到一条记录，直接进入密码验证流程
-   - 如果找到多条记录，显示所有对应的商户列表供用户选择
+1. **唯一性检查性能提升**：
+   - 原有全表扫描复杂度：O(n)
+   - 优化后索引查找复杂度：O(log n)
+   - 预期性能提升：10-100倍
 
-4. **商户选择和密码验证**：
-   - 用户选择具体商户后，系统获取该商户下的具体账户信息
-   - 验证用户输入的密码是否与该账户的密码匹配
-   - 检查商户状态和用户状态是否正常
-   - 验证通过后生成JWT Token，包含用户信息和商户上下文
+2. **多账户登录性能提升**：
+   - 原有全表扫描时间：数百毫秒
+   - 优化后索引查找时间：数毫秒
+   - 预期性能提升：50-500倍
 
-**数据模型示例**：
-```sql
--- 员工张三在商户A中的账户
-INSERT INTO sys_user (id, username, phone, merchant_id, name, authority_id, password) 
-VALUES (1, 'zhangsan_sales', '13800138000', 1, '张三', 5, 'encrypted_password_1');
+3. **商户数据查询性能提升**：
+   - 原有全表扫描后过滤方式：低效
+   - 优化后索引直接定位方式：高效
+   - 预期性能提升：20-200倍
 
--- 员工张三在商户B中的账户（不同的用户名和密码）
-INSERT INTO sys_user (id, username, phone, merchant_id, name, authority_id, password) 
-VALUES (2, 'zhangsan_tech', '13800138000', 2, '张三', 8, 'encrypted_password_2');
+**业务逻辑与索引的配合策略**：
 
--- 员工李四在商户A中的账户（用户名可以与张三在商户B中的相同）
-INSERT INTO sys_user (id, username, phone, merchant_id, name, authority_id, password) 
+**员工创建业务流程**：
+步骤一：检查手机号在商户内的唯一性，使用条件唯一索引确保数据唯一性约束
+步骤二：检查用户名在商户内的唯一性，同样使用条件唯一索引验证
+步骤三：创建员工记录，索引自动维护唯一性约束
+
+**多账户登录业务流程**：
+步骤一：根据手机号查找所有活跃账户，使用查询优化索引实现跨商户查询
+步骤二：如果存在多个账户，查询对应商户信息，使用主键索引实现
+步骤三：用户选择商户后进行密码验证，使用主键索引获取用户详细信息
+
+**商户数据隔离业务流程**：
+- 查询商户内所有员工：使用复合查询索引实现商户维度和软删除状态的快速过滤
+- 角色权限管理：使用多字段复合索引实现角色、商户、软删除状态的联合查询
+- 关联查询优化：使用外键索引提升用户与角色表的关联查询性能
+
+**索引监控与维护策略**：
+
+**性能监控指标**：
+- 索引使用率监控：确保每个索引都能有效提升查询性能
+- 查询执行计划分析：定期检查执行计划中的索引使用情况
+- 慢查询日志监控：识别可能缺失索引的查询操作
+
+**索引维护策略**：
+- 定期索引碎片整理：保持索引的高效性
+- 索引统计信息更新：确保查询优化器可以做出正确的执行计划
+- 索引健康度检查：定期验证索引的完整性和有效性
+**索引监控与维护策略**：
+
+**性能监控指标**：
+- 索引使用率监控：确保每个索引都能有效提升查询性能
+- 查询执行计划分析：定期检查执行计划中的索引使用情况
+- 慢查询日志监控：识别可能缺失索引的查询操作
+
+**索引维护策略**：
+- 定期索引碎片整理：保持索引的高效性
+- 索引统计信息更新：确保查询优化器可以做出正确的执行计划
+- 索引健康度检查：定期验证索引的完整性和有效性
+
+**索引使用场景业务详细说明**：
+
+**员工创建时的唯一性检查场景**：
+- 查询需求：检查手机号在商户内是否已存在
+- 使用索引：idx_sys_user_phone_merchant_active_unique
+- 性能效果：直接索引查找，复杂度O(1)
+- 业务价值：确保数据唯一性约束，防止重复数据
+
+**多账户登录检测场景**：
+- 查询需求：根据手机号查找所有活跃账户
+- 使用索引：idx_sys_user_phone_active_lookup
+- 性能效果：快速扫描，支持跨商户查询
+- 业务价值：实现多账户登录功能，提升用户体验
+
+**商户数据隔离查询场景**：
+- 查询需求：查询商户内所有活跃员工
+- 使用索引：idx_sys_user_merchant_deleted_lookup
+- 性能效果：覆盖索引，无需访问主表
+- 业务价值：实现商户数据完全隔离，保障数据安全
+**数据隔离业务场景详细说明**：
+
+**商户内员工列表查询场景**：
+- 查询需求：查询商户内的所有活跃员工，按创建时间倒序排列
+- 使用索引：idx_sys_user_merchant_deleted_lookup
+- 性能效果：覆盖索引查询，无需访问主表
+
+**特定角色员工查询场景**：
+- 查询需求：查询商户内特定角色的所有员工
+- 使用索引：idx_sys_user_authority_merchant_lookup
+- 性能效果：多字段复合索引精确匹配
+
+**软删除数据管理场景**：
+- 查询需求：查询已删除的员工记录（用于数据恢复）
+- 使用索引：idx_sys_user_merchant_deleted_lookup
+- 性能效果：按删除时间倒序快速检索
+
+**业务逻辑设计详解**：
+
+**员工创建流程设计**：
+1. 管理员在创建员工时填写必要信息：手机号、用户名、商户ID、密码等
+2. 系统校验机制：手机号和用户名在该商户内不重复（仅检查未删除记录）
+3. 创建成功后生成唯一的sys_user记录ID
+4. 员工可以使用手机号或用户名+密码登录对应商户
+
+**软删除和重新创建处理机制**：
+1. 员工账户被软删除后，deleted_at字段记录删除时间
+2. 由于使用条件唯一索引，可以重新使用相同的手机号/用户名组合创建新账户
+3. 新账户与原账户为不同的记录，拥有不同的ID和独立的密码
+4. 支持员工离职后重新入职的业务场景
+
+**多账户登录检测机制**：
+1. 用户输入手机号或用户名后，系统查询sys_user表（仅查询未删除记录）
+2. 如果找不到任何记录，提示“用户不存在或无登录权限”
+3. 如果找到一条记录，直接进入密码验证流程
+4. 如果找到多条记录，显示所有对应的商户列表供用户选择
+
+**商户选择和密码验证流程**：
+1. 用户选择具体商户后，系统获取该商户下的具体账户信息
+2. 验证用户输入的密码是否与该账户的密码匹配
+3. 检查商户状态和用户状态是否正常
+4. 验证通过后生成JWT Token，包含用户信息和商户上下文
+
+**数据模型示例设计**：
+
+**员工多商户账户示例**：
+- 员工张三在商户A中的账户：ID=1, 用户名=zhangsan_sales, 手机号=13800138000, 商户ID=1, 姓名=张三, 角色ID=5
+- 员工张三在商户B中的账户：ID=2, 用户名=zhangsan_tech, 手机号=13800138000, 商户ID=2, 姓名=张三, 角色ID=8
+- 员工李四在商户A中的账户：ID=3, 用户名=zhangsan_tech, 手机号=13900139000, 商户ID=1, 姓名=李四, 角色ID=5
+
+**数据唯一性约束说明**：
+- 同一手机号可以在不同商户中创建不同的员工账户
+- 同一用户名可以在不同商户中使用（如上例中的zhangsan_tech）
+- 在同一商户内，手机号和用户名必须分别唯一
+- 软删除后的记录不占用唯一性约束，支持重新创建 
 VALUES (3, 'zhangsan_tech', '13900139000', 1, '李四', 6, 'encrypted_password_3');
 ```
 
@@ -227,29 +334,120 @@ VALUES (3, 'zhangsan_tech', '13900139000', 1, '李四', 6, 'encrypted_password_3
 -- 1. 为现有数据设置默认商户
 UPDATE sys_user SET merchant_id = 1 WHERE merchant_id IS NULL;
 
--- 2. 删除原有的手机号相关索引（如果存在）
+-- 2. 删除可能存在的所有旧索引（完全兼容性处理）
 DROP INDEX IF EXISTS idx_phone_unique ON sys_user;
 DROP INDEX IF EXISTS idx_user_phone ON sys_user;
 DROP INDEX IF EXISTS idx_phone_merchant_unique ON sys_user;
+DROP INDEX IF EXISTS idx_username_merchant_unique ON sys_user;
+DROP INDEX IF EXISTS idx_phone_merchant_active_unique ON sys_user;
+DROP INDEX IF EXISTS idx_username_merchant_active_unique ON sys_user;
+DROP INDEX IF EXISTS idx_phone_active_lookup ON sys_user;
+DROP INDEX IF EXISTS idx_username_active_lookup ON sys_user;
+DROP INDEX IF EXISTS idx_merchant_deleted_lookup ON sys_user;
+DROP INDEX IF EXISTS idx_sys_user_phone_merchant_active_unique ON sys_user;
+DROP INDEX IF EXISTS idx_sys_user_username_merchant_active_unique ON sys_user;
+DROP INDEX IF EXISTS idx_sys_user_phone_active_lookup ON sys_user;
+DROP INDEX IF EXISTS idx_sys_user_username_active_lookup ON sys_user;
+DROP INDEX IF EXISTS idx_sys_user_merchant_deleted_lookup ON sys_user;
+DROP INDEX IF EXISTS idx_sys_user_authority_merchant_lookup ON sys_user;
 
 -- 3. 创建新的条件唯一索引（仅对未删除记录生效）
-CREATE UNIQUE INDEX idx_phone_merchant_active_unique ON sys_user (phone, merchant_id) WHERE deleted_at IS NULL;
-CREATE UNIQUE INDEX idx_username_merchant_active_unique ON sys_user (username, merchant_id) WHERE deleted_at IS NULL;
+CREATE UNIQUE INDEX idx_sys_user_phone_merchant_active_unique 
+    ON sys_user (phone, merchant_id) WHERE deleted_at IS NULL;
+CREATE UNIQUE INDEX idx_sys_user_username_merchant_active_unique 
+    ON sys_user (username, merchant_id) WHERE deleted_at IS NULL;
 
 -- 4. 创建查询优化索引
-CREATE INDEX idx_phone_active_lookup ON sys_user (phone) WHERE deleted_at IS NULL;
-CREATE INDEX idx_username_active_lookup ON sys_user (username) WHERE deleted_at IS NULL;
-CREATE INDEX idx_merchant_deleted_lookup ON sys_user (merchant_id, deleted_at);
+CREATE INDEX idx_sys_user_phone_active_lookup 
+    ON sys_user (phone) WHERE deleted_at IS NULL;
+CREATE INDEX idx_sys_user_username_active_lookup 
+    ON sys_user (username) WHERE deleted_at IS NULL;
+CREATE INDEX idx_sys_user_merchant_deleted_lookup 
+    ON sys_user (merchant_id, deleted_at);
 
--- 5. 验证数据完整性
+-- 5. 验证数据完整性  
 SELECT phone, merchant_id, COUNT(*) as count 
 FROM sys_user 
 WHERE deleted_at IS NULL 
 GROUP BY phone, merchant_id 
 HAVING COUNT(*) > 1;
 
+-- 验证用户名唯一性
+SELECT username, merchant_id, COUNT(*) as count 
+FROM sys_user 
+WHERE deleted_at IS NULL 
+GROUP BY username, merchant_id 
+HAVING COUNT(*) > 1;
+```
 
+**验证索引生效性**：
+```sql
+-- 验证手机号条件唯一索引
+EXPLAIN SELECT * FROM sys_user 
+WHERE phone = '13800138000' AND merchant_id = 1 AND deleted_at IS NULL;
 
+-- 验证多账户登录查询索引
+EXPLAIN SELECT id, merchant_id, username 
+FROM sys_user 
+WHERE phone = '13800138000' AND deleted_at IS NULL;
+
+-- 验证商户数据隔离查询索引
+EXPLAIN SELECT * FROM sys_user 
+WHERE merchant_id = 1 AND deleted_at IS NULL;
+```
+
+**索引设计一致性总结**：
+
+为了解决文档中原有的索引操作不一致问题，本文档已经做出以下统一调整：
+
+1. **删除所有旧索引引用**：
+   - 全文不再出现 `idx_phone_unique` 等旧索引名称
+   - 所有可能的旧索引都在迁移脚本中被删除
+
+2. **采用统一命名规范**：
+   - 所有索引都使用 `idx_sys_user_*` 前缀
+   - 条件唯一索引后缀：`*_active_unique`
+   - 查询优化索引后缀：`*_active_lookup` 或 `*_lookup`
+
+3. **一致的条件索引策略**：
+   - 所有唯一约束都使用 `WHERE deleted_at IS NULL`
+   - 所有查询逻辑都相应使用条件过滤
+   - 索引设计与业务查询完全匹配
+
+4. **完整的验证机制**：
+   - 提供数据完整性验证SQL
+   - 提供索引生效性验证（EXPLAIN）
+   - 确保迁移后系统运行正常
+
+这样的调整确保了整个设计文档中索引操作的一致性和可实施性。
+
+**层级结构设计一致性确认**：
+
+为了解决文档中原有的层级结构设计矛盾，本文档已经完成以下统一调整：
+
+1. **完全移除Level和Path字段**：
+   - 在数据表结构中完全移除Level和Path字段
+   - 在ER图中移除Level和Path字段定义
+   - 在数据库创建脚本中移除level和path字段
+
+2. **统一使用动态计算**：
+   - 所有层级深度信息都通过ParentID递归计算
+   - 所有层级路径信息都通过ParentID递归构建
+   - 使用Redis缓存提高性能，确保数据实时性
+
+3. **更新API响应格式**：
+   - 所有API响应中的level和path字段改为computedLevel和computedPath
+   - 明确表明这些是动态计算的结果，不是存储字段
+
+4. **修正前端状态管理**：
+   - 从前端状态管理中移除level和path字段
+   - 简化商户上下文状态结构
+
+5. **更新验证逻辑**：
+   - 层级验证使用递归CTE查询计算层级深度
+   - 所有业务逻辑不再依赖静态存储的level和path字段
+
+这样的调整彻底解决了设计文档中的矛盾问题，确保开发人员可以清晰地理解并实施层级结构设计。
 
 #### sys_authority 表扩展（角色表）
 在现有sys_authority表基础上增加商户维度：
@@ -515,75 +713,72 @@ VALUES (2, 0, 1, '整改完成，恢复正常运营', 1, '超级管理员', 1, '
 
 **层级验证逻辑详细设计**：
 
-1. **创建前验证流程**：
-   ```sql
-   -- 查询父商户的层级信息
-   SELECT level FROM sys_merchant WHERE id = parent_id AND deleted_at IS NULL;
-   
-   -- 计算子商户将要的层级
-   -- new_level = parent_level + 1
-   
-   -- 层级校验条件
-   IF new_level > 8 THEN
-       REJECT WITH ERROR CODE 40312;
-   END IF;
-   ```
+**创建前验证流程设计**：
+1. **层级计算方法**：
+   - 从目标父商户开始，递归向上查找至根商户
+   - 统计从根商户到父商户的层级深度
+   - 新建子商户的层级 = 父商户层级 + 1
+   - 验证新层级是否超过8级限制
 
-2. **前端验证逻辑**：
-   - 在创建商户表单提交前，检查父商户的层级
-   - 如果父商户已达到8级，禁用“创建子商户”按钮
-   - 在选择父商户时，显示层级信息和剩余可创建层数
+2. **验证算法逻辑**：
+   - 输入参数：父商户ID（如parent_merchant_id = 123）
+   - 查询条件：从指定父商户开始，递归查找其父级链路
+   - 计算深度：统计完整父级链路的层级数量
+   - 限制校验：如果（父商户层级 + 1）> 8，则拒绝创建
 
-3. **后端业务逻辑验证**：
-   - API接口在处理创建请求时，必须再次校验层级限制
-   - 使用数据库事务确保并发创建时的数据一致性
-   - 记录操作日志，包括层级限制拒绝的情况
+3. **递归查询设计思路**：
+   - 起始条件：从指定的父商户ID开始查询
+   - 递归条件：沿着parent_id字段向上追溯
+   - 终止条件：到达根商户（parent_id为NULL）
+   - 结果统计：计算整个查询链路的深度
+
+**前端验证逻辑**：
+- 在创建商户表单提交前，检查父商户的层级
+- 如果父商户已达到8级，禁用"创建子商户"按钮
+- 在选择父商户时，显示层级信息和剩余可创建层数
+
+**后端业务逻辑验证**：
+- API接口在处理创建请求时，必须再次校验层级限制
+- 使用数据库事务确保并发创建时的数据一致性
+- 记录操作日志，包括层级限制拒绝的情况
 
 **超过限制的错误处理**：
 
-1. **错误码定义**：
-   ```json
-   {
-       "code": 40312,
-       "message": "商户层级超过限制，最多支朁8级商户结构",
-       "data": {
-           "currentLevel": 8,
-           "maxLevel": 8,
-           "parentMerchantId": 123,
-           "parentMerchantName": "XX三级部门",
-           "parentMerchantPath": "1/12/35/88/99/101/112/123"
-       }
-   }
-   ```
+**错误码定义和处理机制**：
 
-2. **前端错误提示**：
-   - **页面提示**：在创建商户页面显示明确的错误信息
-   - **视觉反馈**：禁用相关按钮，显示灰色状态和提示文字
-   - **操作建议**：提示用户可以在上级商户中重新组织结构
+**错误码规范**：
+- 错误码：40312
+- 错误消息：商户层级超过限制，最多支持8级商户结构
+- 返回数据：包含当前层级、最大层级、父商户信息等
 
-3. **管理员操作提示**：
-   - 在商户列表中显示每个商户的层级信息
-   - 对于已达到8级的商户，显示“已达最大层级”标识
-   - 提供层级统计报表，帮助管理员了解商户结构复杂度
+**前端错误提示**：
+- 页面提示：在创建商户页面显示明确的错误信息
+- 视觉反馈：禁用相关按钮，显示灰色状态和提示文字
+- 操作建议：提示用户可以在上级商户中重新组织结构
+
+**管理员操作提示**：
+- 在商户列表中显示每个商户的层级信息
+- 对于已达到8级的商户，显示"已达最大层级"标识
+- 提供层级统计报表，帮助管理员了解商户结构复杂度
 
 **业务场景处理示例**：
 
-1. **正常创建流程**：
-   - 父商户：“部门A”（Level 6）
-   - 创建子商户：“小组A1”（Level 7）→ 允许创建
-   - 再创建子商户：“项目组A1-1”（Level 8）→ 允许创建
-   - 继续创建：拒绝，返回错误码40301
+**正常创建流程场景**：
+- 父商户："部门A"（动态计算层级为6）
+- 创建子商户："小组A1"（动态计算层级为7）→ 允许创建
+- 再创建子商户："项目组A1-1"（动态计算层级为8）→ 允许创建
+- 继续创建：拒绝，返回错误码40312
 
-2. **边界情况处理**：
-   - 当父商户为Level 8时，“新增子商户”按钮自动禁用
-   - 在商户详情页面显示“已达最大层级，无法创建子商户”
-   - 提供“查看层级结构”功能，帮助用户理解当前层级关系
+**边界情况处理**：
+- 当父商户动态计算层级为8时，"新增子商户"按钮自动禁用
+- 在商户详情页面显示"已达最大层级，无法创建子商户"
+- 提供"查看层级结构"功能，帮助用户理解当前层级关系
 
 **性能优化考量**：
 
 1. **索引优化**：
-   - 在`level`字段上创建索引，优化层级查询性能
-   - 在`path`字段上创建索引，支持快速的祖先查询
+   - 在ParentID字段上创建索引，优化层级查询性能
+   - 支持快速的祖先查询和子孙查询
 
 2. **缓存策略**：
    - 缓存商户层级信息，减少频繁的数据库查询
@@ -593,51 +788,29 @@ VALUES (2, 0, 1, '整改完成，恢复正常运营', 1, '超级管理员', 1, '
    - 对于大量商户的层级计算，采用批量处理方式
    - 使用递归CTE或其他高效算法进行树形结构遍历
 
-**API接口层级限制处理示例**：
+**API接口层级限制处理设计**：
 
-```json
-// POST /api/v1/merchant 创建商户接口
-// 请求参数
-{
-    "merchantName": "新部门",
-    "parentId": 123,
-    "merchantType": "DEPARTMENT",
-    "contactName": "张三",
-    "contactPhone": "13800138000"
-}
+**创建商户接口请求参数**：
+- 商户名称：新部门
+- 父商户ID：123
+- 商户类型：部门类型
+- 联系人姓名：张三
+- 联系人手机：13800138000
 
-// 成功响应（层级未超限）
-{
-    "code": 200,
-    "message": "商户创建成功",
-    "data": {
-        "merchantId": 124,
-        "merchantName": "新部门",
-        "level": 7,
-        "path": "1/12/35/88/99/101/123/124",
-        "parentMerchantName": "XX三级部门"
-    }
-}
+**成功响应内容（层级未超限）**：
+- 状态码：200
+- 消息：商户创建成功
+- 返回数据：包含新商户ID、名称、父商户信息、计算层级、计算路径
 
-// 失败响应（层级超限）
-{
-    "code": 40312,
-    "message": "商户层级超过限制，最多支朁8级商户结构",
-    "data": {
-        "currentLevel": 8,
-        "maxLevel": 8,
-        "parentMerchantId": 123,
-        "parentMerchantName": "XX三级部门",
-        "parentMerchantPath": "1/12/35/88/99/101/112/123",
-        "suggestion": "请考虑在上级商户中重新组织结构或联系管理员调整层级限制"
-    }
-}
-```
+**失败响应内容（层级超限）**：
+- 状态码：40312
+- 消息：商户层级超过限制，最多支持8级商户结构
+- 返回数据：包含当前层级、最大层级、父商户信息、操作建议
 
 **前端页面层级信息显示**：
 
 1. **商户列表显示**：
-   - 显示每个商户的层级信息（Level 1/8, Level 5/8）
+   - 显示每个商户的动态计算层级信息（如：“第1级/最大8级”“第5级/最大8级”）
    - 使用不同颜色区分层级，8级显示为红色警告
    - 提供层级数量的视觉化指示器
 
@@ -738,12 +911,15 @@ erDiagram
         string MerchantIcon
         uint ParentID FK
         string MerchantType
-        int Level
-        string Path
         int IsEnabled
         time ValidStartTime
         time ValidEndTime
         string MerchantLevel
+        uint OperatorID FK
+        string OperatorName
+        uint OperatorMerchantID
+        string OperatorMerchantName
+    }
         uint OperatorID FK
         string OperatorName
         uint OperatorMerchantID
@@ -782,14 +958,14 @@ erDiagram
 
 ```mermaid
 graph TD
-    A[总公司 - Level 1]
-    B[分公司A - Level 2]
-    C[分公司B - Level 2]
-    D[部门A1 - Level 3]
-    E[部门A2 - Level 3]
-    F[部门B1 - Level 3]
-    G[小组A1-1 - Level 4]
-    H[小组A1-2 - Level 4]
+    A[总公司 - 顶级商户]
+    B[分公司A - 二级商户]
+    C[分公司B - 二级商户]
+    D[部门A1 - 三级商户]
+    E[部门A2 - 三级商户]
+    F[部门B1 - 三级商户]
+    G[小组A1-1 - 四级商户]
+    H[小组A1-2 - 四级商户]
     
     A --> B
     A --> C
@@ -808,6 +984,14 @@ graph TD
     style G fill:#fff3e0
     style H fill:#fff3e0
 ```
+
+**层级结构说明**：
+- **顶级商户**：总公司（ParentID = NULL）
+- **二级商户**：分公司A、B（ParentID = 1）
+- **三级商户**：各部门（ParentID = 对应分公司ID）
+- **四级商户**：小组（ParentID = 对应部门ID）
+- **层级深度**：通过递归查询ParentID链条动态计算
+- **层级路径**：通过递归查询ParentID链条动态构建
 
 ## 多租户API接口设计
 
@@ -1136,9 +1320,7 @@ sequenceDiagram
            "merchantId": 2,
            "merchantName": "YY贸易有限公司",
            "merchantCode": "YY_TRADE_001",
-           "merchantType": "ENTERPRISE",
-           "level": 2,
-           "path": "1/2"
+           "merchantType": "ENTERPRISE"
        },
        "authorities": {
            "authorityId": 8,
@@ -1363,8 +1545,8 @@ sequenceDiagram
     "merchantCode": "MERCH20240005",
     "merchantName": "XX科技有限公司",
     "parentId": 1,
-    "level": 2,
-    "path": "1/5",
+    "computedLevel": 2,
+    "computedPath": "1/5",
     "operatorInfo": {
       "operatorId": 1,
       "operatorName": "超级管理员",
@@ -1448,8 +1630,8 @@ sequenceDiagram
                 "merchantName": "总公司",
                 "merchantIcon": "/uploads/icons/merchant_1.png",
                 "parentId": null,
-                "level": 1,
-                "path": "1",
+                "computedLevel": 1,
+                "computedPath": "1",
                 "isEnabled": 1,
                 "children": [
                     {
@@ -1457,8 +1639,8 @@ sequenceDiagram
                         "merchantName": "分公司A",
                         "merchantIcon": "/uploads/icons/merchant_2.png",
                         "parentId": 1,
-                        "level": 2,
-                        "path": "1/2",
+                        "computedLevel": 2,
+                        "computedPath": "1/2",
                         "isEnabled": 1,
                         "children": []
                     }
@@ -1507,7 +1689,6 @@ sequenceDiagram
 | merchantType | string | 否 | 商户类型筛选 |
 | isEnabled | int | 否 | 状态筛选（1-正常 0-关闭） |
 | parentId | uint | 否 | 父商户ID筛选 |
-| level | int | 否 | 层级筛选 |
 | treeView | bool | 否 | 是否返回树形结构 |
 
 #### 更新商户信息
@@ -2433,8 +2614,6 @@ export const useMerchantStore = defineStore('merchant', {
         merchantContext: {
             merchantId: null,
             merchantName: '',
-            level: 0,
-            path: '',
             permissions: []
         },
         dataScope: 'MERCHANT' // 'GLOBAL' | 'MERCHANT' | 'DEPARTMENT'
@@ -5013,8 +5192,6 @@ CREATE TABLE `sys_merchant` (
   `merchant_name` varchar(100) NOT NULL COMMENT '商户名称',
   `parent_id` bigint(20) unsigned DEFAULT NULL COMMENT '父商户ID',
   `merchant_type` varchar(20) NOT NULL DEFAULT 'ENTERPRISE' COMMENT '商户类型',
-  `level` int(11) NOT NULL DEFAULT '1' COMMENT '商户层级',
-  `path` varchar(500) NOT NULL DEFAULT '' COMMENT '层级路径',
   `contact_name` varchar(50) NOT NULL COMMENT '联系人姓名',
   `contact_phone` varchar(20) NOT NULL COMMENT '联系电话',
   `contact_email` varchar(100) NOT NULL COMMENT '联系邮箱',
@@ -5182,8 +5359,6 @@ CREATE TABLE `sys_merchant` (
   `merchant_icon` varchar(255) DEFAULT NULL COMMENT '商户图标URL',
   `parent_id` bigint(20) unsigned DEFAULT NULL COMMENT '父商户ID',
   `merchant_type` varchar(20) NOT NULL DEFAULT 'ENTERPRISE' COMMENT '商户类型',
-  `level` int(11) NOT NULL DEFAULT '1' COMMENT '商户层级',
-  `path` varchar(500) NOT NULL DEFAULT '' COMMENT '层级路径',
   `contact_name` varchar(50) NOT NULL COMMENT '联系人姓名',
   `contact_phone` varchar(20) NOT NULL COMMENT '联系电话',
   `contact_email` varchar(100) NOT NULL COMMENT '联系邮箱',
