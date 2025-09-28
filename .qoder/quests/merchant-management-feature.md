@@ -7,7 +7,7 @@
 ### 核心业务特性
 - **多租户数据隔离**：通过商户ID实现数据维度的完全隔离
 - **员工归属管理**：员工必须归属于某个商户，同一商户内员工手机号唯一
-- **多商户切换**：支持员工可拥有多个商户身份，登录时手动选择
+- **单一商户归属**：每个员工只能属于一个商户，确保权限管理简洁明确
 - **角色权限继承**：基于现有Casbin RBAC体系，增加商户维度的权限控制
 - **统一认证体系**：保持JWT认证机制，扩展支持商户上下文
 
@@ -19,62 +19,57 @@
 - **数据隔离方式**：在核心业务表中增加merchant_id字段实现行级数据隔离
 - **权限扩展策略**：扩展Casbin RBAC模型，增加商户维度的权限控制
 - **认证体系升级**：保持JWT机制，在Token中增加当前商户上下文
-- **前端状态管理**：扩展Pinia Store，管理当前商户状态和切换逻辑
+- **前端状态管理**：扩展Pinia Store，管理当前商户状态
 
 ```mermaid
 graph TB
-    subgraph "前端多租户层"
-        A[商户选择组件]
-        B[商户管理页面]
-        C[员工管理组件]
-        D[权限控制指令]
-        E[商户切换组件]
+    subgraph "前端单租户层"
+        A[商户管理页面]
+        B[员工管理组件]
+        C[权限控制指令]
     end
     
     subgraph "API接口层"
-        F[商户管理API]
-        G[多租户用户API]
-        H[多租户角色API]
-        I[商户切换API]
+        D[商户管理API]
+        E[员工管理API]
+        F[角色管理API]
     end
     
     subgraph "业务服务层"
-        J[商户信息服务]
-        K[多租户用户服务]
-        L[多租户角色服务]
-        M[权限控制服务]
+        G[商户信息服务]
+        H[员工管理服务]
+        I[角色权限服务]
     end
     
-    subgraph "扩展数据模型层"
-        N[商户信息模型]
-        O[扩展用户模型]
-        P[扩展角色模型]
-        Q[商户用户关联]
+    subgraph "数据模型层"
+        J[商户信息模型]
+        K[扩展用户模型]
+        L[扩展角色模型]
     end
     
-    subgraph "多租户权限层"
-        R[扩展Casbin引擎]
-        S[商户权限策略]
-        T[数据隔离中间件]
+    subgraph "权限控制层"
+        M[扩展Casbin引擎]
+        N[商户权限策略]
+        O[数据隔离中间件]
     end
     
-    A --> F
-    B --> G
-    C --> H
-    E --> I
-    F --> J
-    G --> K
-    H --> L
-    I --> M
-    J --> N
-    K --> O
-    L --> P
-    M --> Q
-    F --> R
-    G --> R
-    H --> R
-    R --> S
-    R --> T
+    A --> D
+    B --> E
+    C --> F
+    
+    D --> G
+    E --> H
+    F --> I
+    
+    G --> J
+    H --> K
+    I --> L
+    
+    D --> M
+    E --> M
+    F --> M
+    M --> N
+    M --> O
 ```
 
 ## 多租户数据模型设计
@@ -94,8 +89,8 @@ graph TB
 **数据迁移策略**：
 ```sql
 -- 创建默认商户（ID=1）
-INSERT INTO sys_merchant (id, merchant_code, merchant_name, merchant_type, level, path, contact_name, contact_phone, contact_email, status, merchant_level, operator_id, operator_name) 
-VALUES (1, 'DEFAULT_MERCHANT', '默认商户', 'ENTERPRISE', 1, '1', '系统管理员', '13800000000', 'admin@system.com', 'ACTIVE', 'VIP', 1, '系统');
+INSERT INTO sys_merchant (id, merchant_code, merchant_name, merchant_type, level, path, contact_name, contact_phone, contact_email, status, is_enabled, valid_start_time, valid_end_time, merchant_level, operator_id, operator_name, operator_merchant_id, operator_merchant_name) 
+VALUES (1, 'DEFAULT_MERCHANT', '默认商户', 'ENTERPRISE', 1, '1', '系统管理员', '13800000000', 'admin@system.com', 'ACTIVE', 1, '2024-01-01 00:00:00', '2099-12-31 23:59:59', 'VIP', 1, '系统', 1, '默认商户');
 
 -- 更新所有现有员工数据，设置商户ID为1
 UPDATE sys_user SET merchant_id = 1 WHERE merchant_id IS NULL;
@@ -104,9 +99,7 @@ UPDATE sys_user SET merchant_id = 1 WHERE merchant_id IS NULL;
 UPDATE sys_authority SET merchant_id = 1, role_type = 3 WHERE merchant_id IS NULL AND authority_name != '超级管理员';
 UPDATE sys_authority SET merchant_id = 1, role_type = 1 WHERE authority_name = '超级管理员';
 
--- 创建员工商户关联记录
-INSERT INTO sys_merchant_user (user_id, merchant_id, is_default, created_at, updated_at)
-SELECT id, 1, true, NOW(), NOW() FROM sys_user WHERE id NOT IN (SELECT user_id FROM sys_merchant_user WHERE user_id IS NOT NULL);
+
 ```
 
 #### sys_user 表扩展（员工表）
@@ -115,21 +108,126 @@ SELECT id, 1, true, NOW(), NOW() FROM sys_user WHERE id NOT IN (SELECT user_id F
 | 新增字段名 | 类型 | 必填 | 索引 | 说明 | 示例值 |
 |-----------|------|------|------|------|--------|
 | MerchantID | uint | 是 | 普通索引 | 所属商户ID | 1 |
-| IsMainAccount | bool | 否 | 无 | 是否为主账号 | true |
 
-**注意**：原有Phone字段的唯一索引需要修改为复合唯一索引：`(phone, merchant_id, deleted_at)`，确保同一商户内手机号唯一。
+**重要设计说明**：手机号索引策略需要重新设计以支持多商户登录功能。
 
-**IsMainAccount字段说明**：
-- 标识用户是否为商户的主管理员账号
-- 商户创建时，同时创建的管理员用户该字段为 `true`
-- 后续添加的员工用户该字段为 `false`
-- 用于快速判断用户在商户中的管理权限等级
-- 主账号通常拥有该商户的最高管理权限
+**问题分析**：
+原设计中的复合唯一索引(phone, merchant_id, deleted_at)存在业务逻辑冲突：
+- 该索引确保了同一手机号在同一商户内唯一，但限制了跨商户登录功能
+- 与后续多商户登录选择功能产生直接冲突
+- 无法支持同一手机号在多个商户中拥有不同身份的业务需求
 
-**现有数据处理**：
-- 现有员工数据在迁移后默认归属于商户ID=1
-- 现有的第一个管理员用户（或指定的管理员）设置IsMainAccount=true
-- 其他现有员工用户设置IsMainAccount=false
+**手机号索引优化方案**：
+
+**问题分析**：
+原设计中的复合唯一索引(phone, merchant_id, deleted_at)存在业务逻辑冲突：
+- 该索引确保了同一手机号在同一商户内唯一，但限制了跨商户登录功能
+- 与后续多商户登录选择功能产生直接冲突
+- 无法支持同一手机号在多个商户中拥有不同身份的业务需求
+
+**优化索引策略**：
+
+在复合唯一索引中增加`user_id`字段，形成`(phone, merchant_id, user_id, deleted_at)`索引：
+
+**索引设计逻辑**：
+- **同一用户在同一商户内唯一**：通过`(user_id, merchant_id, deleted_at)`确保同一用户在同一商户内只有一条记录
+- **支持跨商户身份**：同一`user_id`可以在不同`merchant_id`中存在多条记录
+- **手机号一致性**：同一`user_id`的所有记录共享相同的`phone`值
+- **软删除支持**：通过`deleted_at`字段支持软删除逻辑
+
+**索引创建语句**：
+```sql
+-- 删除原有的手机号相关索引
+DROP INDEX IF EXISTS idx_phone_unique ON sys_user;
+DROP INDEX IF EXISTS idx_phone_merchant_unique ON sys_user;
+
+-- 创建新的复合唯一索引
+CREATE UNIQUE INDEX idx_phone_merchant_user_unique ON sys_user (phone, merchant_id, user_id, deleted_at);
+
+-- 创建用户商户唯一索引（核心约束）
+CREATE UNIQUE INDEX idx_user_merchant_unique ON sys_user (user_id, merchant_id, deleted_at);
+
+-- 创建手机号查询索引（用于登录检测）
+CREATE INDEX idx_phone_lookup ON sys_user (phone, deleted_at);
+```
+
+**业务逻辑说明**：
+
+1. **用户创建流程**：
+   - 首次创建用户时，系统生成唯一的`user_id`
+   - 用户基础信息（姓名、手机号等）与`user_id`绑定
+   - 在指定商户中创建该用户的第一个身份记录
+
+2. **多商户身份管理**：
+   - 同一`user_id`可以在不同商户中创建多个身份记录
+   - 每个身份记录独立管理角色、权限、状态等信息
+   - 所有身份记录共享相同的基础信息（手机号、真实姓名等）
+
+3. **登录逻辑优化**：
+   - 用户输入手机号后，系统查询该手机号关联的所有用户身份
+   - 如果只有一个身份，直接登录对应商户
+   - 如果有多个身份，显示商户选择界面
+   - 登录成功后，JWT Token包含选择的商户和身份信息
+
+**数据模型示例**：
+```sql
+-- 用户张三的基础身份（user_id=1001）
+-- 在商户A中的记录
+INSERT INTO sys_user (id, user_id, username, phone, merchant_id, name, authority_id) 
+VALUES (1, 1001, 'zhangsan_merchant1', '13800138000', 1, '张三', 5);
+
+-- 张三在商户B中的记录（相同user_id，不同merchant_id）
+INSERT INTO sys_user (id, user_id, username, phone, merchant_id, name, authority_id) 
+VALUES (2, 1001, 'zhangsan_merchant2', '13800138000', 2, '张三', 8);
+```
+
+**sys_user表结构扩展**：
+
+需要在现有sys_user表中增加`user_id`字段：
+
+| 新增字段名 | 类型 | 必填 | 索引 | 说明 | 示例值 |
+|-----------|------|------|------|------|--------|
+| UserID | uint | 是 | 复合索引 | 用户统一标识ID | 1001 |
+
+**字段关系说明**：
+- **id**：sys_user表的主键，每条记录唯一
+- **user_id**：用户的统一标识，同一人在不同商户中的记录共享此ID
+- **phone**：手机号，同一user_id的所有记录必须相同
+- **merchant_id**：商户ID，标识该记录属于哪个商户
+- **username**：登录用户名，可以在不同商户中设置不同值
+- **authority_id**：角色ID，可以在不同商户中拥有不同角色
+
+**约束规则**：
+1. **核心约束**：`(user_id, merchant_id, deleted_at)`必须唯一，确保同一用户在同一商户内只有一条记录
+2. **数据一致性**：同一`user_id`的所有记录，`phone`、`name`等基础信息必须保持一致
+3. **商户隔离**：不同商户中的记录可以有不同的`username`、`authority_id`等业务信息
+
+**方案优势**：
+1. **灵活性**：支持同一用户在多个商户中拥有不同身份
+2. **数据一致性**：通过user_id确保用户基础信息的一致性
+3. **索引高效**：复合索引设计兼顾查询性能和数据完整性
+4. **扩展性**：易于支持未来的多租户功能扩展
+5. **兼容性**：在现有表结构基础上扩展，迁移成本较低
+
+**数据迁移策略**：
+```sql
+-- 1. 为现有数据生成user_id
+UPDATE sys_user SET user_id = id WHERE user_id IS NULL;
+
+-- 2. 创建新的索引
+-- （索引创建语句见上述部分）
+
+-- 3. 验证数据完整性
+SELECT user_id, COUNT(*) as record_count 
+FROM sys_user 
+WHERE deleted_at IS NULL 
+GROUP BY user_id 
+HAVING COUNT(*) > 1;
+```
+
+这个方案既解决了原有的索引冲突问题，又保持了设计的灵活性，是一个很好的优化方案。
+
+
 
 #### sys_authority 表扩展（角色表）
 在现有sys_authority表基础上增加商户维度：
@@ -199,11 +297,16 @@ VALUES ('财务人员', 2, 3);
 | LegalPerson | string | 否 | 无 | 法人代表 | 李四 |
 | RegisteredAddress | string | 否 | 无 | 注册地址 | 北京市朝阳区XX路XX号 |
 | BusinessScope | string | 否 | 无 | 经营范围 | 技术开发、技术服务 |
-| Status | string | 是 | 普通索引 | 商户状态 | PENDING, ACTIVE, SUSPENDED, DISABLED |
+| Status | string | 是 | 普通索引 | 商户状态 | ACTIVE, SUSPENDED, DISABLED |
+| IsEnabled | int | 是 | 普通索引 | 商户开关状态：1-正常 0-关闭 | 1 |
+| ValidStartTime | time.Time | 否 | 无 | 有效开始时间 | 2024-01-01 00:00:00 |
+| ValidEndTime | time.Time | 否 | 无 | 有效结束时间 | 2024-12-31 23:59:59 |
 | MerchantLevel | string | 是 | 无 | 商户等级 | BASIC, PREMIUM, VIP |
 | AdminUserID | uint | 否 | 外键 | 管理员用户ID | 2 |
 | OperatorID | uint | 是 | 无 | 操作者用户ID | 1 |
 | OperatorName | string | 是 | 无 | 操作者姓名 | 张三 |
+| OperatorMerchantID | uint | 否 | 无 | 操作者所属商户ID | 1 |
+| OperatorMerchantName | string | 否 | 无 | 操作者所属商户名称 | XX科技有限公司 |
 | CreatedAt | time.Time | 是 | 无 | 创建时间 | 2024-01-01 10:00:00 |
 | UpdatedAt | time.Time | 是 | 无 | 更新时间 | 2024-01-02 15:30:00 |
 | DeletedAt | gorm.DeletedAt | 否 | 无 | 删除时间 | NULL |
@@ -213,21 +316,7 @@ VALUES ('财务人员', 2, 3);
 - **Level**：商户在层级中的深度，顶级商户为1，子商户为2，依此类推
 - **Path**：记录从根节点到当前节点的完整路径，便于层级查询
 
-#### 商户用户关联模型（sys_merchant_user）
-支持员工拥有多个商户身份的关联表：
 
-| 字段名 | 类型 | 必填 | 索引 | 说明 | 示例值 |
-|--------|------|------|------|------|--------|
-| ID | uint | 是 | 主键 | 主键ID | 1 |
-| UserID | uint | 是 | 复合索引1 | 用户ID | 2 |
-| MerchantID | uint | 是 | 复合索引1 | 商户ID | 1 |
-| IsDefault | bool | 否 | 无 | 是否为默认商户 | true |
-| JoinedAt | time.Time | 是 | 无 | 加入时间 | 2024-01-01 10:00:00 |
-| Status | string | 是 | 无 | 关联状态 | ACTIVE, SUSPENDED |
-| CreatedAt | time.Time | 是 | 无 | 创建时间 | 2024-01-01 10:00:00 |
-| UpdatedAt | time.Time | 是 | 无 | 更新时间 | 2024-01-02 15:30:00 |
-
-**复合唯一索引**：`(user_id, merchant_id)` 确保用户与商户的关联唯一性
 
 #### 商户状态变更记录模型（sys_merchant_status_log）
 
@@ -235,25 +324,97 @@ VALUES ('财务人员', 2, 3);
 |--------|------|------|------|------|--------|
 | ID | uint | 是 | 主键 | 主键ID | 1 |
 | MerchantID | uint | 是 | 外键索引 | 商户ID | 1 |
-| PreviousStatus | string | 是 | 无 | 变更前状态 | PENDING |
-| NewStatus | string | 是 | 无 | 变更后状态 | ACTIVE |
-| ChangeReason | string | 是 | 无 | 变更原因 | 审核通过 |
+| PreviousStatus | string | 是 | 无 | 变更前状态 | ACTIVE |
+| NewStatus | string | 是 | 无 | 变更后状态 | SUSPENDED |
+| ChangeReason | string | 是 | 无 | 变更原因 | 系统管理员操作 |
 | OperatorID | uint | 是 | 无 | 操作者用户ID | 2 |
 | OperatorName | string | 是 | 无 | 操作者姓名 | 张三 |
 | OperatorMerchantID | uint | 否 | 无 | 操作者所属商户ID | 1 |
 | CreatedAt | time.Time | 是 | 无 | 变更时间 | 2024-01-02 15:00:00 |
+
+### 商户状态控制设计
+
+#### 商户开关状态说明
+
+**IsEnabled 字段作用**：
+- **1（正常）**：商户处于正常运营状态，商户内所有用户可以正常登录和使用系统
+- **0（关闭）**：商户处于关闭状态，商户内所有用户无法登录系统平台
+
+**有效时间设计**：
+- **ValidStartTime**：商户有效开始时间，用于记录商户的合同或授权起始时间
+- **ValidEndTime**：商户有效结束时间，用于记录商户的合同或授权结束时间
+- **注意**：有效时间段目前仅做记录用途，不对登录逻辑进行处理
+
+#### 登录限制逻辑
+
+**影响范围**：
+当商户状态设置为关闭（IsEnabled = 0）时，以下用户将无法登录系统：
+- 该商户的所有员工（RoleType = 3）
+- 该商户的管理员（RoleType = 2）
+- **例外**：超级管理员（RoleType = 1）不受商户状态影响，可以正常登录
+
+**登录校验流程**：
+
+```mermaid
+sequenceDiagram
+    participant U as 用户
+    participant API as 登录API
+    participant AUTH as 认证服务
+    participant DB as 数据库
+    
+    U->>API: 提交登录请求
+    API->>AUTH: 验证用户名密码
+    AUTH->>DB: 查询用户信息
+    DB-->>AUTH: 返回用户数据
+    
+    alt 超级管理员
+        AUTH->>AUTH: 跳过商户状态检查
+        AUTH-->>API: 登录成功
+    else 商户用户
+        AUTH->>DB: 查询所属商户状态
+        DB-->>AUTH: 返回商户IsEnabled字段
+        
+        alt IsEnabled = 1
+            AUTH-->>API: 登录成功
+        else IsEnabled = 0
+            AUTH-->>API: 登录失败：商户状态关闭
+        end
+    end
+    
+    API-->>U: 返回登录结果
+```
+
+**错误提示信息**：
+```json
+{
+    "code": 40303,
+    "message": "商户状态关闭，请联系管理员",
+    "data": {
+        "merchantId": 2,
+        "merchantName": "XX科技有限公司",
+        "isEnabled": 0
+    }
+}
+```
+
+**实现要点**：
+1. 在用户登录时，需要同时查询用户所属商户的IsEnabled状态
+2. 超级管理员不受商户状态限制，可以管理关闭的商户
+3. 已登录的用户在商户被关闭后，需要在下次请求时进行状态检查
+4. 提供明确的错误提示，帮助用户理解限制原因
 
 ### 商户层级关系设计
 
 ```mermaid
 erDiagram
     SysMerchant ||--o{ SysMerchant : "父子关系"
+
+    
+    SysMerchant ||--o{ SysMerchant : "父子关系"
     SysMerchant ||--o{ SysUser : "拥有员工"
     SysMerchant ||--o{ SysAuthority : "拥有角色"
     SysMerchant ||--o{ SysMerchantStatusLog : "状态记录"
-    SysMerchant ||--o{ SysMerchantUser : "用户关联"
     
-    SysUser ||--o{ SysMerchantUser : "商户关联"
     SysUser }|--|| SysAuthority : "主角色"
     SysUser ||--o{ SysUserAuthority : "多角色"
     
@@ -269,10 +430,15 @@ erDiagram
         int Level
         string Path
         string Status
+        int IsEnabled
+        time ValidStartTime
+        time ValidEndTime
         string MerchantLevel
         uint AdminUserID FK
         uint OperatorID FK
         string OperatorName
+        uint OperatorMerchantID
+        string OperatorMerchantName
     }
     
     SysUser {
@@ -281,7 +447,7 @@ erDiagram
         string Phone UK
         uint MerchantID FK
         uint AuthorityId FK
-        bool IsMainAccount
+        bool Enable
     }
     
     SysAuthority {
@@ -290,14 +456,6 @@ erDiagram
         uint MerchantID FK
         int RoleType
         uint ParentId FK
-    }
-    
-    SysMerchantUser {
-        uint ID PK
-        uint UserID FK
-        uint MerchantID FK
-        bool IsDefault
-        string Status
     }
     
     SysMerchantStatusLog {
@@ -352,56 +510,6 @@ graph TD
 - 所有业务接口自动进行商户数据隔离
 - 支持多商户切换和上下文管理
 
-### 商户选择与切换接口
-
-#### 获取用户所属商户列表
-- **接口路径**：`GET /api/v1/user/merchants`
-- **权限要求**：已登录用户
-- **响应格式**：
-```json
-{
-    "code": 0,
-    "message": "获取成功",
-    "data": {
-        "merchants": [
-            {
-                "merchantId": 1,
-                "merchantCode": "MERCH20240001",
-                "merchantName": "XX科技有限公司",
-                "isDefault": true,
-                "status": "ACTIVE",
-                "joinedAt": "2024-01-01T10:00:00Z"
-            }
-        ]
-    }
-}
-```
-
-#### 切换当前商户
-- **接口路径**：`POST /api/v1/user/switch-merchant`
-- **权限要求**：已登录用户
-- **请求参数**：
-
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
-| merchantId | uint | 是 | 要切换到的商户ID |
-
-- **响应格式**：
-```json
-{
-    "code": 0,
-    "message": "切换成功",
-    "data": {
-        "token": "new_jwt_token_with_merchant_context",
-        "merchantInfo": {
-            "merchantId": 1,
-            "merchantName": "XX科技有限公司",
-            "userRole": "merchant_admin"
-        }
-    }
-}
-```
-
 ### 商户信息管理接口
 
 #### 创建商户
@@ -412,6 +520,7 @@ graph TD
 | 参数名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
 | merchantName | string | 是 | 商户名称 |
+| merchantIcon | string | 否 | 商户图标URL |
 | parentId | uint | 否 | 父商户ID（不填为顶级商户） |
 | merchantType | string | 是 | 商户类型（ENTERPRISE/INDIVIDUAL） |
 | contactName | string | 是 | 联系人姓名 |
@@ -421,6 +530,10 @@ graph TD
 | legalPerson | string | 否 | 法人代表 |
 | registeredAddress | string | 否 | 注册地址 |
 | businessScope | string | 否 | 经营范围 |
+| merchantLevel | string | 是 | 商户等级（BASIC/PREMIUM/VIP） |
+| isEnabled | int | 否 | 商户开关状态（默认1-正常） |
+| validStartTime | string | 否 | 有效开始时间 |
+| validEndTime | string | 否 | 有效结束时间 |
 | adminUserInfo | object | 是 | 管理员用户信息 |
 
 **adminUserInfo 对象结构：**
@@ -432,11 +545,64 @@ graph TD
 | name | string | 是 | 管理员真实姓名 |
 | phone | string | 是 | 管理员手机号 |
 | email | string | 是 | 管理员邮箱 |
+| headerImg | string | 否 | 管理员头像URL |
+| sideMode | string | 否 | 侧边栏模式（默认dark） |
+| enable | int | 否 | 账户启用状态（默认1-启用） |
 
 **层级关系处理**：
 - 如果提供parentId，系统会自动计算level和path
 - 顶级商户：level=1, path=merchantId
 - 子商户：level=父商户level+1, path=父商户path/merchantId
+
+**请求示例**：
+```json
+{
+  "merchantName": "XX科技有限公司",
+  "merchantIcon": "/uploads/icons/merchant_logo.png",
+  "parentId": 1,
+  "merchantType": "ENTERPRISE",
+  "contactName": "张三",
+  "contactPhone": "13800138000",
+  "contactEmail": "contact@xxtech.com",
+  "businessLicense": "91110000000000000X",
+  "legalPerson": "张三",
+  "registeredAddress": "北京市朝阳区XX路XX号",
+  "businessScope": "技术开发、技术服务",
+  "merchantLevel": "PREMIUM",
+  "isEnabled": 1,
+  "validStartTime": "2024-01-01 00:00:00",
+  "validEndTime": "2024-12-31 23:59:59",
+  "adminUserInfo": {
+    "username": "merchant_admin",
+    "password": "123456",
+    "nickName": "商户管理员",
+    "name": "张三",
+    "phone": "13800138000",
+    "email": "admin@xxtech.com",
+    "headerImg": "/uploads/avatar/admin_avatar.jpg",
+    "sideMode": "dark",
+    "enable": 1
+  }
+}
+```
+
+**响应格式**：
+```json
+{
+  "code": 0,
+  "message": "创建成功",
+  "data": {
+    "merchantId": 5,
+    "merchantCode": "MERCH20240005",
+    "merchantName": "XX科技有限公司",
+    "level": 2,
+    "path": "1/5",
+    "adminUserId": 10,
+    "adminUsername": "merchant_admin",
+    "createdAt": "2024-01-01T10:00:00Z"
+  }
+}
+```
 
 #### 查询商户层级结构
 - **接口路径**：`GET /api/v1/merchant/tree`
@@ -544,15 +710,15 @@ graph TD
 - **接口路径**：`GET /api/v1/merchant/user/list`
 - **数据隔离**：自动过滤，只返回当前商户的员工
 
-#### 添加现有员工到商户
-- **接口路径**：`POST /api/v1/merchant/user/add`
-- **权限要求**：商户管理员权限
+#### 员工状态管理
+- **接口路径**：`PUT /api/v1/merchant/user/:id/status`
+- **权限要求**：商户管理员或超级管理员
 - **请求参数**：
 
 | 参数名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
-| userId | uint | 是 | 用户ID |
-| isDefault | bool | 否 | 是否为默认商户 |
+| enable | bool | 是 | 员工启用状态：true-启用，false-禁用 |
+| reason | string | 否 | 状态变更原因 |
 
 ### 员工角色权限管理接口
 
@@ -661,13 +827,6 @@ graph TD
                 "category": "role_management",
                 "description": "删除商户角色",
                 "isRequired": false
-            },
-            {
-                "permissionCode": "merchant:auth:submit",
-                "permissionName": "认证资料提交",
-                "category": "authentication",
-                "description": "提交商户认证资料",
-                "isRequired": false
             }
         ],
         "categories": [
@@ -685,11 +844,6 @@ graph TD
                 "categoryCode": "role_management",
                 "categoryName": "角色管理",
                 "description": "商户角色管理相关权限"
-            },
-            {
-                "categoryCode": "authentication",
-                "categoryName": "认证管理",
-                "description": "商户认证相关权限"
             }
         ]
     }
@@ -869,26 +1023,7 @@ sequenceDiagram
     API-->>Admin: 返回操作结果
 ```
 
-### 商户认证审核流程
-
-```mermaid
-sequenceDiagram
-    participant M as 商户
-    participant S as 系统
-    participant SA as 超级管理员
-    
-    M->>S: 提交认证资料
-    S->>S: 上传文件到存储
-    S->>S: 创建认证记录（状态：PENDING）
-    S->>SA: 发送审核通知
-    
-    SA->>S: 查看认证资料
-    SA->>S: 审核认证资料
-    S->>S: 更新认证记录状态
-    S->>M: 发送审核结果通知
-```
-
-### 多商户员工登录流程
+### 单一商户员工登录流程
 
 ```mermaid
 sequenceDiagram
@@ -896,30 +1031,15 @@ sequenceDiagram
     participant F as 前端页面
     participant API as 登录API
     participant AUTH as 认证服务
-    participant MS as 商户服务
     participant DB as 数据库
     
     U->>F: 输入用户名密码
     F->>API: POST /api/v1/login
     API->>AUTH: 验证用户凭据
     AUTH->>DB: 查询用户信息
-    
-    alt 单一商户员工
-        AUTH->>AUTH: 生成包含商户ID的JWT
-        AUTH-->>F: 返回Token和商户信息
-        F->>F: 直接进入商户后台
-    else 多商户员工
-        AUTH->>MS: 查询用户所属商户列表
-        MS->>DB: 查询sys_merchant_user关联
-        MS-->>AUTH: 返回商户列表
-        AUTH-->>F: 返回商户选择页面
-        F->>F: 显示商户选择列表
-        U->>F: 选择目标商户
-        F->>API: POST /api/v1/user/switch-merchant
-        API->>AUTH: 生成包含指定商户ID的JWT
-        AUTH-->>F: 返回新Token和商户信息
-        F->>F: 进入选定商户后台
-    end
+    AUTH->>AUTH: 生成包含商户ID的JWT
+    AUTH-->>F: 返回Token和商户信息
+    F->>F: 进入商户后台
 ```
 
 ### 商户内数据隔离流程
@@ -955,22 +1075,7 @@ sequenceDiagram
     MW-->>F: 返回最终结果
 ```
 
-### 商户切换流程
 
-```mermaid
-stateDiagram-v2
-    [*] --> 已登录用户 : 登录成功
-    已登录用户 --> 商户A后台 : 选择默认商户A
-    商户A后台 --> 商户选择页 : 点击切换商户
-    商户选择页 --> 商户B后台 : 选择商户B
-    商户B后台 --> 商户选择页 : 点击切换商户
-    商户A后台 --> 商户选择页 : 点击切换商户
-    商户选择页 --> 商户A后台 : 选择商户A
-    
-    note right of 商户A后台 : JWT包含商户A上下文
-    note right of 商户B后台 : JWT包含商户B上下文
-    note right of 商户选择页 : 显示用户所有商户列表
-```
 
 ### 原有系统界面兼容性改造
 
@@ -1082,192 +1187,294 @@ stateDiagram-v2
 
 #### 登录流程优化设计
 
-**多商户登录场景分析**：
-1. **单商户员工**：用户只属于一个商户，登录后直接进入该商户后台
-2. **多商户员工**：用户属于多个商户，登录后需要选择要进入的商户
-3. **现有员工兼容**：现有员工默认归属商户ID=1，保持原有登录体验
+**多商户员工登录场景分析**：
+- 员工在登录时，系统检查该手机号在多个商户中是否存在
+- 如果员工只属于一个商户：直接进入该商户后台
+- 如果员工属于多个商户：显示商户选择界面，让用户选择要进入的商户
+- 保持现有单商户用户体验不变，多商户功能对原用户透明
 
-#### 前端登录页面改造（login.vue）
+#### 多商户检测接口
 
-**1. 登录表单保持不变**
-- 保留原有的用户名/手机号、密码、验证码输入框
-- 不在登录页面增加商户选择，避免用户困惑
-- 保持原有的登录UI设计和交互逻辑
+**新增接口：检测用户多商户身份**
+- **接口路径**：`POST /api/v1/auth/check-merchants`
+- **调用时机**：用户输入用户名/手机号后，密码验证前
+- **请求参数**：
 
-**2. 登录后处理逻辑修改**
-- 登录成功后调用 `/api/v1/user/merchants` 获取用户所属商户列表
-- 根据商户数量进行不同的跳转处理：
-  - 单商户：直接跳转到后台首页（保持原有体验）
-  - 多商户：跳转到商户选择页面
+| 参数名 | 类型 | 必填 | 说明 |
+|--------|------|------|------|
+| identifier | string | 是 | 用户标识（手机号或用户名） |
+| identifierType | string | 否 | 标识类型：phone/username（默认自动检测） |
 
-**3. 商户选择页面设计（merchant-select.vue）**
+- **后端检测逻辑**：
+```sql
+-- 自动检测标识类型（正则匹配手机号格式）
+SELECT u.id, u.username, u.phone, u.merchant_id, u.name,
+       m.merchant_name, m.merchant_icon, m.status,
+       CASE 
+         WHEN a.role_type = 1 THEN '超级管理员'
+         WHEN a.role_type = 2 THEN '商户管理员'
+         ELSE '员工'
+       END as user_role
+FROM sys_user u
+LEFT JOIN sys_merchant m ON u.merchant_id = m.id
+LEFT JOIN sys_authority a ON u.authority_id = a.authority_id
+WHERE (u.phone = ? OR u.username = ?) 
+  AND u.deleted_at IS NULL 
+  AND u.enable = 1
+  AND m.is_enabled = 1;
+```
 
+- **响应格式**：
+```json
+{
+  "code": 0,
+  "message": "检测成功",
+  "data": {
+    "isMultiMerchant": true,
+    "merchantCount": 2,
+    "identifierType": "phone",
+    "merchants": [
+      {
+        "userId": 10,
+        "username": "zhangsan_a",
+        "merchantId": 1,
+        "merchantName": "XX科技有限公司",
+        "merchantIcon": "/uploads/icons/merchant_1.png",
+        "userRole": "商户管理员",
+        "status": "ACTIVE"
+      },
+      {
+        "userId": 25,
+        "username": "zhangsan_b", 
+        "merchantId": 3,
+        "merchantName": "YY贸易公司",
+        "merchantIcon": "/uploads/icons/merchant_3.png",
+        "userRole": "员工",
+        "status": "ACTIVE"
+      }
+    ]
+  }
+}
+```
+
+#### 多商户登录流程
+
+```mermaid
+sequenceDiagram
+    participant U as 员工
+    participant F as 前端页面
+    participant API as 登录API
+    participant AUTH as 认证服务
+    participant DB as 数据库
+    
+    U->>F: 输入手机号
+    F->>API: POST /api/v1/auth/check-merchants
+    API->>DB: 查询手机号对应的商户列表
+    
+    alt 单一商户员工
+        DB-->>API: 返回单个商户信息
+        API-->>F: isMultiMerchant=false
+        F->>F: 显示密码输入框
+        U->>F: 输入密码
+        F->>API: POST /api/v1/login (包含merchantId)
+        API->>AUTH: 验证密码并生成Token
+        AUTH-->>F: 返回Token和商户信息
+        F->>F: 直接进入商户后台
+    else 多商户员工
+        DB-->>API: 返回多个商户信息
+        API-->>F: isMultiMerchant=true + 商户列表
+        F->>F: 显示商户选择界面
+        U->>F: 选择目标商户
+        F->>F: 显示密码输入框
+        U->>F: 输入密码
+        F->>API: POST /api/v1/login (包含选中merchantId)
+        API->>AUTH: 验证密码并生成Token
+        AUTH-->>F: 返回Token和商户信息
+        F->>F: 进入选定商户后台
+    end
+```
+
+#### 登录接口扩展
+
+**现有登录接口修改（/api/v1/base/login）**
+
+**请求参数扩展**：
+| 参数名 | 类型 | 必填 | 说明 |
+|--------|------|------|------|
+| username | string | 是 | 用户名或手机号 |
+| password | string | 是 | 密码 |
+| captcha | string | 否 | 验证码 |
+| captchaId | string | 否 | 验证码ID |
+| merchantId | uint | 否 | 选择的商户ID（多商户时必填） |
+
+**响应数据结构扩展**：
+```json
+{
+  "code": 0,
+  "message": "登录成功",
+  "data": {
+    "user": {
+      "userName": "admin",
+      "nickName": "管理员",
+      "uuid": "xxx-xxx-xxx",
+      "userId": 1,
+      "authorityId": "super_admin",
+      "merchantId": 1,
+      "merchantName": "XX科技有限公司",
+      "roleType": 2,
+      "phone": "13800138000"
+    },
+    "token": "jwt_token_here",
+    "expiresAt": "2024-01-01T10:00:00Z"
+  }
+}
+```
+
+#### 商户选择页面设计
+
+**页面路由设计**
+- 路由地址：在登录页面内部状态切换，不单独设置路由
+- 页面状态：`loginStep: 'phone' | 'merchant-select' | 'password'`
+
+**商户选择界面组件**
 ```vue
 <template>
   <div class="merchant-select-container">
     <div class="select-header">
-      <h2>选择要进入的商户</h2>
-      <p class="user-info">欢迎，{{ userInfo.nickName }}</p>
+      <h3>选择工作商户</h3>
+      <p>检测到您在多个商户中有账户，请选择要登录的商户</p>
     </div>
     
     <div class="merchant-list">
       <div 
-        v-for="merchant in merchantList" 
+        v-for="merchant in merchants" 
         :key="merchant.merchantId"
-        class="merchant-card"
+        class="merchant-item"
+        :class="{ active: selectedMerchantId === merchant.merchantId }"
         @click="selectMerchant(merchant)"
       >
         <div class="merchant-icon">
-          <img v-if="merchant.merchantIcon" :src="merchant.merchantIcon" />
+          <img v-if="merchant.merchantIcon" :src="merchant.merchantIcon" :alt="merchant.merchantName" />
           <div v-else class="default-icon">{{ merchant.merchantName.charAt(0) }}</div>
         </div>
         <div class="merchant-info">
-          <h3>{{ merchant.merchantName }}</h3>
-          <p class="merchant-id">商户ID: {{ merchant.merchantId }}</p>
-          <span v-if="merchant.isDefault" class="default-badge">默认</span>
+          <h4>{{ merchant.merchantName }}</h4>
+          <span class="role-tag">{{ merchant.userRole }}</span>
         </div>
-        <div class="enter-btn">
-          <el-button type="primary">进入</el-button>
+        <div class="select-indicator">
+          <el-icon v-if="selectedMerchantId === merchant.merchantId"><Check /></el-icon>
         </div>
       </div>
     </div>
     
-    <div class="footer-actions">
-      <el-button @click="logout">退出登录</el-button>
+    <div class="action-buttons">
+      <el-button @click="goBack">返回</el-button>
+      <el-button type="primary" :disabled="!selectedMerchantId" @click="continueLogin">
+        继续登录
+      </el-button>
     </div>
   </div>
 </template>
 ```
 
-**4. 商户选择页面交互逻辑**
-- 展示用户所属的所有商户列表
-- 支持点击选择商户并进入对应后台
-- 记住用户的选择偏好（下次登录时优先显示）
-- 提供退出登录选项
+**交互逻辑**：
+1. 用户输入手机号后，自动检测多商户身份
+2. 如果是多商户，显示商户选择界面
+3. 用户选择商户后，显示密码输入框
+4. 提交登录时携带选中的商户ID
+5. 支持返回重新选择商户
 
-#### 后端登录接口修改
+#### 前端状态管理
 
-**现有登录接口保持兼容（/api/v1/base/login）**
-
-1. **登录验证逻辑不变**
-   - 保持原有的用户名/密码验证
-   - 保持原有的验证码校验
-   - 保持原有的用户状态检查
-
-2. **响应数据结构扩展**
-   ```json
-   {
-     "code": 0,
-     "message": "登录成功",
-     "data": {
-       "user": {
-         "userName": "admin",
-         "nickName": "管理员",
-         "uuid": "xxx-xxx-xxx",
-         "userId": 1,
-         "authorityId": "super_admin",
-         // 新增字段
-         "merchantId": 1,
-         "merchantCount": 1,  // 用户所属商户数量
-         "isMultiMerchant": false  // 是否多商户用户
-       },
-       "token": "jwt_token_here",
-       "expiresAt": "2024-01-01T10:00:00Z"
-     }
-   }
-   ```
-
-3. **Token生成策略**
-   - **单商户用户**：直接在Token中包含商户ID信息
-   - **多商户用户**：生成临时Token，不包含具体商户ID，用于获取商户列表
-   - **商户选择后**：通过 `/api/v1/user/switch-merchant` 获取包含商户上下文的正式Token
-
-#### 用户商户列表接口
-
-**新增接口：获取用户所属商户列表**
-- **接口路径**：`GET /api/v1/user/merchants`
-- **调用时机**：登录成功后立即调用
-- **权限要求**：需要有效的登录Token
-- **响应格式**：
-```json
-{
-  "code": 0,
-  "message": "获取成功",
-  "data": {
-    "merchants": [
-      {
-        "merchantId": 1,
-        "merchantCode": "MERCH20240001",
-        "merchantName": "XX科技有限公司",
-        "merchantIcon": "/uploads/icons/merchant_1.png",
-        "isDefault": true,
-        "status": "ACTIVE",
-        "userRole": "merchant_admin",
-        "joinedAt": "2024-01-01T10:00:00Z"
-      }
-    ],
-    "defaultMerchantId": 1  // 用户的默认商户ID
-  }
-}
-```
-
-#### 商户选择接口优化
-
-**商户切换接口增强（/api/v1/user/switch-merchant）**
-- 支持登录后的首次商户选择
-- 支持已登录用户的商户切换
-- 统一的Token刷新机制
-
-#### 前端路由守卫修改
-
-**路由拦截逻辑更新**
+**登录状态管理扩展**
 ```javascript
-// router/index.js - 路由守卫
-router.beforeEach(async (to, from, next) => {
-  const userStore = useUserStore()
-  const tenantStore = useTenantStore()
-  const token = getToken()
+// stores/auth.js
+export const useAuthStore = defineStore('auth', {
+  state: () => ({
+    loginStep: 'phone', // 'phone' | 'merchant-select' | 'password'
+    phoneNumber: '',
+    isMultiMerchant: false,
+    availableMerchants: [],
+    selectedMerchantId: null,
+    selectedMerchant: null
+  }),
   
-  if (token) {
-    // 已登录用户
-    if (!userStore.userInfo.userId) {
-      // 获取用户信息
-      await userStore.getUserInfo()
-    }
-    
-    // 检查是否需要选择商户
-    if (userStore.userInfo.isMultiMerchant && !tenantStore.currentMerchantId) {
-      // 多商户用户但未选择商户，跳转到商户选择页
-      if (to.path !== '/merchant-select') {
-        next('/merchant-select')
-        return
+  actions: {
+    // 检测多商户身份
+    async checkMerchants(phone) {
+      const response = await checkMerchants({ phone })
+      this.phoneNumber = phone
+      this.isMultiMerchant = response.data.isMultiMerchant
+      this.availableMerchants = response.data.merchants || []
+      
+      if (this.isMultiMerchant) {
+        this.loginStep = 'merchant-select'
+      } else {
+        this.loginStep = 'password'
+        // 单商户时自动设置商户ID
+        if (this.availableMerchants.length > 0) {
+          this.selectedMerchantId = this.availableMerchants[0].merchantId
+          this.selectedMerchant = this.availableMerchants[0]
+        }
       }
-    }
+    },
     
-    // 单商户用户或已选择商户，正常访问
-    next()
-  } else {
-    // 未登录，跳转登录页
-    if (to.path !== '/login') {
-      next('/login')
-    } else {
-      next()
+    // 选择商户
+    selectMerchant(merchant) {
+      this.selectedMerchantId = merchant.merchantId
+      this.selectedMerchant = merchant
+      this.loginStep = 'password'
+    },
+    
+    // 登录
+    async login(password) {
+      const loginData = {
+        username: this.phoneNumber,
+        password,
+        merchantId: this.selectedMerchantId
+      }
+      
+      const response = await login(loginData)
+      // 处理登录成功逻辑
+      return response
+    },
+    
+    // 重置状态
+    resetLoginState() {
+      this.loginStep = 'phone'
+      this.phoneNumber = ''
+      this.isMultiMerchant = false
+      this.availableMerchants = []
+      this.selectedMerchantId = null
+      this.selectedMerchant = null
     }
   }
 })
 ```
 
-#### 状态管理修改
+#### 兼容性保障措施
 
-**用户状态管理扩展（stores/user.js）**
-```javascript
-export const useUserStore = defineStore('user', {
-  state: () => ({
-    // 原有字段保持不变
-    userInfo: {},
-    token: '',
-    
-    // 新增多商户相关字段
+**1. 现有用户体验保持不变**
+- 单商户员工登录流程保持不变，直接进入后台系统
+- 登录界面UI保持原有设计，用户无感知
+- 现有的自动登录、记住密码等功能正常工作
+
+**2. 多商户功能透明升级**
+- 对现有单商户用户无任何影响
+- 多商户功能仅在需要时才会显示，不会干扰现有用户
+- 支持渐进式升级，新增多商户员工时自动生效
+
+**3. 错误处理和降级**
+- 商户检测接口失败时，默认使用单商户模式
+- 商户状态关闭时提供明确的错误提示
+- 网络异常时，保留基础的登录功能
+
+**3. 员工转移支持**
+- 提供完整的员工商户转移功能
+- 支持转移时的角色权限重置
+- 保留转移历史记录供审计
+
+
     merchantCount: 0,
     isMultiMerchant: false,
     userMerchants: []
@@ -1320,17 +1527,21 @@ export const useUserStore = defineStore('user', {
 **2. 渐进式升级支持**
 - 支持用户逐步被添加到多个商户
 - 首次成为多商户用户时，引导用户了解商户选择功能
-- 提供用户偏好设置，可选择默认进入的商户
+#### 兼容性保障措施
 
-**3. 错误处理和降级**
-- 商户列表获取失败时，提供重试机制
-- 商户切换失败时，回退到用户的默认商户
+**1. 现有用户体验保持不变**
+- 员工登录后直接进入所属商户的后台系统
+- 登录界面UI保持原有设计，用户无感知
+- 现有的自动登录、记住密码等功能正常工作
+
+**2. 错误处理和降级**
+- 商户状态关闭时提供明确的错误提示
 - 网络异常时，保留基础的登录功能
 
-**4. 用户引导和帮助**
-- 在商户选择页面提供功能说明
-- 为多商户功能提供帮助文档链接
-- 支持客服联系方式，协助用户处理登录问题
+**3. 员工转移支持**
+- 提供完整的员工商户转移功能
+- 支持转移时的角色权限重置
+- 保留转移历史记录供审计
 
 ## 多租户前端组件架构
 
@@ -1338,35 +1549,29 @@ export const useUserStore = defineStore('user', {
 
 ```mermaid
 graph TB
-    subgraph "商户选择与切换"
-        A[MerchantSelector.vue - 商户选择器]
-        B[MerchantSwitcher.vue - 商户切换组件]
-    end
-    
     subgraph "商户管理主页面"
-        C[MerchantManagement.vue - 商户管理主页]
-        D[MerchantList.vue - 商户列表]
-        E[MerchantTree.vue - 商户树形结构]
-        F[MerchantForm.vue - 商户表单]
-        G[MerchantDetail.vue - 商户详情]
+        A[MerchantManagement.vue - 商户管理主页]
+        B[MerchantList.vue - 商户列表]
+        C[MerchantTree.vue - 商户树形结构]
+        D[MerchantForm.vue - 商户表单]
+        E[MerchantDetail.vue - 商户详情]
     end
     
     subgraph "商户层级管理"
-        H[MerchantHierarchy.vue - 层级结构管理]
-        I[MerchantMove.vue - 商户移动组件]
-        J[HierarchyBreadcrumb.vue - 层级面包屑]
+        F[MerchantHierarchy.vue - 层级结构管理]
+        G[MerchantMove.vue - 商户移动组件]
+        H[HierarchyBreadcrumb.vue - 层级面包屑]
     end
     
-    subgraph "多租户员工管理"
-        K[TenantUserList.vue - 商户员工列表]
-        L[TenantUserForm.vue - 员工表单]
-        M[UserMerchantBind.vue - 用户商户绑定]
+    subgraph "单租户员工管理"
+        I[TenantUserList.vue - 商户员工列表]
+        J[TenantUserForm.vue - 员工表单]
     end
     
-    subgraph "多租户角色管理"
-        N[TenantRoleList.vue - 商户角色列表]
-        O[TenantRoleForm.vue - 角色表单]
-        P[RolePermission.vue - 角色权限配置]
+    subgraph "商户角色管理"
+        K[TenantRoleList.vue - 商户角色列表]
+        L[TenantRoleForm.vue - 角色表单]
+        M[RolePermission.vue - 角色权限配置]
     end
     
     subgraph "通用组件"
@@ -3315,14 +3520,6 @@ CREATE TABLE `sys_merchant_status_log` (
   KEY `idx_merchant_status_log_merchant_id` (`merchant_id`),
   KEY `idx_merchant_status_log_operator_id` (`operator_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商户状态变更日志表';
-
--- 初始化超级管理员角色
-INSERT INTO `sys_authority` (`authority_id`, `authority_name`, `parent_id`, `merchant_id`, `is_system_role`, `default_router`) 
-VALUES ('super_admin', '超级管理员', 0, NULL, 1, 'dashboard');
-
--- 初始化超级管理员用户（密码需要加密）
-INSERT INTO `sys_user` (`username`, `password`, `nick_name`, `name`, `phone`, `email`, `merchant_id`, `authority_id`, `is_main_account`) 
-VALUES ('superadmin', '$2a$10$encrypted_password_here', '超级管理员', '系统管理员', '13800000000', 'admin@system.com', NULL, 'super_admin', 1);
 ```
 
 #### 数据初始化脚本
