@@ -6,10 +6,10 @@
 
 ### 核心业务特性
 - **多租户数据隔离**：通过商户ID实现数据维度的完全隔离
-- **员工归属管理**：员工必须归属于某个商户，同一商户内员工手机号唯一
-- **单一商户归属**：每个员工只能属于一个商户，确保权限管理简洁明确
+- **员工独立账户管理**：员工可以在多个商户中拥有不同的独立账户，每个账户有独立的用户名、手机号和密码
+- **跨商户身份支持**：同一手机号或用户名可在不同商户中创建不同的员工账户，账户间完全独立
 - **角色权限继承**：基于现有Casbin RBAC体系，增加商户维度的权限控制
-- **统一认证体系**：保持JWT认证机制，扩展支持商户上下文
+- **统一认证体系**：保持JWT认证机制，扩展支持商户上下文和多账户登录选择
 
 ## 技术架构
 
@@ -92,10 +92,10 @@ graph TB
 INSERT INTO sys_merchant (id, merchant_code, merchant_name, merchant_type, level, path, contact_name, contact_phone, contact_email, status, is_enabled, valid_start_time, valid_end_time, merchant_level, operator_id, operator_name, operator_merchant_id, operator_merchant_name) 
 VALUES (1, 'DEFAULT_MERCHANT', '默认商户', 'ENTERPRISE', 1, '1', '系统管理员', '13800000000', 'admin@system.com', 'ACTIVE', 1, '2024-01-01 00:00:00', '2099-12-31 23:59:59', 'VIP', 1, '系统', 1, '默认商户');
 
--- 更新所有现有员工数据，设置商户ID为1
+-- 更新所有现有员工数据，设置merchant_id为1
 UPDATE sys_user SET merchant_id = 1 WHERE merchant_id IS NULL;
 
--- 更新所有现有角色数据，设置商户ID为1，超级管理员角色设置RoleType=1
+-- 更新所有现有角色数据，设置merchant_id和role_type
 UPDATE sys_authority SET merchant_id = 1, role_type = 3 WHERE merchant_id IS NULL AND authority_name != '超级管理员';
 UPDATE sys_authority SET merchant_id = 1, role_type = 1 WHERE authority_name = '超级管理员';
 
@@ -107,32 +107,29 @@ UPDATE sys_authority SET merchant_id = 1, role_type = 1 WHERE authority_name = '
 
 | 新增字段名 | 类型 | 必填 | 索引 | 说明 | 示例值 |
 |-----------|------|------|------|------|--------|
-| MerchantID | uint | 是 | 普通索引 | 所属商户ID | 1 |
+| MerchantID | uint | 是 | 复合索引 | 所属商户ID | 1 |
 
-**重要设计说明**：手机号索引策略需要重新设计以支持多商户登录功能。
+**字段关系说明**：
+- **id**：sys_user表的主键，每条记录的唯一标识
+- **phone**：手机号，允许同一手机号在不同商户中创建不同的员工账户
+- **merchant_id**：商户ID，标识该记录属于哪个商户
+- **username**：登录用户名，在同一商户内必须唯一，不同商户间可以重复
+- **authority_id**：角色ID，可以在不同商户中拥有不同角色
+- **name**：真实姓名，同一手机号的员工在不同商户中可以使用不同姓名
+- **password**：登录密码，每个商户的员工账户有独立的密码
 
-**问题分析**：
-原设计中的复合唯一索引(phone, merchant_id, deleted_at)存在业务逻辑冲突：
-- 该索引确保了同一手机号在同一商户内唯一，但限制了跨商户登录功能
-- 与后续多商户登录选择功能产生直接冲突
-- 无法支持同一手机号在多个商户中拥有不同身份的业务需求
+**索引设计优化**：
 
-**手机号索引优化方案**：
-
-**问题分析**：
-原设计中的复合唯一索引(phone, merchant_id, deleted_at)存在业务逻辑冲突：
-- 该索引确保了同一手机号在同一商户内唯一，但限制了跨商户登录功能
-- 与后续多商户登录选择功能产生直接冲突
-- 无法支持同一手机号在多个商户中拥有不同身份的业务需求
 
 **优化索引策略**：
 
-在复合唯一索引中增加`user_id`字段，形成`(phone, merchant_id, user_id, deleted_at)`索引：
+移除手机号全局唯一限制，采用商户内字段唯一约束：
 
 **索引设计逻辑**：
-- **同一用户在同一商户内唯一**：通过`(user_id, merchant_id, deleted_at)`确保同一用户在同一商户内只有一条记录
-- **支持跨商户身份**：同一`user_id`可以在不同`merchant_id`中存在多条记录
-- **手机号一致性**：同一`user_id`的所有记录共享相同的`phone`值
+- **商户内手机号唯一**：通过`(phone, merchant_id, deleted_at)`确保同一商户内手机号唯一
+- **商户内用户名唯一**：通过`(username, merchant_id, deleted_at)`确保同一商户内用户名唯一
+- **支持跨商户账户**：同一手机号或用户名可以在不同商户中创建不同的员工账户
+- **用户名灵活性**：同一手机号在不同商户中可以使用不同的用户名
 - **软删除支持**：通过`deleted_at`字段支持软删除逻辑
 
 **索引创建语句**：
@@ -141,91 +138,81 @@ UPDATE sys_authority SET merchant_id = 1, role_type = 1 WHERE authority_name = '
 DROP INDEX IF EXISTS idx_phone_unique ON sys_user;
 DROP INDEX IF EXISTS idx_phone_merchant_unique ON sys_user;
 
--- 创建新的复合唯一索引
-CREATE UNIQUE INDEX idx_phone_merchant_user_unique ON sys_user (phone, merchant_id, user_id, deleted_at);
+-- 创建商户内手机号唯一索引
+CREATE UNIQUE INDEX idx_phone_merchant_unique ON sys_user (phone, merchant_id, deleted_at);
 
--- 创建用户商户唯一索引（核心约束）
-CREATE UNIQUE INDEX idx_user_merchant_unique ON sys_user (user_id, merchant_id, deleted_at);
+-- 创建商户内用户名唯一索引
+CREATE UNIQUE INDEX idx_username_merchant_unique ON sys_user (username, merchant_id, deleted_at);
 
--- 创建手机号查询索引（用于登录检测）
+-- 创建手机号查询索引（用于多账户登录检测）
 CREATE INDEX idx_phone_lookup ON sys_user (phone, deleted_at);
+
+-- 创建用户名查询索引（用于多账户登录检测）
+CREATE INDEX idx_username_lookup ON sys_user (username, deleted_at);
 ```
 
-**业务逻辑说明**：
+**业务逻辑设计**：
 
-1. **用户创建流程**：
-   - 首次创建用户时，系统生成唯一的`user_id`
-   - 用户基础信息（姓名、手机号等）与`user_id`绑定
-   - 在指定商户中创建该用户的第一个身份记录
+1. **员工创建流程**：
+   - 管理员在创建员工时填写：手机号、用户名、商户ID、密码等信息
+   - 系统校验：手机号和用户名在该商户内不重复
+   - 创建成功后生成唯一的sys_user记录ID
+   - 该员工可以使用手机号或用户名+密码登录对应商户
 
-2. **多商户身份管理**：
-   - 同一`user_id`可以在不同商户中创建多个身份记录
-   - 每个身份记录独立管理角色、权限、状态等信息
-   - 所有身份记录共享相同的基础信息（手机号、真实姓名等）
+2. **多账户登录检测**：
+   - 用户输入手机号或用户名后，系统查询sys_user表
+   - 如果找不到任何记录，提示"用户不存在或无登录权限"
+   - 如果找到一条记录，直接进入密码验证流程
+   - 如果找到多条记录，显示所有对应的商户列表供用户选择
 
-3. **登录逻辑优化**：
-   - 用户输入手机号后，系统查询该手机号关联的所有用户身份
-   - 如果只有一个身份，直接登录对应商户
-   - 如果有多个身份，显示商户选择界面
-   - 登录成功后，JWT Token包含选择的商户和身份信息
+3. **商户选择和密码验证**：
+   - 用户选择具体商户后，系统获取该商户下的具体账户信息
+   - 验证用户输入的密码是否与该账户的密码匹配
+   - 检查商户状态和用户状态是否正常
+   - 验证通过后生成JWT Token，包含用户信息和商户上下文
 
 **数据模型示例**：
 ```sql
--- 用户张三的基础身份（user_id=1001）
--- 在商户A中的记录
-INSERT INTO sys_user (id, user_id, username, phone, merchant_id, name, authority_id) 
-VALUES (1, 1001, 'zhangsan_merchant1', '13800138000', 1, '张三', 5);
+-- 员工张三在商户A中的账户
+INSERT INTO sys_user (id, username, phone, merchant_id, name, authority_id, password) 
+VALUES (1, 'zhangsan_sales', '13800138000', 1, '张三', 5, 'encrypted_password_1');
 
--- 张三在商户B中的记录（相同user_id，不同merchant_id）
-INSERT INTO sys_user (id, user_id, username, phone, merchant_id, name, authority_id) 
-VALUES (2, 1001, 'zhangsan_merchant2', '13800138000', 2, '张三', 8);
+-- 员工张三在商户B中的账户（不同的用户名和密码）
+INSERT INTO sys_user (id, username, phone, merchant_id, name, authority_id, password) 
+VALUES (2, 'zhangsan_tech', '13800138000', 2, '张三', 8, 'encrypted_password_2');
+
+-- 员工李四在商户A中的账户（用户名可以与张三在商户B中的相同）
+INSERT INTO sys_user (id, username, phone, merchant_id, name, authority_id, password) 
+VALUES (3, 'zhangsan_tech', '13900139000', 1, '李四', 6, 'encrypted_password_3');
 ```
 
-**sys_user表结构扩展**：
-
-需要在现有sys_user表中增加`user_id`字段：
-
-| 新增字段名 | 类型 | 必填 | 索引 | 说明 | 示例值 |
-|-----------|------|------|------|------|--------|
-| UserID | uint | 是 | 复合索引 | 用户统一标识ID | 1001 |
-
-**字段关系说明**：
-- **id**：sys_user表的主键，每条记录唯一
-- **user_id**：用户的统一标识，同一人在不同商户中的记录共享此ID
-- **phone**：手机号，同一user_id的所有记录必须相同
-- **merchant_id**：商户ID，标识该记录属于哪个商户
-- **username**：登录用户名，可以在不同商户中设置不同值
-- **authority_id**：角色ID，可以在不同商户中拥有不同角色
-
-**约束规则**：
-1. **核心约束**：`(user_id, merchant_id, deleted_at)`必须唯一，确保同一用户在同一商户内只有一条记录
-2. **数据一致性**：同一`user_id`的所有记录，`phone`、`name`等基础信息必须保持一致
-3. **商户隔离**：不同商户中的记录可以有不同的`username`、`authority_id`等业务信息
-
 **方案优势**：
-1. **灵活性**：支持同一用户在多个商户中拥有不同身份
-2. **数据一致性**：通过user_id确保用户基础信息的一致性
-3. **索引高效**：复合索引设计兼顾查询性能和数据完整性
-4. **扩展性**：易于支持未来的多租户功能扩展
-5. **兼容性**：在现有表结构基础上扩展，迁移成本较低
+2. **灵活性强**：支持同一手机号在多个商户中创建不同账户
+3. **数据隔离**：每个账户独立管理，包括独立的密码和权限
+4. **登录便捷**：支持手机号或用户名登录，自动检测多账户情况
+5. **扩展性好**：在现有表结构基础上只需调整索引，迁移成本低
 
 **数据迁移策略**：
 ```sql
--- 1. 为现有数据生成user_id
-UPDATE sys_user SET user_id = id WHERE user_id IS NULL;
+-- 1. 删除原有的手机号全局唯一索引
+DROP INDEX IF EXISTS idx_phone_unique ON sys_user;
 
--- 2. 创建新的索引
--- （索引创建语句见上述部分）
+-- 2. 为现有数据设置默认商户
+UPDATE sys_user SET merchant_id = 1 WHERE merchant_id IS NULL;
 
--- 3. 验证数据完整性
-SELECT user_id, COUNT(*) as record_count 
+-- 3. 创建新的索引
+CREATE UNIQUE INDEX idx_phone_merchant_unique ON sys_user (phone, merchant_id, deleted_at);
+CREATE UNIQUE INDEX idx_username_merchant_unique ON sys_user (username, merchant_id, deleted_at);
+CREATE INDEX idx_phone_lookup ON sys_user (phone, deleted_at);
+CREATE INDEX idx_username_lookup ON sys_user (username, deleted_at);
+
+-- 4. 验证数据完整性
+SELECT phone, merchant_id, COUNT(*) as count 
 FROM sys_user 
 WHERE deleted_at IS NULL 
-GROUP BY user_id 
+GROUP BY phone, merchant_id 
 HAVING COUNT(*) > 1;
-```
 
-这个方案既解决了原有的索引冲突问题，又保持了设计的灵活性，是一个很好的优化方案。
 
 
 
@@ -297,12 +284,12 @@ VALUES ('财务人员', 2, 3);
 | LegalPerson | string | 否 | 无 | 法人代表 | 李四 |
 | RegisteredAddress | string | 否 | 无 | 注册地址 | 北京市朝阳区XX路XX号 |
 | BusinessScope | string | 否 | 无 | 经营范围 | 技术开发、技术服务 |
-| Status | string | 是 | 普通索引 | 商户状态 | ACTIVE, SUSPENDED, DISABLED |
+
 | IsEnabled | int | 是 | 普通索引 | 商户开关状态：1-正常 0-关闭 | 1 |
 | ValidStartTime | time.Time | 否 | 无 | 有效开始时间 | 2024-01-01 00:00:00 |
 | ValidEndTime | time.Time | 否 | 无 | 有效结束时间 | 2024-12-31 23:59:59 |
 | MerchantLevel | string | 是 | 无 | 商户等级 | BASIC, PREMIUM, VIP |
-| AdminUserID | uint | 否 | 外键 | 管理员用户ID | 2 |
+
 | OperatorID | uint | 是 | 无 | 操作者用户ID | 1 |
 | OperatorName | string | 是 | 无 | 操作者姓名 | 张三 |
 | OperatorMerchantID | uint | 否 | 无 | 操作者所属商户ID | 1 |
@@ -505,10 +492,241 @@ graph TD
 ### 接口规范说明
 - 遵循 RESTful API 设计规范，增加商户上下文
 - 统一使用 JSON 格式进行数据交换
-- 扩展JWT认证，Token中包含当前商户ID信息
+- 扩展JWT认证，Token中包含当前用户身份和商户ID信息
 - 集成商户维度的Casbin权限控制
 - 所有业务接口自动进行商户数据隔离
-- 支持多商户切换和上下文管理
+- 支持多商户身份切换和上下文管理
+
+### 多商户登录功能设计
+
+支持同一用户在多个商户中拥有不同身份的智能登录功能。
+
+#### 登录流程设计
+
+```mermaid
+sequenceDiagram
+    participant U as 用户
+    participant LOGIN as 登录界面
+    participant API as 登录API
+    participant AUTH as 认证服务
+    participant DB as 数据库
+    
+    U->>LOGIN: 输入手机号或用户名
+    LOGIN->>API: 提交登录请求
+    API->>AUTH: 验证手机号用户名
+    AUTH->>DB: 根据手机号或用户名查询所有身份记录
+    DB-->>AUTH: 返回用户身份列表
+    
+    alt 手机号或用户名不存在
+        AUTH-->>API: 返回登录失败
+        API-->>LOGIN: 显示错误信息
+    else 只有一个身份
+        AUTH->>AUTH: 验证密码和商户状态
+        alt 验证成功且商户正常
+            AUTH->>AUTH: 生成JWT Token
+            AUTH-->>API: 返回登录成功+Token
+            API-->>LOGIN: 跳转到主界面
+        else 密码错误或商户关闭
+            AUTH-->>API: 返回对应错误信息
+            API-->>LOGIN: 显示错误信息
+        end
+    else 有多个身份
+
+            AUTH-->>API: 返回商户选择列表
+            API-->>LOGIN: 显示商户选择界面
+            U->>LOGIN: 选择商户身份和密码
+        AUTH->>AUTH: 验证密码（对应商户身份和密码）和商户状态
+        alt 密码验证成功
+            LOGIN->>API: 提交商户选择
+            API->>AUTH: 验证选择的商户身份
+            AUTH->>AUTH: 检查选择商户状态
+            alt 商户正常
+                AUTH->>AUTH: 生成JWT Token
+                AUTH-->>API: 返回登录成功+Token
+                API-->>LOGIN: 跳转到主界面
+            else 商户关闭
+                AUTH-->>API: 返回商户状态错误
+                API-->>LOGIN: 显示商户关闭信息
+            end
+        else 密码验证失败
+            AUTH-->>API: 返回密码错误
+            API-->>LOGIN: 显示密码错误信息
+        end
+    end
+```
+
+#### 登录接口设计
+
+**第一步：统一登录接口**
+- **接口路径**：`POST /api/v1/auth/login`
+- **请求参数**：
+
+| 参数名 | 类型 | 必填 | 说明 |
+|--------|------|------|------|
+| phone | string | 是 | 手机号 |
+| password | string | 是 | 密码 |
+
+**响应格式** - 只有一个身份：
+```json
+{
+    "code": 0,
+    "message": "登录成功",
+    "data": {
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+        "user": {
+            "id": 1,
+            "username": "zhangsan_sales",
+            "name": "张三",
+            "phone": "13800138000",
+            "merchantInfo": {
+                "merchantId": 1,
+                "merchantName": "XX科技有限公司",
+                "merchantIcon": "/uploads/icons/merchant_1.png",
+                "authorityId": 5,
+                "authorityName": "销售经理",
+                "roleType": 3
+            }
+        },
+        "needMerchantSelect": false
+    }
+}
+```
+
+**响应格式** - 多个账户：
+```json
+{
+    "code": 10001,
+    "message": "请选择登录商户",
+    "data": {
+        "name": "张三",
+        "phone": "13800138000",
+        "accounts": [
+            {
+                "id": 1,
+                "merchantId": 1,
+                "merchantName": "XX科技有限公司",
+                "merchantIcon": "/uploads/icons/merchant_1.png",
+                "username": "zhangsan_sales",
+                "authorityName": "销售经理",
+                "roleType": 3,
+                "merchantStatus": "ACTIVE",
+                "merchantEnabled": 1,
+                "isDefault": true
+            },
+            {
+                "id": 2,
+                "merchantId": 2,
+                "merchantName": "YY贸易有限公司",
+                "merchantIcon": "/uploads/icons/merchant_2.png",
+                "username": "zhangsan_tech",
+                "authorityName": "技术顾问",
+                "roleType": 3,
+                "merchantStatus": "ACTIVE",
+                "merchantEnabled": 1,
+                "isDefault": false
+            }
+        ],
+        "needMerchantSelect": true,
+        "tempToken": "temp_token_for_merchant_selection"
+    }
+}
+```
+
+**第二步：商户身份选择接口**
+- **接口路径**：`POST /api/v1/auth/select-identity`
+- **请求参数**：
+
+| 参数名 | 类型 | 必填 | 说明 |
+|--------|------|------|------|
+| identityId | uint | 是 | 选择的账户记录ID（sys_user.id） |
+| tempToken | string | 是 | 临时令牌（用于验证） |
+
+**响应格式**：
+```json
+{
+    "code": 0,
+    "message": "登录成功",
+    "data": {
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+        "user": {
+            "id": 2,
+            "username": "zhangsan_tech",
+            "name": "张三",
+            "phone": "13800138000",
+            "merchantInfo": {
+                "merchantId": 2,
+                "merchantName": "YY贸易有限公司",
+                "merchantIcon": "/uploads/icons/merchant_2.png",
+                "authorityId": 8,
+                "authorityName": "技术顾问",
+                "roleType": 3
+            }
+        }
+    }
+}
+```
+
+#### JWT Token 扩展设计
+
+在JWT Payload中增加用户账户和商户上下文信息：
+
+```json
+{
+    "userId": 2,
+    "username": "zhangsan_tech",
+    "phone": "13800138000",
+    "name": "张三",
+    "merchantId": 2,
+    "merchantName": "YY贸易有限公司",
+    "authorityId": 8,
+    "authorityName": "技术顾问",
+    "roleType": 3,
+    "iat": 1640995200,
+    "exp": 1641081600
+}
+```
+
+#### 账户切换功能
+
+**账户切换接口**
+- **接口路径**：`POST /api/v1/auth/switch-account`
+- **权限要求**：需要已登录用户的有效Token
+- **请求参数**：
+
+| 参数名 | 类型 | 必填 | 说明 |
+|--------|------|------|------|
+| targetAccountId | uint | 是 | 目标账户记录ID |
+
+**功能说明**：
+- 用户在不退出的情况下切换到另一个商户账户
+- 系统验证目标账户是否属于当前用户（相同手机号）
+- 检查目标商户的状态和账户在该商户中的状态
+- 生成新的JWT Token包含目标账户信息
+
+**响应格式**：
+```json
+{
+    "code": 0,
+    "message": "账户切换成功",
+    "data": {
+        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+        "user": {
+            "id": 3,
+            "username": "zhangsan_finance",
+            "name": "张三",
+            "phone": "13800138000",
+            "merchantInfo": {
+                "merchantId": 3,
+                "merchantName": "ZZ金融服务有限公司",
+                "merchantIcon": "/uploads/icons/merchant_3.png",
+                "authorityId": 12,
+                "authorityName": "财务专员",
+                "roleType": 3
+            }
+        }
+    }
+}
+```
 
 ### 商户信息管理接口
 
@@ -534,20 +752,7 @@ graph TD
 | isEnabled | int | 否 | 商户开关状态（默认1-正常） |
 | validStartTime | string | 否 | 有效开始时间 |
 | validEndTime | string | 否 | 有效结束时间 |
-| adminUserInfo | object | 是 | 管理员用户信息 |
 
-**adminUserInfo 对象结构：**
-| 参数名 | 类型 | 必填 | 说明 |
-|--------|------|------|------|
-| username | string | 是 | 管理员登录名 |
-| password | string | 是 | 管理员密码 |
-| nickName | string | 是 | 管理员昵称 |
-| name | string | 是 | 管理员真实姓名 |
-| phone | string | 是 | 管理员手机号 |
-| email | string | 是 | 管理员邮箱 |
-| headerImg | string | 否 | 管理员头像URL |
-| sideMode | string | 否 | 侧边栏模式（默认dark） |
-| enable | int | 否 | 账户启用状态（默认1-启用） |
 
 **层级关系处理**：
 - 如果提供parentId，系统会自动计算level和path
@@ -572,17 +777,7 @@ graph TD
   "isEnabled": 1,
   "validStartTime": "2024-01-01 00:00:00",
   "validEndTime": "2024-12-31 23:59:59",
-  "adminUserInfo": {
-    "username": "merchant_admin",
-    "password": "123456",
-    "nickName": "商户管理员",
-    "name": "张三",
-    "phone": "13800138000",
-    "email": "admin@xxtech.com",
-    "headerImg": "/uploads/avatar/admin_avatar.jpg",
-    "sideMode": "dark",
-    "enable": 1
-  }
+
 }
 ```
 
@@ -597,8 +792,7 @@ graph TD
     "merchantName": "XX科技有限公司",
     "level": 2,
     "path": "1/5",
-    "adminUserId": 10,
-    "adminUsername": "merchant_admin",
+
     "createdAt": "2024-01-01T10:00:00Z"
   }
 }
@@ -698,27 +892,142 @@ graph TD
 - **接口路径**：`PUT /api/v1/merchant/:id/status`
 - **权限要求**：仅系统管理员可操作
 
-### 多租户员工管理接口
-
 #### 创建商户员工
 - **接口路径**：`POST /api/v1/merchant/user`
-- **权限要求**：商户管理员权限
-- **自动处理**：自动设置员工的merchant_id为当前商户
-- **校验规则**：手机号在当前商户内唯一
+- **权限要求**：商户管理员权限或超级管理员
+- **功能说明**：
+- 在当前商户中创建新员工或为一个手机号在当前商户中创建账户
+- 支持同一手机号在不同商户中创建不同账户
+- 每个账户拥有独立的用户名、密码、角色
+- **请求参数**：
+
+| 参数名 | 类型 | 必填 | 说明 |
+|--------|------|------|------|
+| phone | string | 是 | 手机号 |　（在当前商户内唯一）
+| name | string | 是 | 真实姓名 |
+| username | string | 是 | 登录用户名（在当前商户内唯一） |
+| password | string | 是 | 登录密码 |
+| email | string | 否 | 邮箱地址 |
+| nickName | string | 否 | 显示昵称 |
+| headerImg | string | 否 | 头像地址 |
+| authorityId | uint | 是 | 角色ID（必须是当前商户的角色） |
+| enable | int | 否 | 启用状态（默认1-启用） |
+
+**业务逻辑**：
+1. **创建新员工**：
+   - 检查手机号和用户名在当前商户内是否已存在
+   - 在当前商户中创建新的员工记录
+   - 设置用户在该商户中的特定信息（用户名、角色、密码等）
+
+2. **支持同一手机号或用户名在不同商户中创建账户**：
+   - 同一手机号或用户名可以在不同商户中创建不同的员工账户
+   - 每个账户拥有独立的用户名、密码、角色
+   - 同一商户内手机号和用户名必须唯一
+
+**响应格式**：
+```json
+{
+    "code": 0,
+    "message": "创建成功",
+    "data": {
+        "id": 5,
+        "username": "lisi_sales",
+        "name": "李四",
+        "phone": "13800138001",
+        "merchantId": 1,
+        "authorityId": 6,
+        "createdAt": "2024-01-01T10:00:00Z"
+    }
+}
+```
 
 #### 查询商户员工列表
 - **接口路径**：`GET /api/v1/merchant/user/list`
+- **权限要求**：商户管理员或超级管理员
 - **数据隔离**：自动过滤，只返回当前商户的员工
+- **查询参数**：
 
-#### 员工状态管理
+| 参数名 | 类型 | 必填 | 说明 |
+|--------|------|------|------|
+| page | int | 否 | 页码（默认1） |
+| pageSize | int | 否 | 每页数量（默认10） |
+| name | string | 否 | 姓名模糊查询 |
+| phone | string | 否 | 手机号模糊查询 |
+| username | string | 否 | 用户名模糊查询 |
+| authorityId | uint | 否 | 角色ID筛选 |
+| enable | int | 否 | 启用状态筛选 |
+
+**响应格式**：
+```json
+{
+    "code": 0,
+    "message": "获取成功",
+    "data": {
+        "list": [
+            {
+                "id": 1,
+                "username": "zhangsan_sales",
+                "name": "张三",
+                "phone": "13800138000",
+                "email": "zhangsan@example.com",
+                "nickName": "张三",
+                "headerImg": "/uploads/avatar/zhangsan.jpg",
+                "enable": 1,
+                "merchantId": 1,
+                "authorityInfo": {
+                    "authorityId": 5,
+                    "authorityName": "销售经理",
+                    "roleType": 3
+                },
+                "createdAt": "2024-01-01T10:00:00Z",
+                "hasOtherAccounts": true,
+                "otherMerchantCount": 2
+            }
+        ],
+        "total": 25,
+        "page": 1,
+        "pageSize": 10
+    }
+}
+```
+
+#### 员工账户状态管理
 - **接口路径**：`PUT /api/v1/merchant/user/:id/status`
 - **权限要求**：商户管理员或超级管理员
 - **请求参数**：
 
 | 参数名 | 类型 | 必填 | 说明 |
 |--------|------|------|------|
-| enable | bool | 是 | 员工启用状态：true-启用，false-禁用 |
+| enable | bool | 是 | 在当前商户中的启用状态 |
 | reason | string | 否 | 状态变更原因 |
+
+**注意**：此操作仅影响该员工在当前商户中的状态，不影响其在其他商户中的账户。
+
+#### 移除商户员工
+- **接口路径**：`DELETE /api/v1/merchant/user/:id`
+- **权限要求**：商户管理员或超级管理员
+- **功能说明**：仅删除该员工在当前商户中的账户记录，不影响其在其他商户中的账户
+
+**请求参数**：
+
+| 参数名 | 类型 | 必填 | 说明 |
+|--------|------|------|------|
+| reason | string | 否 | 删除原因 |
+| transferAuthorityId | uint | 否 | 如果该员工有待处理事务，转移给的角色ID |
+
+**响应格式**：
+```json
+{
+    "code": 0,
+    "message": "移除成功",
+    "data": {
+        "removedAccountId": 5,
+        "merchantId": 1,
+        "hasOtherAccounts": false,
+        "message": "已移除该用户在当前商户中的账户"
+    }
+}
+```
 
 ### 员工角色权限管理接口
 
@@ -1195,7 +1504,7 @@ sequenceDiagram
 
 #### 多商户检测接口
 
-**新增接口：检测用户多商户身份**
+**新增接口：检测用户多商户账户**
 - **接口路径**：`POST /api/v1/auth/check-merchants`
 - **调用时机**：用户输入用户名/手机号后，密码验证前
 - **请求参数**：
@@ -1457,7 +1766,7 @@ export const useAuthStore = defineStore('auth', {
 **1. 现有用户体验保持不变**
 - 单商户员工登录流程保持不变，直接进入后台系统
 - 登录界面UI保持原有设计，用户无感知
-- 现有的自动登录、记住密码等功能正常工作
+- 现有的自动登录、图片验证码、记住密码等功能正常工作
 
 **2. 多商户功能透明升级**
 - 对现有单商户用户无任何影响
@@ -1469,10 +1778,7 @@ export const useAuthStore = defineStore('auth', {
 - 商户状态关闭时提供明确的错误提示
 - 网络异常时，保留基础的登录功能
 
-**3. 员工转移支持**
-- 提供完整的员工商户转移功能
-- 支持转移时的角色权限重置
-- 保留转移历史记录供审计
+
 
 
     merchantCount: 0,
@@ -1507,13 +1813,7 @@ export const useAuthStore = defineStore('auth', {
       const response = await getUserMerchants()
       this.userMerchants = response.data.merchants
       
-      // 设置默认商户
-      const defaultMerchant = response.data.merchants.find(m => m.isDefault)
-      if (defaultMerchant && !this.isMultiMerchant) {
-        useTenantStore().setCurrentMerchant(defaultMerchant)
-      }
-    }
-  }
+      
 })
 ```
 
@@ -1538,10 +1838,7 @@ export const useAuthStore = defineStore('auth', {
 - 商户状态关闭时提供明确的错误提示
 - 网络异常时，保留基础的登录功能
 
-**3. 员工转移支持**
-- 提供完整的员工商户转移功能
-- 支持转移时的角色权限重置
-- 保留转移历史记录供审计
+
 
 ## 多租户前端组件架构
 
@@ -1563,19 +1860,16 @@ graph TB
         H[HierarchyBreadcrumb.vue - 层级面包屑]
     end
     
-    subgraph "单租户员工管理"
-        I[TenantUserList.vue - 商户员工列表]
-        J[TenantUserForm.vue - 员工表单]
-    end
+
     
     subgraph "商户角色管理"
-        K[TenantRoleList.vue - 商户角色列表]
-        L[TenantRoleForm.vue - 角色表单]
+        K[merchantRoleList.vue - 商户角色列表]
+        L[merchantRoleForm.vue - 角色表单]
         M[RolePermission.vue - 角色权限配置]
     end
     
     subgraph "通用组件"
-        Q[TenantContext.vue - 商户上下文组件]
+        Q[merchantContext.vue - 商户上下文组件]
         R[DataIsolation.vue - 数据隔离组件]
         S[MerchantBadge.vue - 商户标记组件]
         T[TreeSelect.vue - 树形选择器]
@@ -1644,8 +1938,8 @@ graph TB
 
 #### Pinia Store 扩展结构
 ``javascript
-// stores/tenant.js - 多租户状态管理
-export const useTenantStore = defineStore('tenant', {
+// stores/merchant.js - 多租户状态管理
+export const usemerchantStore = defineStore('merchant', {
   state: () => ({
     // 当前商户信息
     currentMerchant: null,
@@ -1654,9 +1948,9 @@ export const useTenantStore = defineStore('tenant', {
     // 商户树结构
     merchantTree: [],
     // 商户员工列表
-    tenantUsers: [],
+    merchantUsers: [],
     // 商户角色列表
-    tenantRoles: [],
+    merchantRoles: [],
     // 搜索条件
     searchConditions: {},
     // 分页信息
@@ -1673,7 +1967,7 @@ export const useTenantStore = defineStore('tenant', {
     // 当前商户名称
     currentMerchantName: (state) => state.currentMerchant?.merchantName,
     // 是否多商户用户
-    isMultiTenant: (state) => state.userMerchants.length > 1,
+    isMultimerchant: (state) => state.userMerchants.length > 1,
     // 当前用户在当前商户的角色
     currentUserRole: (state) => state.currentMerchant?.userRole
   },
@@ -1775,10 +2069,10 @@ export const useTenantStore = defineStore('tenant', {
     },
     
     // 获取商户员工列表
-    async fetchTenantUsers(params) {
+    async fetchmerchantUsers(params) {
       try {
         const response = await api.get('/api/v1/merchant/user/list', { params })
-        this.tenantUsers = response.data.list
+        this.merchantUsers = response.data.list
         return response.data
       } catch (error) {
         console.error('获取商户员工列表失败:', error)
@@ -1787,10 +2081,10 @@ export const useTenantStore = defineStore('tenant', {
     },
     
     // 创建商户员工
-    async createTenantUser(userData) {
+    async createmerchantUser(userData) {
       try {
         const response = await api.post('/api/v1/merchant/user', userData)
-        await this.fetchTenantUsers()
+        await this.fetchmerchantUsers()
         return response.data
       } catch (error) {
         console.error('创建商户员工失败:', error)
@@ -1799,10 +2093,10 @@ export const useTenantStore = defineStore('tenant', {
     },
     
     // 获取商户角色列表
-    async fetchTenantRoles(params) {
+    async fetchmerchantRoles(params) {
       try {
         const response = await api.get('/api/v1/merchant/authority/list', { params })
-        this.tenantRoles = response.data.list
+        this.merchantRoles = response.data.list
         return response.data
       } catch (error) {
         console.error('获取商户角色列表失败:', error)
@@ -1811,10 +2105,10 @@ export const useTenantStore = defineStore('tenant', {
     },
     
     // 创建商户角色
-    async createTenantRole(roleData) {
+    async createmerchantRole(roleData) {
       try {
         const response = await api.post('/api/v1/merchant/authority', roleData)
-        await this.fetchTenantRoles()
+        await this.fetchmerchantRoles()
         return response.data
       } catch (error) {
         console.error('创建商户角色失败:', error)
@@ -1833,13 +2127,13 @@ export const useTenantStore = defineStore('tenant', {
 基于现有的 Casbin RBAC 体系，设计三级权限体系：
 
 **原有模型**：`p = sub, obj, act`
-**扩展模型**：`p = sub, obj, act, tenant`
+**扩展模型**：`p = sub, obj, act, merchant`
 
 其中：
 - `sub`：主体（用户角色）
 - `obj`：对象（API路径或菜单资源）
 - `act`：操作（HTTP方法或菜单操作）
-- `tenant`：租户（商户ID，超级管理员为*）
+- `merchant`：租户（商户ID，超级管理员为*）
 
 ### 三级权限体系详细设计
 
@@ -2146,7 +2440,7 @@ func SuperAdminMiddleware() gin.HandlerFunc {
         
         // 设置超级管理员标识
         c.Set("isSuperAdmin", true)
-        c.Set("bypassTenantIsolation", true) // 绕过商户隔离
+        c.Set("bypassmerchantIsolation", true) // 绕过商户隔离
         
         c.Next()
     }
@@ -2197,12 +2491,12 @@ func MerchantPermissionMiddleware() gin.HandlerFunc {
 ``javascript
 // directive/role-auth.js
 import { useUserStore } from '@/stores/user'
-import { useTenantStore } from '@/stores/tenant'
+import { usemerchantStore } from '@/stores/merchant'
 
 export default {
   mounted(el, binding) {
     const userStore = useUserStore()
-    const tenantStore = useTenantStore()
+    const merchantStore = usemerchantStore()
     
     const requiredPermission = binding.value
     const userRole = userStore.userInfo.authorityId
@@ -2220,7 +2514,7 @@ export default {
     }
     
     // 商户维度权限检查
-    const merchantId = tenantStore.currentMerchantId
+    const merchantId = merchantStore.currentMerchantId
     if (!merchantId && requiredPermission.startsWith('merchant:')) {
       el.style.display = 'none'
       return
@@ -2301,22 +2595,22 @@ const merchantRoutes = [
         }
       },
       {
-        path: 'tenant-user',
-        name: 'TenantUser',
-        component: () => import('@/views/merchant/tenant-user.vue'),
+        path: 'merchant-user',
+        name: 'merchantUser',
+        component: () => import('@/views/merchant/merchant-user.vue'),
         meta: {
           title: '商户员工',
-          permission: 'tenant:user:list',
+          permission: 'merchant:user:list',
           requireMerchant: true // 需要商户上下文
         }
       },
       {
-        path: 'tenant-role',
-        name: 'TenantRole',
-        component: () => import('@/views/merchant/tenant-role.vue'),
+        path: 'merchant-role',
+        name: 'merchantRole',
+        component: () => import('@/views/merchant/merchant-role.vue'),
         meta: {
           title: '商户角色',
-          permission: 'tenant:role:list',
+          permission: 'merchant:role:list',
           requireMerchant: true
         }
       }
@@ -2330,11 +2624,11 @@ export default merchantRoutes
 #### 按钮级权限控制
 ``vue
 <template>
-  <div class="tenant-user-list">
+  <div class="merchant-user-list">
     <!-- 创建按钮 -->
     <el-button 
-      v-auth="'tenant:user:create'"
-      v-tenant-auth="currentMerchantId"
+      v-auth="'merchant:user:create'"
+      v-merchant-auth="currentMerchantId"
       type="primary" 
       @click="handleCreate">
       新建员工
@@ -2344,15 +2638,15 @@ export default merchantRoutes
     <el-table-column label="操作" width="200">
       <template #default="{ row }">
         <el-button 
-          v-auth="'tenant:user:update'"
-          v-tenant-auth="row.merchantId"
+          v-auth="'merchant:user:update'"
+          v-merchant-auth="row.merchantId"
           size="small" 
           @click="handleEdit(row)">
           编辑
         </el-button>
         <el-button 
-          v-auth="'tenant:user:delete'"
-          v-tenant-auth="row.merchantId"
+          v-auth="'merchant:user:delete'"
+          v-merchant-auth="row.merchantId"
           size="small" 
           type="danger" 
           @click="handleDelete(row)">
@@ -2364,26 +2658,26 @@ export default merchantRoutes
 </template>
 
 <script setup>
-import { useTenantStore } from '@/stores/tenant'
+import { usemerchantStore } from '@/stores/merchant'
 
-const tenantStore = useTenantStore()
-const currentMerchantId = computed(() => tenantStore.currentMerchantId)
+const merchantStore = usemerchantStore()
+const currentMerchantId = computed(() => merchantStore.currentMerchantId)
 </script>
 ```
 
 #### 多租户权限指令
 ``javascript
-// directive/tenant-auth.js
-import { useTenantStore } from '@/stores/tenant'
+// directive/merchant-auth.js
+import { usemerchantStore } from '@/stores/merchant'
 import { useUserStore } from '@/stores/user'
 
 export default {
   mounted(el, binding) {
-    const tenantStore = useTenantStore()
+    const merchantStore = usemerchantStore()
     const userStore = useUserStore()
     
     const requiredMerchantId = binding.value
-    const currentMerchantId = tenantStore.currentMerchantId
+    const currentMerchantId = merchantStore.currentMerchantId
     const userRole = userStore.userInfo.authorityId
     
     // 系统管理员不受商户限制
@@ -2428,7 +2722,7 @@ export default {
 **权限控制组件集**：
 
 1. **RoleAuthButton.vue** - 权限按钮组件
-2. **TenantSwitcher.vue** - 商户切换组件
+2. **merchantSwitcher.vue** - 商户切换组件
 3. **PermissionTable.vue** - 权限表格组件
 4. **MerchantPermissionAssign.vue** - 商户权限分配组件
 5. **RolePermissionMatrix.vue** - 角色权限矩阵组件
@@ -2589,16 +2883,16 @@ func TestMerchantServiceTestSuite(t *testing.T) {
 **前端单元测试**：
 
 ```javascript
-// tests/unit/stores/tenant.test.js
+// tests/unit/stores/merchant.test.js
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useTenantStore } from '@/stores/tenant'
-import * as api from '@/api/tenant'
+import { usemerchantStore } from '@/stores/merchant'
+import * as api from '@/api/merchant'
 
 // Mock API
-vi.mock('@/api/tenant')
+vi.mock('@/api/merchant')
 
-describe('TenantStore', () => {
+describe('merchantStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
@@ -2613,7 +2907,7 @@ describe('TenantStore', () => {
       
       api.getUserMerchants.mockResolvedValue({ data: { merchants: mockMerchants } })
       
-      const store = useTenantStore()
+      const store = usemerchantStore()
       const result = await store.fetchUserMerchants()
       
       expect(result.merchants).toEqual(mockMerchants)
@@ -2624,7 +2918,7 @@ describe('TenantStore', () => {
     it('should handle fetch error', async () => {
       api.getUserMerchants.mockRejectedValue(new Error('Network error'))
       
-      const store = useTenantStore()
+      const store = usemerchantStore()
       
       await expect(store.fetchUserMerchants()).rejects.toThrow('Network error')
     })
@@ -2645,7 +2939,7 @@ describe('TenantStore', () => {
       
       api.switchMerchant.mockResolvedValue(mockResponse)
       
-      const store = useTenantStore()
+      const store = usemerchantStore()
       const result = await store.switchMerchant(2)
       
       expect(result).toEqual(mockResponse.data)
@@ -2822,7 +3116,7 @@ describe('Merchant Management E2E', () => {
     })
   })
 
-  describe('Multi-tenant Login Flow', () => {
+  describe('Multi-merchant Login Flow', () => {
     it('should handle multi-merchant user login', () => {
       // 登出超级管理员
       cy.logout()
@@ -3007,7 +3301,7 @@ describe('Merchant Management E2E', () => {
 ### 多租户存储路径规划
 ```
 uploads/
-├── tenants/                    # 多租户文件根目录
+├── merchants/                    # 多租户文件根目录
 │   ├── merchant_1/           # 商户ID目录
 │   │   ├── business_license/   # 营业执照
 │   │   ├── tax_registration/   # 税务登记证
@@ -3037,7 +3331,7 @@ uploads/
 
 #### 前端验证规则
 ``javascript
-const tenantValidationRules = {
+const merchantValidationRules = {
   // 商户验证规则
   merchantName: [
     { required: true, message: '请输入商户名称', trigger: 'blur' },
@@ -3060,9 +3354,9 @@ const tenantValidationRules = {
     { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' },
     { 
       validator: async (rule, value) => {
-        const tenantStore = useTenantStore()
+        const merchantStore = usemerchantStore()
         // 检查在当前商户内的唯一性
-        const exists = await api.checkUserPhoneInTenant(value, tenantStore.currentMerchantId)
+        const exists = await api.checkUserPhoneInmerchant(value, merchantStore.currentMerchantId)
         if (exists) {
           throw new Error('该手机号在当前商户内已存在')
         }
@@ -3077,9 +3371,9 @@ const tenantValidationRules = {
     { min: 2, max: 50, message: '角色名称长度为2-50个字符', trigger: 'blur' },
     { 
       validator: async (rule, value) => {
-        const tenantStore = useTenantStore()
+        const merchantStore = usemerchantStore()
         // 检查在当前商户内的唯一性
-        const exists = await api.checkAuthorityNameInTenant(value, tenantStore.currentMerchantId)
+        const exists = await api.checkAuthorityNameInmerchant(value, merchantStore.currentMerchantId)
         if (exists) {
           throw new Error('该角色名称在当前商户内已存在')
         }
@@ -3112,7 +3406,7 @@ const tenantValidationRules = {
 ### 多租户审计日志格式
 ``json
 {
-  "operation": "tenant_user_create",
+  "operation": "merchant_user_create",
   "operator_id": 1,
   "operator_name": "merchant_admin",
   "operator_merchant_id": 1,
@@ -3125,9 +3419,9 @@ const tenantValidationRules = {
     "assigned_roles": ["merchant_operator"]
   },
   "data_isolation": {
-    "is_cross_tenant": false,
-    "source_tenant": 1,
-    "target_tenant": 1
+    "is_cross_merchant": false,
+    "source_merchant": 1,
+    "target_merchant": 1
   },
   "timestamp": "2024-01-01T10:00:00Z",
   "ip_address": "192.168.1.100",
@@ -3142,8 +3436,8 @@ const tenantValidationRules = {
 #### 数据隔离中间件增强版
 
 ```go
-// middleware/tenant_isolation.go
-func TenantIsolationMiddleware() gin.HandlerFunc {
+// middleware/merchant_isolation.go
+func merchantIsolationMiddleware() gin.HandlerFunc {
     return func(c *gin.Context) {
         claims, exists := c.Get("claims")
         if !exists {
@@ -3157,7 +3451,7 @@ func TenantIsolationMiddleware() gin.HandlerFunc {
         // 超级管理员绕过租户隔离
         if waitUse.AuthorityId == "super_admin" {
             c.Set("isSuperAdmin", true)
-            c.Set("bypassTenantIsolation", true)
+            c.Set("bypassmerchantIsolation", true)
             c.Next()
             return
         }
@@ -3441,14 +3735,10 @@ CREATE TABLE `sys_merchant` (
   `legal_person` varchar(50) DEFAULT NULL COMMENT '法人代表',
   `registered_address` varchar(255) DEFAULT NULL COMMENT '注册地址',
   `business_scope` text COMMENT '经营范围',
-  `status` varchar(20) NOT NULL DEFAULT 'PENDING' COMMENT '商户状态',
+
   `merchant_level` varchar(20) NOT NULL DEFAULT 'BASIC' COMMENT '商户等级',
-  `admin_user_id` bigint(20) unsigned DEFAULT NULL COMMENT '管理员用户ID',
-  `created_by` bigint(20) unsigned NOT NULL COMMENT '创建人 ID',
-  `updated_by` bigint(20) unsigned DEFAULT NULL COMMENT '更新人 ID',
-  `created_at` datetime(3) DEFAULT NULL COMMENT '创建时间',
-  `updated_at` datetime(3) DEFAULT NULL COMMENT '更新时间',
-  `deleted_at` datetime(3) DEFAULT NULL COMMENT '删除时间',
+
+
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_merchant_code` (`merchant_code`),
   KEY `idx_merchant_parent_id` (`parent_id`),
@@ -3465,15 +3755,8 @@ ADD COLUMN `is_main_account` tinyint(1) DEFAULT '0' COMMENT '是否为主账号'
 ADD INDEX `idx_user_merchant_id` (`merchant_id`),
 ADD INDEX `idx_user_phone_merchant` (`phone`, `merchant_id`, `deleted_at`);
 
--- 删除原有的手机号唯一索引，改为复合唯一索引
-ALTER TABLE `sys_user` DROP INDEX `idx_user_phone`;
-ALTER TABLE `sys_user` ADD UNIQUE INDEX `idx_user_phone_merchant_unique` (`phone`, `merchant_id`, `deleted_at`);
 
--- 扩展sys_authority表，增加商户相关字段
-ALTER TABLE `sys_authority` 
-ADD COLUMN `merchant_id` bigint(20) unsigned DEFAULT NULL COMMENT '所属商户ID' AFTER `parent_id`,
-ADD COLUMN `is_system_role` tinyint(1) DEFAULT '0' COMMENT '是否为系统角色' AFTER `merchant_id`,
-ADD INDEX `idx_authority_merchant_id` (`merchant_id`);
+
 
 -- 创建商户用户关联表
 CREATE TABLE `sys_merchant_user` (
@@ -3491,20 +3774,7 @@ CREATE TABLE `sys_merchant_user` (
   KEY `idx_merchant_user_user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商户用户关联表';
 
--- 创建商户认证信息表
-CREATE TABLE `sys_merchant_auth` (
-  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-  `merchant_id` bigint(20) unsigned NOT NULL COMMENT '商户ID',
-  `auth_type` varchar(50) NOT NULL COMMENT '认证类型',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_merchant_code` (`merchant_code`),
-  KEY `idx_parent_id` (`parent_id`),
-  KEY `idx_status` (`status`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商户信息表';
-  KEY `idx_merchant_auth_merchant_id` (`merchant_id`),
-  KEY `idx_merchant_auth_status` (`auth_status`),
-  KEY `idx_merchant_auth_deleted_at` (`deleted_at`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='商户认证信息表';
+
 
 -- 创建商户状态变更日志表
 CREATE TABLE `sys_merchant_status_log` (
@@ -3634,9 +3904,9 @@ CREATE TABLE `sys_merchant` (
   `legal_person` varchar(50) DEFAULT NULL COMMENT '法人代表',
   `registered_address` varchar(255) DEFAULT NULL COMMENT '注册地址',
   `business_scope` text COMMENT '经营范围',
-  `status` varchar(20) NOT NULL DEFAULT 'PENDING' COMMENT '商户状态',
+
   `merchant_level` varchar(20) NOT NULL DEFAULT 'BASIC' COMMENT '商户等级',
-  `admin_user_id` bigint(20) unsigned DEFAULT NULL COMMENT '管理员用户ID',
+
   `operator_id` bigint(20) unsigned NOT NULL COMMENT '操作者用户ID',
   `operator_name` varchar(50) NOT NULL COMMENT '操作者姓名',
   `created_at` datetime(3) DEFAULT NULL COMMENT '创建时间',
@@ -3771,13 +4041,13 @@ SELECT '数据库迁移已完成！现有员工和角色都已归属于商户ID=
 import { ref, onMounted } from 'vue'
 
 import { useRouter } from 'vue-router'
-import { useTenantStore } from '@/stores/tenant'
+import { usemerchantStore } from '@/stores/merchant'
 import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
 import { Refresh, ArrowRight } from '@element-plus/icons-vue'
 
 const router = useRouter()
-const tenantStore = useTenantStore()
+const merchantStore = usemerchantStore()
 const userStore = useUserStore()
 
 const merchants = ref([])
@@ -3790,7 +4060,7 @@ onMounted(async () => {
 async function loadMerchants() {
   try {
     loading.value = true
-    const response = await tenantStore.fetchUserMerchants()
+    const response = await merchantStore.fetchUserMerchants()
     merchants.value = response.merchants
   } catch (error) {
     ElMessage.error('获取商户列表失败')
@@ -3801,7 +4071,7 @@ async function loadMerchants() {
 
 async function selectMerchant(merchant) {
   try {
-    await tenantStore.switchMerchant(merchant.merchantId)
+    await merchantStore.switchMerchant(merchant.merchantId)
     ElMessage.success(`切换到 ${merchant.merchantName}`)
     
     // 根据用户角色跳转不同页面
@@ -4143,12 +4413,12 @@ function getStatusText(status) {
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { useTenantStore } from '@/stores/tenant'
+import { usemerchantStore } from '@/stores/merchant'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Key, ArrowDown } from '@element-plus/icons-vue'
 import { formatDate } from '@/utils/date'
 
-const tenantStore = useTenantStore()
+const merchantStore = usemerchantStore()
 
 const loading = ref(false)
 const treeView = ref(false)
@@ -4193,7 +4463,7 @@ async function loadMerchantList() {
       page: pagination.page,
       pageSize: pagination.pageSize
     }
-    const response = await tenantStore.fetchMerchantList(params)
+    const response = await merchantStore.fetchMerchantList(params)
     merchantList.value = response.list
     pagination.total = response.total
   } catch (error) {
@@ -4206,7 +4476,7 @@ async function loadMerchantList() {
 async function loadMerchantTree() {
   try {
     loading.value = true
-    const response = await tenantStore.fetchMerchantTree()
+    const response = await merchantStore.fetchMerchantTree()
     merchantTree.value = response.merchantTree
   } catch (error) {
     ElMessage.error('获取商户树结构失败')
@@ -4249,7 +4519,7 @@ function handleDelete(row) {
     type: 'warning'
   }).then(async () => {
     try {
-      await tenantStore.deleteMerchant(row.merchantId)
+      await merchantStore.deleteMerchant(row.merchantId)
       ElMessage.success('删除成功')
       loadData()
     } catch (error) {
@@ -4327,313 +4597,7 @@ function getStatusText(status) {
 }
 </style>
 ```
-### 部署配置与环境设置
 
-#### Docker容器化部署
-
-```yaml
-# docker-compose.yml
-version: '3.8'
-
-services:
-  # 应用服务
-  gin-vue-admin:
-    build: .
-    ports:
-      - "8888:8888"
-    environment:
-      - GVA_CONFIG=/app/config.yaml
-      - DB_HOST=mysql
-      - DB_PORT=3306
-      - DB_USER=gva
-      - DB_PASSWORD=gva123456
-      - DB_NAME=gva_merchant
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-    depends_on:
-      - mysql
-      - redis
-    volumes:
-      - ./uploads:/app/uploads
-      - ./logs:/app/logs
-    networks:
-      - gva-network
-
-  # 数据库服务
-  mysql:
-    image: mysql:8.0
-    environment:
-      - MYSQL_ROOT_PASSWORD=root123456
-      - MYSQL_DATABASE=gva_merchant
-      - MYSQL_USER=gva
-      - MYSQL_PASSWORD=gva123456
-    ports:
-      - "3306:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql
-    command: --default-authentication-plugin=mysql_native_password
-    networks:
-      - gva-network
-
-  # Redis缓存服务
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    networks:
-      - gva-network
-
-  # Nginx反向代理
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/ssl:/etc/nginx/ssl
-      - ./web/dist:/usr/share/nginx/html
-    depends_on:
-      - gin-vue-admin
-    networks:
-      - gva-network
-
-volumes:
-  mysql_data:
-  redis_data:
-
-networks:
-  gva-network:
-    driver: bridge
-```
-
-#### Nginx配置
-
-```nginx
-# nginx/nginx.conf
-user nginx;
-worker_processes auto;
-error_log /var/log/nginx/error.log;
-pid /run/nginx.pid;
-
-events {
-    worker_connections 1024;
-}
-
-http {
-    log_format main '$remote_addr - $remote_user [$time_local] "$request" '
-                    '$status $body_bytes_sent "$http_referer" '
-                    '"$http_user_agent" "$http_x_forwarded_for"';
-
-    access_log /var/log/nginx/access.log main;
-
-    sendfile on;
-    tcp_nopush on;
-    tcp_nodelay on;
-    keepalive_timeout 65;
-    types_hash_max_size 2048;
-
-    include /etc/nginx/mime.types;
-    default_type application/octet-stream;
-
-    # Gzip压缩
-    gzip on;
-    gzip_vary on;
-    gzip_min_length 1024;
-    gzip_comp_level 6;
-    gzip_types text/plain text/css text/xml text/javascript application/javascript application/json application/xml+rss;
-
-    # 上传文件大小限制
-    client_max_body_size 50M;
-
-    # 负载均衡配置
-    upstream backend {
-        server gin-vue-admin:8888;
-        # 可以配置多个后端服务
-        # server gin-vue-admin-2:8888;
-    }
-
-    # HTTP服务器配置
-    server {
-        listen 80;
-        server_name localhost;
-
-        # 前端静态资源
-        location / {
-            root /usr/share/nginx/html;
-            index index.html index.htm;
-            try_files $uri $uri/ /index.html;
-            
-            # 缓存配置
-            location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
-                expires 1y;
-                add_header Cache-Control "public, immutable";
-            }
-        }
-
-        # API接口代理
-        location /api/ {
-            proxy_pass http://backend;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            
-            # 超时配置
-            proxy_connect_timeout 30s;
-            proxy_send_timeout 30s;
-            proxy_read_timeout 30s;
-        }
-
-        # 文件上传接口
-        location /upload/ {
-            proxy_pass http://backend;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            
-            # 上传文件特殊配置
-            client_max_body_size 50M;
-            proxy_request_buffering off;
-        }
-
-        # WebSocket支持（如果需要）
-        location /ws/ {
-            proxy_pass http://backend;
-            proxy_http_version 1.1;
-            proxy_set_header Upgrade $http_upgrade;
-            proxy_set_header Connection "upgrade";
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        }
-    }
-
-    # HTTPS服务器配置（可选）
-    server {
-        listen 443 ssl http2;
-        server_name your-domain.com;
-
-        ssl_certificate /etc/nginx/ssl/cert.pem;
-        ssl_certificate_key /etc/nginx/ssl/key.pem;
-        ssl_session_cache shared:SSL:1m;
-        ssl_session_timeout 10m;
-        ssl_protocols TLSv1.2 TLSv1.3;
-        ssl_ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256;
-        ssl_prefer_server_ciphers on;
-
-        # 其他配置与HTTP相同
-        location / {
-            root /usr/share/nginx/html;
-            index index.html index.htm;
-            try_files $uri $uri/ /index.html;
-        }
-
-        location /api/ {
-            proxy_pass http://backend;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-        }
-    }
-}
-```
-
-#### 应用配置文件
-
-```yaml
-# config.yaml
-system:
-  env: 'production'
-  addr: 8888
-  db-type: mysql
-  oss-type: local
-  use-multipoint: false
-  use-redis: true
-  iplimit-count: 15000
-  iplimit-time: 3600
-
-# 数据库配置
-mysql:
-  path: '${DB_HOST:127.0.0.1}:${DB_PORT:3306}'
-  port: '${DB_PORT:3306}'
-  config: 'charset=utf8mb4&parseTime=True&loc=Local'
-  db-name: '${DB_NAME:gva_merchant}'
-  username: '${DB_USER:gva}'
-  password: '${DB_PASSWORD:gva123456}'
-  prefix: ''
-  singular: false
-  engine: ''
-  max-idle-conns: 10
-  max-open-conns: 100
-  log-mode: 'info'
-  log-zap: false
-
-# Redis配置
-redis:
-  addr: '${REDIS_HOST:127.0.0.1}:${REDIS_PORT:6379}'
-  password: '${REDIS_PASSWORD:}'
-  db: 0
-
-# JWT配置
-jwt:
-  signing-key: 'your-super-secret-jwt-key-merchant-management'
-  expires-time: 604800  # 7天
-  buffer-time: 86400    # 1天
-  issuer: 'gin-vue-admin-merchant'
-
-# Casbin权限配置
-casbin:
-  model-path: './resource/rbac_model.conf'
-
-# 文件上传配置
-local:
-  path: 'uploads/file'
-  store-path: 'uploads/file'
-
-# 多租户配置
-multi-tenant:
-  enabled: true
-  default-merchant-id: 0
-  max-merchants-per-user: 10
-  merchant-isolation-enabled: true
-  super-admin-bypass: true
-
-# 日志配置
-zap:
-  level: 'info'
-  prefix: '[gin-vue-admin-merchant]'
-  format: 'console'
-  director: 'log'
-  encode-level: 'LowercaseColorLevelEncoder'
-  stacktrace-key: 'stacktrace'
-  max-age: 7
-  show-line: true
-  log-in-console: true
-
-# 邮件配置
-email:
-  to: 'admin@example.com'
-  port: 587
-  from: 'noreply@yourapp.com'
-  host: 'smtp.example.com'
-  is-ssl: false
-  secret: 'your-email-password'
-  nickname: '商户管理系统'
-
-# 跨域配置
-cors:
-  mode: 'allow-all'
-  whitelist:
-    - allow-origin: 'https://your-domain.com'
-      allow-headers: 'Content-Type,AccessToken,X-CSRF-Token,Authorization,Token,X-Token,X-User-Id'
-      allow-methods: 'POST,GET,OPTIONS,DELETE,PUT'
-      expose-headers: 'Content-Length,Access-Control-Allow-Origin,Access-Control-Allow-Headers,Content-Type'
-```
 ### 监控和运维设计
 
 #### 系统监控指标
@@ -4657,443 +4621,7 @@ cors:
   - 异常权限操作次数
   - SQL注入尝试次数
 
-#### Prometheus监控配置
 
-```yaml
-# monitoring/prometheus.yml
-global:
-  scrape_interval: 15s
-  evaluation_interval: 15s
-
-rule_files:
-  - "rules/*.yml"
-
-alerting:
-  alertmanagers:
-    - static_configs:
-        - targets:
-          - alertmanager:9093
-
-scrape_configs:
-  # 应用服务监控
-  - job_name: 'gin-vue-admin-merchant'
-    static_configs:
-      - targets: ['gin-vue-admin:8888']
-    metrics_path: '/metrics'
-    scrape_interval: 10s
-    scrape_timeout: 5s
-
-  # MySQL监控
-  - job_name: 'mysql'
-    static_configs:
-      - targets: ['mysql-exporter:9104']
-
-  # Redis监控
-  - job_name: 'redis'
-    static_configs:
-      - targets: ['redis-exporter:9121']
-
-  # Nginx监控
-  - job_name: 'nginx'
-    static_configs:
-      - targets: ['nginx-exporter:9113']
-
-  # Node监控
-  - job_name: 'node'
-    static_configs:
-      - targets: ['node-exporter:9100']
-```
-
-#### 报警规则配置
-
-```yaml
-# monitoring/rules/merchant_alerts.yml
-groups:
-  - name: merchant_management_alerts
-    rules:
-      # 高错误率报警
-      - alert: HighErrorRate
-        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
-        for: 2m
-        labels:
-          severity: critical
-        annotations:
-          summary: "High error rate detected"
-          description: "Error rate is {{ $value | humanizePercentage }} for the last 5 minutes"
-
-      # API响应时间过高
-      - alert: HighResponseTime
-        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
-        for: 3m
-        labels:
-          severity: warning
-        annotations:
-          summary: "High API response time"
-          description: "95th percentile response time is {{ $value }}s"
-
-      # 数据库连接池告警
-      - alert: DatabaseConnectionPoolHigh
-        expr: mysql_global_status_threads_connected / mysql_global_variables_max_connections > 0.8
-        for: 2m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Database connection pool usage high"
-          description: "Connection pool usage is {{ $value | humanizePercentage }}"
-
-      # 异常登录尝试
-      - alert: SuspiciousLoginAttempts
-        expr: increase(failed_login_attempts_total[5m]) > 50
-        for: 1m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Suspicious login attempts detected"
-          description: "{{ $value }} failed login attempts in the last 5 minutes"
-
-      # 越权访问尝试
-      - alert: UnauthorizedAccessAttempts
-        expr: increase(unauthorized_access_attempts_total[5m]) > 10
-        for: 1m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Unauthorized access attempts detected"
-          description: "{{ $value }} unauthorized access attempts in the last 5 minutes"
-
-      # 商户数据异常
-      - alert: MerchantDataInconsistency
-        expr: merchant_data_consistency_errors_total > 0
-        for: 0m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Merchant data inconsistency detected"
-          description: "Data consistency errors detected in merchant management"
-```
-
-#### Grafana仪表盘配置
-
-```json
-{
-  "dashboard": {
-    "title": "商户管理系统监控仪表盘",
-    "panels": [
-      {
-        "title": "API请求量",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "rate(http_requests_total[5m])",
-            "legendFormat": "{{method}} {{path}}"
-          }
-        ]
-      },
-      {
-        "title": "响应时间分布",
-        "type": "heatmap",
-        "targets": [
-          {
-            "expr": "rate(http_request_duration_seconds_bucket[5m])",
-            "format": "heatmap"
-          }
-        ]
-      },
-      {
-        "title": "商户注册趋势",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "increase(merchant_registrations_total[1h])",
-            "legendFormat": "小时新增"
-          }
-        ]
-      },
-      {
-        "title": "活跃商户数",
-        "type": "stat",
-        "targets": [
-          {
-            "expr": "active_merchants_total",
-            "legendFormat": "活跃商户"
-          }
-        ]
-      },
-      {
-        "title": "数据库性能",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "mysql_global_status_queries",
-            "legendFormat": "QPS"
-          },
-          {
-            "expr": "mysql_global_status_threads_connected",
-            "legendFormat": "连接数"
-          }
-        ]
-      },
-      {
-        "title": "缓存命中率",
-        "type": "stat",
-        "targets": [
-          {
-            "expr": "redis_keyspace_hits_total / (redis_keyspace_hits_total + redis_keyspace_misses_total) * 100",
-            "legendFormat": "命中率"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-#### 日志集中化管理
-
-```yaml
-# logging/filebeat.yml
-filebeat.inputs:
-  # 应用日志
-  - type: log
-    enabled: true
-    paths:
-      - /app/logs/*.log
-    fields:
-      service: gin-vue-admin-merchant
-      environment: production
-    multiline.pattern: '^\d{4}-\d{2}-\d{2}'
-    multiline.negate: true
-    multiline.match: after
-
-  # Nginx访问日志
-  - type: log
-    enabled: true
-    paths:
-      - /var/log/nginx/access.log
-    fields:
-      service: nginx
-      log_type: access
-
-  # Nginx错误日志
-  - type: log
-    enabled: true
-    paths:
-      - /var/log/nginx/error.log
-    fields:
-      service: nginx
-      log_type: error
-
-output.elasticsearch:
-  hosts: ["elasticsearch:9200"]
-  index: "merchant-logs-%{+yyyy.MM.dd}"
-
-processors:
-  - add_host_metadata:
-      when.not.contains.tags: forwarded
-  - add_docker_metadata: ~
-  - add_kubernetes_metadata: ~
-```
-
-#### 自动化运维脚本
-
-```bash
-#!/bin/bash
-# scripts/deploy.sh - 自动化部署脚本
-
-set -e
-
-# 配置参数
-APP_NAME="gin-vue-admin-merchant"
-DOCKER_IMAGE="$APP_NAME:latest"
-CONTAINER_NAME="$APP_NAME"
-PORT=8888
-
-# 颜色输出
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
-
-print_status() {
-    echo -e "${GREEN}[INFO]${NC} $1"
-}
-
-print_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
-}
-
-print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
-
-# 检查依赖
-check_dependencies() {
-    print_status "Checking dependencies..."
-    
-    if ! command -v docker &> /dev/null; then
-        print_error "Docker is not installed"
-        exit 1
-    fi
-    
-    if ! command -v docker-compose &> /dev/null; then
-        print_error "Docker Compose is not installed"
-        exit 1
-    fi
-    
-    print_status "All dependencies are satisfied"
-}
-
-# 数据库备份
-backup_database() {
-    print_status "Creating database backup..."
-    
-    BACKUP_FILE="backup/db_backup_$(date +%Y%m%d_%H%M%S).sql"
-    mkdir -p backup
-    
-    docker exec mysql mysqldump -u gva -pgva123456 gva_merchant > "$BACKUP_FILE"
-    
-    if [ $? -eq 0 ]; then
-        print_status "Database backup created: $BACKUP_FILE"
-    else
-        print_error "Database backup failed"
-        exit 1
-    fi
-}
-
-# 构建镜像
-build_image() {
-    print_status "Building Docker image..."
-    
-    docker build -t "$DOCKER_IMAGE" .
-    
-    if [ $? -eq 0 ]; then
-        print_status "Docker image built successfully"
-    else
-        print_error "Docker image build failed"
-        exit 1
-    fi
-}
-
-# 停止旧服务
-stop_old_service() {
-    print_status "Stopping old service..."
-    
-    if [ "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
-        docker stop "$CONTAINER_NAME"
-        docker rm "$CONTAINER_NAME"
-        print_status "Old service stopped"
-    else
-        print_warning "No running service found"
-    fi
-}
-
-# 部署新服务
-deploy_service() {
-    print_status "Deploying new service..."
-    
-    docker-compose up -d
-    
-    if [ $? -eq 0 ]; then
-        print_status "Service deployed successfully"
-    else
-        print_error "Service deployment failed"
-        exit 1
-    fi
-}
-
-# 健康检查
-health_check() {
-    print_status "Performing health check..."
-    
-    max_attempts=30
-    attempt=1
-    
-    while [ $attempt -le $max_attempts ]; do
-        if curl -s "http://localhost:$PORT/health" > /dev/null; then
-            print_status "Health check passed"
-            return 0
-        fi
-        
-        print_warning "Health check attempt $attempt/$max_attempts failed, retrying..."
-        sleep 2
-        ((attempt++))
-    done
-    
-    print_error "Health check failed after $max_attempts attempts"
-    return 1
-}
-
-# 清理旧镜像
-cleanup() {
-    print_status "Cleaning up old images..."
-    
-    docker image prune -f
-    
-    print_status "Cleanup completed"
-}
-
-# 主流程
-main() {
-    print_status "Starting deployment process..."
-    
-    check_dependencies
-    backup_database
-    build_image
-    stop_old_service
-    deploy_service
-    
-    if health_check; then
-        cleanup
-        print_status "Deployment completed successfully!"
-    else
-        print_error "Deployment failed during health check"
-        exit 1
-    fi
-}
-
-# 执行主流程
-main "$@"
-```
-
-#### 数据备份策略
-
-```bash
-#!/bin/bash
-# scripts/backup.sh - 数据备份脚本
-
-set -e
-
-# 配置参数
-BACKUP_DIR="/backup/mysql"
-S3_BUCKET="your-backup-bucket"
-RETENTION_DAYS=30
-DATE=$(date +%Y%m%d_%H%M%S)
-
-# 创建备份目录
-mkdir -p "$BACKUP_DIR"
-
-# 数据库备份
-echo "Starting database backup..."
-docker exec mysql mysqldump \
-    --single-transaction \
-    --routines \
-    --triggers \
-    --all-databases \
-    -u gva -pgva123456 | gzip > "$BACKUP_DIR/full_backup_$DATE.sql.gz"
-
-# 上传到云存储（可选）
-if command -v aws &> /dev/null; then
-    echo "Uploading backup to S3..."
-    aws s3 cp "$BACKUP_DIR/full_backup_$DATE.sql.gz" "s3://$S3_BUCKET/mysql/"
-fi
-
-# 清理过期备份
-echo "Cleaning up old backups..."
-find "$BACKUP_DIR" -name "*.sql.gz" -mtime +$RETENTION_DAYS -delete
-
-echo "Backup completed: full_backup_$DATE.sql.gz"
-```
-- **层级数据一致性**：商户移动操作使用数据库事务保证一致性
 
 ### JWT令牌扩展设计
 
@@ -5253,9 +4781,9 @@ func (m *MerchantSwitchService) determineUserRole(user model.SysUser, merchant m
   - L3: 商户角色权限缓存（Redis）
   - L4: 商户树结构缓存（Redis）
 - **缓存Key设计**：包含商户ID的分层Key结构
-  - `tenant:{merchantId}:user:list`
-  - `tenant:{merchantId}:role:list`
-  - `tenant:{merchantId}:permission:cache`
+  - `merchant:{merchantId}:user:list`
+  - `merchant:{merchantId}:role:list`
+  - `merchant:{merchantId}:permission:cache`
   - `merchant:tree:structure` （全局树结构）
   - `merchant:{merchantId}:children` （子商户列表）
 - **缓存失效**：商户数据变更时精准失效相关缓存
@@ -5332,13 +4860,13 @@ func (m *MerchantSwitchService) determineUserRole(user model.SysUser, merchant m
 ### 测试用例示例
 ```
 // 多租户数据隔离测试
-describe('TenantDataIsolation', () => {
+describe('merchantDataIsolation', () => {
   test('应该只返回当前商户的用户数据', async () => {
     const merchantId = 1
-    const userService = new TenantUserService()
+    const userService = new merchantUserService()
     
     // 设置商户上下文
-    userService.setTenantContext({ merchantId })
+    userService.setmerchantContext({ merchantId })
     
     const users = await userService.getUserList()
     
@@ -5351,9 +4879,9 @@ describe('TenantDataIsolation', () => {
   test('跨商户数据访问应该被拦截', async () => {
     const currentMerchantId = 1
     const targetMerchantId = 2
-    const userService = new TenantUserService()
+    const userService = new merchantUserService()
     
-    userService.setTenantContext({ merchantId: currentMerchantId })
+    userService.setmerchantContext({ merchantId: currentMerchantId })
     
     // 尝试访问其他商户的用户数据
     await expect(userService.getUserById(targetMerchantId, 123))
@@ -5364,26 +4892,26 @@ describe('TenantDataIsolation', () => {
 // 商户切换功能测试
 describe('MerchantSwitching', () => {
   test('用户应该能够成功切换到有权限的商户', async () => {
-    const tenantStore = useTenantStore()
+    const merchantStore = usemerchantStore()
     const targetMerchantId = 2
     
     // 模拟用户有多个商户权限
-    tenantStore.userMerchants = [
+    merchantStore.userMerchants = [
       { merchantId: 1, merchantName: '商户A' },
       { merchantId: 2, merchantName: '商户B' }
     ]
     
-    const result = await tenantStore.switchMerchant(targetMerchantId)
+    const result = await merchantStore.switchMerchant(targetMerchantId)
     
     expect(result.merchantInfo.merchantId).toBe(targetMerchantId)
-    expect(tenantStore.currentMerchantId).toBe(targetMerchantId)
+    expect(merchantStore.currentMerchantId).toBe(targetMerchantId)
   })
   
   test('切换到无权限商户应该失败', async () => {
-    const tenantStore = useTenantStore()
+    const merchantStore = usemerchantStore()
     const unauthorizedMerchantId = 999
     
-    await expect(tenantStore.switchMerchant(unauthorizedMerchantId))
+    await expect(merchantStore.switchMerchant(unauthorizedMerchantId))
       .rejects.toThrow('商户切换失败')
   })
 })
