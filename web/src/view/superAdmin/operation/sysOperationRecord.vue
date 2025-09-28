@@ -370,4 +370,30 @@
     color: #2c3e50;
     padding: 10px;
   }
+  /* 修复排序按钮点击问题的样式 */
+  .el-table th {
+    position: relative;
+  }
+  .el-table th > .cell {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .el-table th > .cell > .caret-wrapper {
+    position: absolute;
+    right: 8px;
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+    width: 16px;
+  }
+  .el-table th > .cell > .caret-wrapper .sort-caret {
+    cursor: pointer;
+    opacity: 0.4;
+    transition: opacity 0.2s, color 0.2s;
+  }
+  .el-table th > .cell > .caret-wrapper .sort-caret:hover {
+    opacity: 1;
+  }
 </style>
