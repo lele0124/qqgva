@@ -78,6 +78,17 @@ func (operationRecordService *OperationRecordService) GetSysOperationRecordInfoL
 	if err != nil {
 		return
 	}
-	err = db.Order("id desc").Limit(limit).Offset(offset).Preload("User").Find(&sysOperationRecords).Error
+	
+	// 排序处理
+	sort := "id desc"
+	if info.SortField != "" {
+		order := "asc"
+		if info.SortOrder == "desc" {
+			order = "desc"
+		}
+		sort = info.SortField + " " + order
+	}
+	
+	err = db.Order(sort).Limit(limit).Offset(offset).Preload("User").Find(&sysOperationRecords).Error
 	return sysOperationRecords, total, err
 }

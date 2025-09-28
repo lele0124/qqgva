@@ -8,4 +8,6 @@ import (
 type SysOperationRecordSearch struct {
 	system.SysOperationRecord
 	request.PageInfo
+	SortField string `json:"sortField" form:"sortField"` // 排序字段
+	SortOrder string `json:"sortOrder" form:"sortOrder"` // 排序顺序: asc 或 desc
 }
