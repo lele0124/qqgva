@@ -6,7 +6,6 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/merchant/model"
     "github.com/flipped-aurora/gin-vue-admin/server/plugin/merchant/model/request"
-    "gorm.io/gorm"
 )
 
 var Merchant = new(merchant)
@@ -21,31 +20,15 @@ func (s *merchant) CreateMerchant(ctx context.Context, merchant *model.Merchant)
 
 // DeleteMerchant 删除商户信息记录
 // Author [yourname](https://github.com/yourname)
-func (s *merchant) DeleteMerchant(ctx context.Context, ID string,userID uint) (err error) {
-	err = global.GVA_DB.Transaction(func(tx *gorm.DB) error {
-	    if err := tx.Model(&model.Merchant{}).Where("id = ?", ID).Update("deleted_by", userID).Error; err != nil {
-              return err
-        }
-        if err = tx.Delete(&model.Merchant{},"id = ?",ID).Error; err != nil {
-              return err
-        }
-        return nil
-	})
+func (s *merchant) DeleteMerchant(ctx context.Context, ID string) (err error) {
+	err = global.GVA_DB.Delete(&model.Merchant{},"id = ?",ID).Error
 	return err
 }
 
 // DeleteMerchantByIds 批量删除商户信息记录
 // Author [yourname](https://github.com/yourname)
-func (s *merchant) DeleteMerchantByIds(ctx context.Context, IDs []string,deleted_by uint) (err error) {
-	err = global.GVA_DB.Transaction(func(tx *gorm.DB) error {
-	    if err := tx.Model(&model.Merchant{}).Where("id in ?", IDs).Update("deleted_by", deleted_by).Error; err != nil {
-            return err
-        }
-        if err := tx.Where("id in ?", IDs).Delete(&model.Merchant{}).Error; err != nil {
-            return err
-        }
-        return nil
-    })
+func (s *merchant) DeleteMerchantByIds(ctx context.Context, IDs []string) (err error) {
+	err = global.GVA_DB.Where("id in ?", IDs).Delete(&model.Merchant{}).Error
 	return err
 }
 

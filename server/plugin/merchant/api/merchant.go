@@ -8,7 +8,6 @@ import (
     "github.com/flipped-aurora/gin-vue-admin/server/plugin/merchant/model/request"
     "github.com/gin-gonic/gin"
     "go.uber.org/zap"
-    "github.com/flipped-aurora/gin-vue-admin/server/utils"
 )
 
 var Merchant = new(merchant)
@@ -34,7 +33,6 @@ func (a *merchant) CreateMerchant(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-    info.CreatedBy = utils.GetUserID(c)
 	err = serviceMerchant.CreateMerchant(ctx,&info)
 	if err != nil {
         global.GVA_LOG.Error("创建失败!", zap.Error(err))
@@ -58,8 +56,7 @@ func (a *merchant) DeleteMerchant(c *gin.Context) {
     ctx := c.Request.Context()
 
 	ID := c.Query("ID")
-    userID := utils.GetUserID(c)
-	err := serviceMerchant.DeleteMerchant(ctx,ID,userID)
+	err := serviceMerchant.DeleteMerchant(ctx,ID)
 	if err != nil {
         global.GVA_LOG.Error("删除失败!", zap.Error(err))
 		response.FailWithMessage("删除失败:" + err.Error(), c)
@@ -81,8 +78,7 @@ func (a *merchant) DeleteMerchantByIds(c *gin.Context) {
     ctx := c.Request.Context()
 
 	IDs := c.QueryArray("IDs[]")
-    userID := utils.GetUserID(c)
-	err := serviceMerchant.DeleteMerchantByIds(ctx,IDs,userID)
+	err := serviceMerchant.DeleteMerchantByIds(ctx,IDs)
 	if err != nil {
         global.GVA_LOG.Error("批量删除失败!", zap.Error(err))
 		response.FailWithMessage("批量删除失败:" + err.Error(), c)
@@ -110,7 +106,6 @@ func (a *merchant) UpdateMerchant(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-    info.UpdatedBy = utils.GetUserID(c)
 	err = serviceMerchant.UpdateMerchant(ctx,info)
     if err != nil {
         global.GVA_LOG.Error("更新失败!", zap.Error(err))

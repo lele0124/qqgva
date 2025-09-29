@@ -13,9 +13,6 @@ type Merchant struct {
   Address  *string `json:"address" form:"address" gorm:"comment:商户地址;column:address;size:255;"`  //商户地址
   BusinessScope  *string `json:"businessScope" form:"businessScope" gorm:"comment:经营范围;column:business_scope;size:255;"`  //经营范围
   IsEnabled  *bool `json:"isEnabled" form:"isEnabled" gorm:"default:true;comment:是否启用;column:is_enabled;"`  //是否启用
-    CreatedBy  uint   `gorm:"column:created_by;comment:创建者"`
-    UpdatedBy  uint   `gorm:"column:updated_by;comment:更新者"`
-    DeletedBy  uint   `gorm:"column:deleted_by;comment:删除者"`
 }
 
 
