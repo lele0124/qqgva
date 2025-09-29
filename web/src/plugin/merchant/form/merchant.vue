@@ -9,12 +9,6 @@
         <el-form-item label="商户类型:" prop="merchantType">
           <el-input v-model="formData.merchantType" :clearable="true"  placeholder="请输入商户类型" />
        </el-form-item>
-        <el-form-item label="联系人:" prop="contactPerson">
-          <el-input v-model="formData.contactPerson" :clearable="true"  placeholder="请输入联系人" />
-       </el-form-item>
-        <el-form-item label="联系电话:" prop="contactPhone">
-          <el-input v-model="formData.contactPhone" :clearable="true"  placeholder="请输入联系电话" />
-       </el-form-item>
         <el-form-item label="地址:" prop="address">
           <el-input v-model="formData.address" :clearable="true"  placeholder="请输入地址" />
        </el-form-item>
@@ -58,8 +52,6 @@ const type = ref('')
 const formData = ref({
             merchantName: '',
             merchantType: '',
-            contactPerson: '',
-            contactPhone: '',
             address: '',
             status: 0,
         })

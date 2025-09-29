@@ -61,12 +61,6 @@ func (s *merchant) GetMerchantInfoList(ctx context.Context, info request.Merchan
     if info.MerchantName != nil && *info.MerchantName != "" {
         db = db.Where("merchant_name LIKE ?", "%"+ *info.MerchantName+"%")
     }
-    if info.ContactPerson != nil && *info.ContactPerson != "" {
-        db = db.Where("contact_person LIKE ?", "%"+ *info.ContactPerson+"%")
-    }
-    if info.ContactPhone != nil && *info.ContactPhone != "" {
-        db = db.Where("contact_phone LIKE ?", "%"+ *info.ContactPhone+"%")
-    }
     if info.Address != nil && *info.Address != "" {
         db = db.Where("address LIKE ?", "%"+ *info.Address+"%")
     }

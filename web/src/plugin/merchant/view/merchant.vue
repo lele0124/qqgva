@@ -30,14 +30,6 @@
   <el-input v-model="searchInfo.merchantType" placeholder="搜索条件" />
 </el-form-item>
            
-            <el-form-item label="联系人" prop="contactPerson">
-  <el-input v-model="searchInfo.contactPerson" placeholder="搜索条件" />
-</el-form-item>
-           
-            <el-form-item label="联系电话" prop="contactPhone">
-  <el-input v-model="searchInfo.contactPhone" placeholder="搜索条件" />
-</el-form-item>
-           
             <el-form-item label="地址" prop="address">
   <el-input v-model="searchInfo.address" placeholder="搜索条件" />
 </el-form-item>
@@ -85,10 +77,6 @@
 
             <el-table-column align="left" label="商户类型" prop="merchantType" width="120" />
 
-            <el-table-column align="left" label="联系人" prop="contactPerson" width="120" />
-
-            <el-table-column align="left" label="联系电话" prop="contactPhone" width="120" />
-
             <el-table-column align="left" label="地址" prop="address" width="120" />
 
             <el-table-column sortable align="left" label="状态" prop="status" width="120" />
@@ -131,12 +119,6 @@
              <el-form-item label="商户类型:" prop="merchantType">
     <el-input v-model="formData.merchantType" :clearable="true" placeholder="请输入商户类型" />
 </el-form-item>
-             <el-form-item label="联系人:" prop="contactPerson">
-    <el-input v-model="formData.contactPerson" :clearable="true" placeholder="请输入联系人" />
-</el-form-item>
-             <el-form-item label="联系电话:" prop="contactPhone">
-    <el-input v-model="formData.contactPhone" :clearable="true" placeholder="请输入联系电话" />
-</el-form-item>
              <el-form-item label="地址:" prop="address">
     <el-input v-model="formData.address" :clearable="true" placeholder="请输入地址" />
 </el-form-item>
@@ -153,12 +135,6 @@
 </el-descriptions-item>
                  <el-descriptions-item label="商户类型">
     {{ detailForm.merchantType }}
-</el-descriptions-item>
-                 <el-descriptions-item label="联系人">
-    {{ detailForm.contactPerson }}
-</el-descriptions-item>
-                 <el-descriptions-item label="联系电话">
-    {{ detailForm.contactPhone }}
 </el-descriptions-item>
                  <el-descriptions-item label="地址">
     {{ detailForm.address }}
@@ -407,8 +383,6 @@ const closeDialog = () => {
     formData.value = {
         merchantName: '',
         merchantType: '',
-        contactPerson: '',
-        contactPhone: '',
         address: '',
         status: 0,
         }
