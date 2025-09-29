@@ -502,8 +502,6 @@ VALUES ('财务人员', 2, 3);
 
 | 字段名 | 类型 | 必填 | 索引 | 说明 | 示例值 |
 |--------|------|------|------|------|--------|
-| ID | int | 是 | 主键 | 主键ID | 1 |
-| MerchantCode | string | 是 | 唯一索引 | 商户编码 | MERCH20240001 |
 | MerchantName | string | 是 | 普通索引 | 商户名称 | XX科技有限公司 |
 | MerchantIcon | string | 否 | 无 | 商户图标URL | /uploads/icons/merchant_1.png |
 | ParentID | uint | 否 | 普通索引 | 父商户ID（NULL表示顶级商户） | 1 |
@@ -516,13 +514,36 @@ VALUES ('财务人员', 2, 3);
 | ValidStartTime | time.Time | 否 | 无 | 有效开始时间（仅记录用途） | 2024-01-01 00:00:00 |
 | ValidEndTime | time.Time | 否 | 无 | 有效结束时间（仅记录用途） | 2024-12-31 23:59:59 |
 | MerchantLevel | uint | 是 | 无 | 商户等级 | 1-普通商户 2-高级商户 3-VIP商户 |
-| OperatorId | uint | 是 | 无 | 操作者用户ID | 1 |
-| OperatorName | string | 是 | 无 | 操作者姓名 | 张三 |
-| OperatorMerchantId | uint | 否 | 无 | 操作者所属商户ID | 1 |
-| OperatorMerchantName | string | 否 | 无 | 操作者所属商户名称 | XX科技有限公司 |
-| CreatedAt | time.Time | 是 | 无 | 创建时间 | 2024-01-01 10:00:00 |
-| updatedAt | time.Time | 是 | 无 | 更新时间 | 2024-01-02 15:30:00 |
-| DeletedAt | gorm.DeletedAt | 否 | 无 | 删除时间 | NULL |
+
+
+
+
+type GVA_MODEL struct {
+	ID                   uint           `gorm:"primarykey" json:"ID"`                              // 主键ID
+	UUID                 uuid.UUID      `json:"uuid" gorm:"index;comment:全局UUID"`                  // 全局UUID
+	OperatorId           uint           `json:"operatorId" gorm:"index;comment:操作人ID"`             // 操作人ID
+	OperatorName         string         `json:"operatorName" gorm:"index;comment:操作人姓名"`           // 操作人姓名
+	OperatorMerchantId   uint           `json:"operatorMerchantId" gorm:"index;comment:操作人商户ID"`   // 操作人商户ID
+	OperatorMerchantName string         `json:"operatorMerchantName" gorm:"index;comment:操作人商户名称"` // 操作人商户名称
+	UpdatedAt            time.Time      `json:"updatedAt" gorm:"index;comment:更新时间"`               // 更新时间
+	DeletedAt            gorm.DeletedAt `gorm:"index" json:"deletedAt"`                            // 删除时间
+}
+
+type Merchant struct {
+    global.GVA_MODEL
+  MerchantName  *string `json:"merchantName" form:"merchantName" gorm:"comment:商户名称;column:merchant_name;size:100;" binding:"required"`  //商户名称
+  Address  *string `json:"address" form:"address" gorm:"comment:商户地址;column:address;size:255;"`  //商户地址
+  BusinessScope  *string `json:"businessScope" form:"businessScope" gorm:"comment:经营范围;column:business_scope;size:255;"`  //经营范围
+  IsEnabled  *bool `json:"isEnabled" form:"isEnabled" gorm:"default:true;comment:是否启用;column:is_enabled;"`  //是否启用
+}
+
+
+
+
+
+
+
+
 
 **表结构冗余优化说明**：
 - **移除Level字段**：商户层级可以通过递归查询ParentID动态计算，无需冗余存储
