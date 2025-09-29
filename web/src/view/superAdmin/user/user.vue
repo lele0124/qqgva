@@ -602,9 +602,8 @@
   const userInfo = ref({
     ID: '',
     uuid: '',
-    CreatedAt: '',
     updatedAt: '',
-    DeletedAt: '',
+    deletedAt: '',
     userName: '',
     password: '',
     nickName: '',
@@ -692,9 +691,8 @@
     userInfo.value = {
       ID: '',
       uuid: '',
-      CreatedAt: '',
       updatedAt: '',
-      DeletedAt: '',
+      deletedAt: '',
       userName: '',
       password: '',
       nickName: '',
