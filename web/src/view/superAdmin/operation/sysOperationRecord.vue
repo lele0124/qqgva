@@ -43,8 +43,8 @@
         <el-table-column align="left" label="创建时间" prop="CreatedAt" width="180" sortable>
           <template #default="scope">{{ formatDate(scope.row.CreatedAt) }}</template>
         </el-table-column>
-        <el-table-column align="left" label="更新时间" prop="UpdatedAt" width="180" sortable>
-          <template #default="scope">{{ formatDate(scope.row.UpdatedAt) }}</template>
+        <el-table-column align="left" label="更新时间" prop="updatedAt" width="180" sortable>
+          <template #default="scope">{{ formatDate(scope.row.updatedAt) }}</template>
         </el-table-column>
         <el-table-column align="left" label="请求IP" prop="ip" width="120" sortable />
         <el-table-column align="left" label="请求方法" prop="method" width="120" sortable />

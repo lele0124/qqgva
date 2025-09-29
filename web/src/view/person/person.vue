@@ -449,13 +449,13 @@
   }
 
   const enterEdit = async () => {
-    const updateData = editField.value === 'nickName' 
+    const updatedAta = editField.value === 'nickName' 
       ? { nickName: editValue.value }
       : { name: editValue.value }
       
-    const res = await setSelfInfo(updateData)
+    const res = await setSelfInfo(updatedAta)
     if (res.code === 0) {
-      userStore.ResetUserInfo(updateData)
+      userStore.ResetUserInfo(updatedAta)
       ElMessage.success('修改成功')
     }
     editValue.value = ''

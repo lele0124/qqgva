@@ -192,7 +192,7 @@ web/
     
     - 用于定义与数据库表映射的 GORM 结构体。
         
-    - 结构体应继承 `global.GVA_MODEL` 以包含 `ID`, `CreatedAt`, `UpdatedAt` 等基础字段。
+    - 结构体应继承 `global.GVA_MODEL` 以包含 `ID`, `CreatedAt`, `updatedAt` 等基础字段。
         
     - 必须为字段添加清晰的 `json` 和 `gorm` 标签。
 

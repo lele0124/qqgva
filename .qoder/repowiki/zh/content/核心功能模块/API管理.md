@@ -103,7 +103,7 @@ classDiagram
         +string ApiGroup
         +string Method
         +time.Time CreatedAt
-        +time.Time UpdatedAt
+        +time.Time updatedAt
         +*time.Time DeletedAt
     }
     note right of SysApi : "Path : API路径,用于路由匹配<br/>Description : API中文描述,便于理解<br/>ApiGroup : API组别,用于分类管理<br/>Method : 请求方法(POST/GET/PUT/DELETE)"

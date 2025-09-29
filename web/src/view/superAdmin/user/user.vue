@@ -122,7 +122,7 @@
           <template #default="scope">
             <div>
               <div>{{ scope.row.operatorName || '-' }}</div>
-              <div class="text-xs text-gray-400">{{ formatDate(scope.row.UpdatedAt) }}</div>
+              <div class="text-xs text-gray-400">{{ formatDate(scope.row.updatedAt) }}</div>
             </div>
           </template>
         </el-table-column>
@@ -344,8 +344,8 @@
         
         <!-- 将时间相关的只读字段移到表单最下方,并统一显示方式 -->
         <div v-if="dialogFlag === 'edit'" class="form-row">
-          <el-form-item label="更新时间" prop="UpdatedAt" class="form-half bold-label">
-            <el-input :value="formatDate(userInfo.UpdatedAt)" disabled />
+          <el-form-item label="更新时间" prop="updatedAt" class="form-half bold-label">
+            <el-input :value="formatDate(userInfo.updatedAt)" disabled />
           </el-form-item>
           <el-form-item label="创建时间" prop="CreatedAt" class="form-half bold-label">
             <el-input :value="formatDate(userInfo.CreatedAt)" disabled />
@@ -603,7 +603,7 @@
     ID: '',
     uuid: '',
     CreatedAt: '',
-    UpdatedAt: '',
+    updatedAt: '',
     DeletedAt: '',
     userName: '',
     password: '',
@@ -693,7 +693,7 @@
       ID: '',
       uuid: '',
       CreatedAt: '',
-      UpdatedAt: '',
+      updatedAt: '',
       DeletedAt: '',
       userName: '',
       password: '',

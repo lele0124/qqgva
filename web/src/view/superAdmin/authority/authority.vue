@@ -21,9 +21,9 @@
           min-width="180"
           prop="authorityName"
         />
-        <el-table-column label="更新时间" min-width="220" prop="UpdatedAt">
+        <el-table-column label="更新时间" min-width="220" prop="updatedAt">
           <template #default="scope">
-            {{ formatDate(scope.row.UpdatedAt) }}
+            {{ formatDate(scope.row.updatedAt) }}
           </template>
         </el-table-column>
         <el-table-column label="默认路由" min-width="180" prop="defaultRouter" />

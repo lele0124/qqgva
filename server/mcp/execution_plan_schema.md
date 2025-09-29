@@ -516,7 +516,7 @@ type DataSource struct {
    - array(数组)
 5. **搜索类型**: FieldSearchType支持:EQ, NE, GT, GE, LT, LE, LIKE, BETWEEN等
 6. **索引类型**: FieldIndexType支持:index, unique等
-7. **GvaModel**: 设置为true时会自动包含ID、CreatedAt、UpdatedAt、DeletedAt字段
+7. **GvaModel**: 设置为true时会自动包含ID、CreatedAt、updatedAt、DeletedAt字段
 8. **关联配置**: 使用dataSource时,确保关联表已存在,建议开启checkDataSource验证
 
 ## 常见错误避免

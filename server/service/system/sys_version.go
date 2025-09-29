@@ -48,8 +48,8 @@ func (sysVersionService *SysVersionService) GetSysVersionInfoList(ctx context.Co
 	db := global.GVA_DB.Model(&system.SysVersion{})
 	var sysVersions []system.SysVersion
 	// 如果有条件搜索 下方会自动创建搜索语句
-	if len(info.CreatedAtRange) == 2 {
-		db = db.Where("created_at BETWEEN ? AND ?", info.CreatedAtRange[0], info.CreatedAtRange[1])
+	if len(info.UpdatedAtRange) == 2 {
+		db = db.Where("updated_at BETWEEN ? AND ?", info.UpdatedAtRange[0], info.UpdatedAtRange[1])
 	}
 
 	if info.VersionName != nil && *info.VersionName != "" {

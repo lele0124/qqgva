@@ -502,15 +502,12 @@ VALUES ('财务人员', 2, 3);
 
 | 字段名 | 类型 | 必填 | 索引 | 说明 | 示例值 |
 |--------|------|------|------|------|--------|
-| ID | uint | 是 | 主键 | 主键ID | 1 |
+| ID | int | 是 | 主键 | 主键ID | 1 |
 | MerchantCode | string | 是 | 唯一索引 | 商户编码 | MERCH20240001 |
 | MerchantName | string | 是 | 普通索引 | 商户名称 | XX科技有限公司 |
 | MerchantIcon | string | 否 | 无 | 商户图标URL | /uploads/icons/merchant_1.png |
 | ParentID | uint | 否 | 普通索引 | 父商户ID（NULL表示顶级商户） | 1 |
-| MerchantType | string | 是 | 无 | 商户类型 | ENTERPRISE, INDIVIDUAL |
-| ContactName | string | 是 | 无 | 联系人姓名 | 张三 |
-| ContactPhone | string | 是 | 无 | 联系电话 | 13800138000 |
-| ContactEmail | string | 是 | 无 | 联系邮箱 | contact@example.com |
+| MerchantType | uint | 是 | 无 | 商户类型 | 1－企业　2－个体 |
 | BusinessLicense | string | 否 | 无 | 营业执照号 | 91110000000000000X |
 | LegalPerson | string | 否 | 无 | 法人代表 | 李四 |
 | RegisteredAddress | string | 否 | 无 | 注册地址 | 北京市朝阳区XX路XX号 |
@@ -518,13 +515,13 @@ VALUES ('财务人员', 2, 3);
 | IsEnabled | int | 是 | 普通索引 | 商户开关状态：1-正常 0-关闭 | 1 |
 | ValidStartTime | time.Time | 否 | 无 | 有效开始时间（仅记录用途） | 2024-01-01 00:00:00 |
 | ValidEndTime | time.Time | 否 | 无 | 有效结束时间（仅记录用途） | 2024-12-31 23:59:59 |
-| MerchantLevel | string | 是 | 无 | 商户等级 | BASIC, PREMIUM, VIP |
-| OperatorID | uint | 是 | 无 | 操作者用户ID | 1 |
+| MerchantLevel | uint | 是 | 无 | 商户等级 | 1-普通商户 2-高级商户 3-VIP商户 |
+| OperatorId | uint | 是 | 无 | 操作者用户ID | 1 |
 | OperatorName | string | 是 | 无 | 操作者姓名 | 张三 |
-| OperatorMerchantID | uint | 否 | 无 | 操作者所属商户ID | 1 |
+| OperatorMerchantId | uint | 否 | 无 | 操作者所属商户ID | 1 |
 | OperatorMerchantName | string | 否 | 无 | 操作者所属商户名称 | XX科技有限公司 |
 | CreatedAt | time.Time | 是 | 无 | 创建时间 | 2024-01-01 10:00:00 |
-| UpdatedAt | time.Time | 是 | 无 | 更新时间 | 2024-01-02 15:30:00 |
+| updatedAt | time.Time | 是 | 无 | 更新时间 | 2024-01-02 15:30:00 |
 | DeletedAt | gorm.DeletedAt | 否 | 无 | 删除时间 | NULL |
 
 **表结构冗余优化说明**：

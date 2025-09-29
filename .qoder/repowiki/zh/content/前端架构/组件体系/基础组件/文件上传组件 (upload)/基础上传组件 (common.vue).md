@@ -147,7 +147,7 @@ class OssInterface {
 class ExaFileUploadAndDownload {
 +ID uint
 +CreatedAt time.Time
-+UpdatedAt time.Time
++updatedAt time.Time
 +DeletedAt gorm.DeletedAt
 +Name string
 +ClassId int

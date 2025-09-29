@@ -97,17 +97,17 @@ getDataSourceFunc()
     <div class="gva-search-box">
       <el-form ref="elSearchFormRef" :inline="true" :model="searchInfo" class="demo-form-inline" @keyup.enter="onSubmit">
       {{- if .GvaModel }}
-      <el-form-item label="创建日期" prop="createdAtRange">
+      <el-form-item label="更新日期" prop="updatedAtRange">
       <template #label>
         <span>
-          创建日期
+          更新日期
           <el-tooltip content="搜索范围是开始日期(包含)至结束日期(不包含)">
             <el-icon><QuestionFilled /></el-icon>
           </el-tooltip>
         </span>
       </template>
          <el-date-picker
-                  v-model="searchInfo.createdAtRange"
+                  v-model="searchInfo.updatedAtRange"
                   class="!w-380px"
                   type="datetimerange"
                   range-separator="至"

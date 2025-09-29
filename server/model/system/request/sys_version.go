@@ -8,7 +8,7 @@ import (
 )
 
 type SysVersionSearch struct {
-	CreatedAtRange []time.Time `json:"createdAtRange" form:"createdAtRange[]"`
+	UpdatedAtRange []time.Time `json:"updatedAtRange" form:"updatedAtRange[]"`
 	VersionName    *string     `json:"versionName" form:"versionName"`
 	VersionCode    *string     `json:"versionCode" form:"versionCode"`
 	request.PageInfo

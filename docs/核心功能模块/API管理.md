@@ -103,7 +103,7 @@ class SysApi {
 +string ApiGroup
 +string Method
 +time.Time CreatedAt
-+time.Time UpdatedAt
++time.Time updatedAt
 +*time.Time DeletedAt
 }
 note right of SysApi

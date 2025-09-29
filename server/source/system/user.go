@@ -2,10 +2,10 @@ package system
 
 import (
 	"context"
+
 	sysModel "github.com/flipped-aurora/gin-vue-admin/server/model/system"
 	"github.com/flipped-aurora/gin-vue-admin/server/service/system"
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
@@ -56,7 +56,6 @@ func (i *initUser) InitializeData(ctx context.Context) (next context.Context, er
 
 	entities := []sysModel.SysUser{
 		{
-			UUID:        uuid.New(),
 			Username:    "admin",
 			Password:    adminPassword,
 			NickName:    "Mr.奇淼",
@@ -66,7 +65,6 @@ func (i *initUser) InitializeData(ctx context.Context) (next context.Context, er
 			Email:       "333333333@qq.com",
 		},
 		{
-			UUID:        uuid.New(),
 			Username:    "a303176530",
 			Password:    password,
 			NickName:    "用户1",

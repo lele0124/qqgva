@@ -62,9 +62,9 @@
                 <CustomPic pic-type="file" :pic-src="scope.row.url" preview/>
               </template>
             </el-table-column>
-            <el-table-column align="left" label="日期" prop="UpdatedAt" width="180">
+            <el-table-column align="left" label="日期" prop="updatedAt" width="180">
               <template #default="scope">
-                <div>{{ formatDate(scope.row.UpdatedAt) }}</div>
+                <div>{{ formatDate(scope.row.updatedAt) }}</div>
               </template>
             </el-table-column>
             <el-table-column

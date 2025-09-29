@@ -865,7 +865,7 @@ JOINS模式下不支持导入
       }
       delete copyData.ID
       delete copyData.CreatedAt
-      delete copyData.UpdatedAt
+      delete copyData.updatedAt
       copyData.templateID = copyData.templateID + '_copy'
       copyData.name = copyData.name + '_copy'
       formData.value = copyData

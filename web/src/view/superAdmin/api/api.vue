@@ -121,7 +121,7 @@
                 <!-- 调试信息 -->
                 <div v-if="process.env.NODE_ENV === 'development'" style="font-size: 10px; color: #999; margin-top: 2px;">
                   <div v-if="scope.row.updatedAt">原始updatedAt: {{ typeof scope.row.updatedAt }}</div>
-                  <div v-if="scope.row.UpdatedAt">原始UpdatedAt: {{ typeof scope.row.UpdatedAt }}</div>
+                  <div v-if="scope.row.updatedAt">原始updatedAt: {{ typeof scope.row.updatedAt }}</div>
                   <div v-if="scope.row.updated_at">原始updated_at: {{ typeof scope.row.updated_at }}</div>
                 </div>
               </div>
@@ -685,10 +685,10 @@
         console.log('第一条数据的结构:', table.data.list[0]);
         console.log('updatedAt字段是否存在:', 'updatedAt' in table.data.list[0]);
         console.log('updatedAt字段的值:', table.data.list[0].updatedAt, '类型:', typeof table.data.list[0].updatedAt);
-        console.log('UpdatedAt字段是否存在:', 'UpdatedAt' in table.data.list[0]);
-        console.log('UpdatedAt字段的值:', table.data.list[0].UpdatedAt, '类型:', typeof table.data.list[0].UpdatedAt);
+        console.log('updatedAt字段是否存在:', 'updatedAt' in table.data.list[0]);
+        console.log('updatedAt字段的值:', table.data.list[0].updatedAt, '类型:', typeof table.data.list[0].updatedAt);
         console.log('formatDate函数测试(updatedAt):', formatDate(table.data.list[0].updatedAt));
-        console.log('formatDate函数测试(UpdatedAt):', formatDate(table.data.list[0].UpdatedAt));
+        console.log('formatDate函数测试(updatedAt):', formatDate(table.data.list[0].updatedAt));
         
         // 检查是否有其他可能的时间字段名称
         const possibleDateFields = ['createdAt', 'CreatedAt', 'updated_at', 'created_at'];
@@ -702,9 +702,9 @@
       const processedList = table.data.list.map(item => {
         let formattedUpdateTime = '-';
         
-        // 只使用UpdatedAt字段
-        if (item.UpdatedAt) {
-          const date = new Date(item.UpdatedAt);
+        // 只使用updatedAt字段
+        if (item.updatedAt) {
+          const date = new Date(item.updatedAt);
           if (!isNaN(date.getTime())) {
             formattedUpdateTime = date.toLocaleString('zh-CN', {
               year: 'numeric',

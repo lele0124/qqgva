@@ -1170,7 +1170,7 @@
   const useGva = (e) => {
     if (e && form.value.fields.length) {
       ElMessageBox.confirm(
-        '如果您开启GVA默认结构,会自动添加ID,CreatedAt,UpdatedAt,DeletedAt字段,此行为将自动清除您目前在下方创建的重名字段,是否继续？',
+        '如果您开启GVA默认结构,会自动添加ID,CreatedAt,updatedAt,DeletedAt字段,此行为将自动清除您目前在下方创建的重名字段,是否继续？',
         '注意',
         {
           confirmButtonText: '继续',
