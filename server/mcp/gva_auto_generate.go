@@ -656,7 +656,7 @@ func (t *AutomationModuleAnalyzer) handleAnalyze(ctx context.Context, request mc
 				BusinessDB:   history.BusinessDB,
 				Description:  history.Description,
 				Abbreviation: history.Abbreviation,
-				CreatedAt:    history.CreatedAt.Format("2006-01-02 15:04:05"),
+				CreatedAt:    history.UpdatedAt.Format("2006-01-02 15:04:05"),
 			})
 		}
 	}

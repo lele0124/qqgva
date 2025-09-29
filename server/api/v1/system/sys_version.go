@@ -397,7 +397,7 @@ func (sysVersionApi *SysVersionApi) DownloadVersionJson(c *gin.Context) {
 				Name:        *version.VersionName,
 				Code:        *version.VersionCode,
 				Description: *version.Description,
-				ExportTime:  version.CreatedAt.Format("2006-01-02 15:04:05"),
+				ExportTime:  version.UpdatedAt.Format("2006-01-02 15:04:05"),
 			},
 			Menus: []system.SysBaseMenu{},
 			Apis:  []system.SysApi{},
