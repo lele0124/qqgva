@@ -22,28 +22,31 @@
                 />
        </el-form-item>
       
-            <el-form-item label="商户名称" prop="merchantName">
-  <el-input v-model="searchInfo.merchantName" placeholder="搜索条件" />
+            <el-form-item label="商户ID" prop="merchantId">
+  <el-input v-model.number="searchInfo.merchantId" placeholder="搜索条件" />
 </el-form-item>
            
-            <el-form-item label="商户类型" prop="merchantType">
-  <el-input v-model="searchInfo.merchantType" placeholder="搜索条件" />
+            <el-form-item label="业务类型" prop="businessType">
+  <el-input v-model="searchInfo.businessType" placeholder="搜索条件" />
 </el-form-item>
            
-            <el-form-item label="联系人" prop="contactPerson">
-  <el-input v-model="searchInfo.contactPerson" placeholder="搜索条件" />
+            <el-form-item label="金额" prop="amount">
+  <el-input v-model.number="searchInfo.amount" placeholder="搜索条件" />
 </el-form-item>
            
-            <el-form-item label="联系电话" prop="contactPhone">
-  <el-input v-model="searchInfo.contactPhone" placeholder="搜索条件" />
-</el-form-item>
+            <el-form-item label="记录时间" prop="recordTime">
+  <template #label>
+    <span>
+      记录时间
+      <el-tooltip content="搜索范围是开始日期(包含)至结束日期(不包含)">
+        <el-icon><QuestionFilled /></el-icon>
+      </el-tooltip>
+    </span>
+  </template>
+<el-date-picker class="!w-380px" v-model="searchInfo.recordTimeRange" type="datetimerange" range-separator="至"  start-placeholder="开始时间" end-placeholder="结束时间"></el-date-picker></el-form-item>
            
-            <el-form-item label="地址" prop="address">
-  <el-input v-model="searchInfo.address" placeholder="搜索条件" />
-</el-form-item>
-           
-            <el-form-item label="状态" prop="status">
-  <el-input v-model.number="searchInfo.status" placeholder="搜索条件" />
+            <el-form-item label="备注" prop="remark">
+  <el-input v-model="searchInfo.remark" placeholder="搜索条件" />
 </el-form-item>
            
         <template v-if="showAllQuery">
@@ -62,9 +65,9 @@
         <div class="gva-btn-list">
             <el-button v-auth="btnAuth.add" type="primary" icon="plus" @click="openDialog()">新增</el-button>
             <el-button v-auth="btnAuth.batchDelete" icon="delete" style="margin-left: 10px;" :disabled="!multipleSelection.length" @click="onDelete">删除</el-button>
-            <ExportTemplate v-auth="btnAuth.exportTemplate" template-id="merchant_Merchant" />
-            <ExportExcel v-auth="btnAuth.exportExcel" template-id="merchant_Merchant" filterDeleted/>
-            <ImportExcel v-auth="btnAuth.importExcel" template-id="merchant_Merchant" @on-success="getTableData" />
+            <ExportTemplate v-auth="btnAuth.exportTemplate" template-id="merchant_MerchantBusinessRecord" />
+            <ExportExcel v-auth="btnAuth.exportExcel" template-id="merchant_MerchantBusinessRecord" filterDeleted/>
+            <ImportExcel v-auth="btnAuth.importExcel" template-id="merchant_MerchantBusinessRecord" @on-success="getTableData" />
         </div>
         <el-table
         ref="multipleTable"
@@ -81,22 +84,21 @@
             <template #default="scope">{{ formatDate(scope.row.CreatedAt) }}</template>
         </el-table-column>
         
-            <el-table-column align="left" label="商户名称" prop="merchantName" width="120" />
+            <el-table-column align="left" label="商户ID" prop="merchantId" width="120" />
 
-            <el-table-column align="left" label="商户类型" prop="merchantType" width="120" />
+            <el-table-column align="left" label="业务类型" prop="businessType" width="120" />
 
-            <el-table-column align="left" label="联系人" prop="contactPerson" width="120" />
+            <el-table-column sortable align="left" label="金额" prop="amount" width="120" />
 
-            <el-table-column align="left" label="联系电话" prop="contactPhone" width="120" />
-
-            <el-table-column align="left" label="地址" prop="address" width="120" />
-
-            <el-table-column sortable align="left" label="状态" prop="status" width="120" />
+            <el-table-column sortable align="left" label="记录时间" prop="recordTime" width="180">
+   <template #default="scope">{{ formatDate(scope.row.recordTime) }}</template>
+</el-table-column>
+            <el-table-column align="left" label="备注" prop="remark" width="120" />
 
         <el-table-column align="left" label="操作" fixed="right" min-width="240">
             <template #default="scope">
             <el-button v-auth="btnAuth.info" type="primary" link class="table-button" @click="getDetails(scope.row)"><el-icon style="margin-right: 5px"><InfoFilled /></el-icon>查看</el-button>
-            <el-button v-auth="btnAuth.edit" type="primary" link icon="edit" class="table-button" @click="updateMerchantFunc(scope.row)">编辑</el-button>
+            <el-button v-auth="btnAuth.edit" type="primary" link icon="edit" class="table-button" @click="updateMerchantBusinessRecordFunc(scope.row)">编辑</el-button>
             <el-button  v-auth="btnAuth.delete" type="primary" link icon="delete" @click="deleteRow(scope.row)">删除</el-button>
             </template>
         </el-table-column>
@@ -125,46 +127,40 @@
             </template>
 
           <el-form :model="formData" label-position="top" ref="elFormRef" :rules="rule" label-width="80px">
-             <el-form-item label="商户名称:" prop="merchantName">
-    <el-input v-model="formData.merchantName" :clearable="true" placeholder="请输入商户名称" />
+             <el-form-item label="商户ID:" prop="merchantId">
+    <el-input v-model.number="formData.merchantId" :clearable="true" placeholder="请输入商户ID" />
 </el-form-item>
-             <el-form-item label="商户类型:" prop="merchantType">
-    <el-input v-model="formData.merchantType" :clearable="true" placeholder="请输入商户类型" />
+             <el-form-item label="业务类型:" prop="businessType">
+    <el-input v-model="formData.businessType" :clearable="true" placeholder="请输入业务类型" />
 </el-form-item>
-             <el-form-item label="联系人:" prop="contactPerson">
-    <el-input v-model="formData.contactPerson" :clearable="true" placeholder="请输入联系人" />
+             <el-form-item label="金额:" prop="amount">
+    <el-input-number v-model="formData.amount" style="width:100%" :precision="2" :clearable="true" />
 </el-form-item>
-             <el-form-item label="联系电话:" prop="contactPhone">
-    <el-input v-model="formData.contactPhone" :clearable="true" placeholder="请输入联系电话" />
+             <el-form-item label="记录时间:" prop="recordTime">
+    <el-date-picker v-model="formData.recordTime" type="date" style="width:100%" placeholder="选择日期" :clearable="true" />
 </el-form-item>
-             <el-form-item label="地址:" prop="address">
-    <el-input v-model="formData.address" :clearable="true" placeholder="请输入地址" />
-</el-form-item>
-             <el-form-item label="状态:" prop="status">
-    <el-input v-model.number="formData.status" :clearable="true" placeholder="请输入状态" />
+             <el-form-item label="备注:" prop="remark">
+    <el-input v-model="formData.remark" :clearable="true" placeholder="请输入备注" />
 </el-form-item>
           </el-form>
     </el-drawer>
 
     <el-drawer destroy-on-close size="800" v-model="detailShow" :show-close="true" :before-close="closeDetailShow" title="查看">
             <el-descriptions :column="1" border>
-                 <el-descriptions-item label="商户名称">
-    {{ detailForm.merchantName }}
+                 <el-descriptions-item label="商户ID">
+    {{ detailForm.merchantId }}
 </el-descriptions-item>
-                 <el-descriptions-item label="商户类型">
-    {{ detailForm.merchantType }}
+                 <el-descriptions-item label="业务类型">
+    {{ detailForm.businessType }}
 </el-descriptions-item>
-                 <el-descriptions-item label="联系人">
-    {{ detailForm.contactPerson }}
+                 <el-descriptions-item label="金额">
+    {{ detailForm.amount }}
 </el-descriptions-item>
-                 <el-descriptions-item label="联系电话">
-    {{ detailForm.contactPhone }}
+                 <el-descriptions-item label="记录时间">
+    {{ detailForm.recordTime }}
 </el-descriptions-item>
-                 <el-descriptions-item label="地址">
-    {{ detailForm.address }}
-</el-descriptions-item>
-                 <el-descriptions-item label="状态">
-    {{ detailForm.status }}
+                 <el-descriptions-item label="备注">
+    {{ detailForm.remark }}
 </el-descriptions-item>
             </el-descriptions>
         </el-drawer>
@@ -174,13 +170,13 @@
 
 <script setup>
 import {
-  createMerchant,
-  deleteMerchant,
-  deleteMerchantByIds,
-  updateMerchant,
-  findMerchant,
-  getMerchantList
-} from '@/plugin/merchant/api/merchant'
+  createMerchantBusinessRecord,
+  deleteMerchantBusinessRecord,
+  deleteMerchantBusinessRecordByIds,
+  updateMerchantBusinessRecord,
+  findMerchantBusinessRecord,
+  getMerchantBusinessRecordList
+} from '@/plugin/merchant/api/merchantBusinessRecord'
 
 // 全量引入格式化工具 请按需保留
 import { getDictFunc, formatDate, formatBoolean, filterDict ,filterDataSource, returnArrImg, onDownloadFile } from '@/utils/format'
@@ -198,7 +194,7 @@ import ExportTemplate from '@/components/exportExcel/exportTemplate.vue'
 
 
 defineOptions({
-    name: 'Merchant'
+    name: 'MerchantBusinessRecord'
 })
 // 按钮权限实例化
     const btnAuth = useBtnAuth()
@@ -211,19 +207,24 @@ const showAllQuery = ref(false)
 
 // 自动化生成的字典(可能为空)以及字段
 const formData = ref({
-            merchantName: '',
-            merchantType: '',
-            contactPerson: '',
-            contactPhone: '',
-            address: '',
-            status: 0,
+            merchantId: 0,
+            businessType: '',
+            amount: 0,
+            recordTime: new Date(),
+            remark: '',
         })
 
 
 
 // 验证规则
 const rule = reactive({
-               merchantName : [{
+               merchantId : [{
+                   required: true,
+                   message: '',
+                   trigger: ['input','blur'],
+               },
+              ],
+               businessType : [{
                    required: true,
                    message: '',
                    trigger: ['input','blur'],
@@ -233,6 +234,18 @@ const rule = reactive({
                    message: '不能只输入空格',
                    trigger: ['input', 'blur'],
               }
+              ],
+               amount : [{
+                   required: true,
+                   message: '',
+                   trigger: ['input','blur'],
+               },
+              ],
+               recordTime : [{
+                   required: true,
+                   message: '',
+                   trigger: ['input','blur'],
+               },
               ],
 })
 
@@ -250,7 +263,8 @@ const sortChange = ({ prop, order }) => {
   const sortMap = {
     CreatedAt:"created_at",
     ID:"id",
-            status: 'status',
+            amount: 'amount',
+            recordTime: 'record_time',
   }
 
   let sort = sortMap[prop]
@@ -291,7 +305,7 @@ const handleCurrentChange = (val) => {
 
 // 查询
 const getTableData = async() => {
-  const table = await getMerchantList({ page: page.value, pageSize: pageSize.value, ...searchInfo.value })
+  const table = await getMerchantBusinessRecordList({ page: page.value, pageSize: pageSize.value, ...searchInfo.value })
   if (table.code === 0) {
     tableData.value = table.data.list
     total.value = table.data.total
@@ -326,7 +340,7 @@ const deleteRow = (row) => {
         cancelButtonText: '取消',
         type: 'warning'
     }).then(() => {
-            deleteMerchantFunc(row)
+            deleteMerchantBusinessRecordFunc(row)
         })
     }
 
@@ -349,7 +363,7 @@ const onDelete = async() => {
         multipleSelection.value.map(item => {
           IDs.push(item.ID)
         })
-      const res = await deleteMerchantByIds({ IDs })
+      const res = await deleteMerchantBusinessRecordByIds({ IDs })
       if (res.code === 0) {
         ElMessage({
           type: 'success',
@@ -367,8 +381,8 @@ const onDelete = async() => {
 const type = ref('')
 
 // 更新行
-const updateMerchantFunc = async(row) => {
-    const res = await findMerchant({ ID: row.ID })
+const updateMerchantBusinessRecordFunc = async(row) => {
+    const res = await findMerchantBusinessRecord({ ID: row.ID })
     type.value = 'update'
     if (res.code === 0) {
         formData.value = res.data
@@ -378,8 +392,8 @@ const updateMerchantFunc = async(row) => {
 
 
 // 删除行
-const deleteMerchantFunc = async (row) => {
-    const res = await deleteMerchant({ ID: row.ID })
+const deleteMerchantBusinessRecordFunc = async (row) => {
+    const res = await deleteMerchantBusinessRecord({ ID: row.ID })
     if (res.code === 0) {
         ElMessage({
                 type: 'success',
@@ -405,12 +419,11 @@ const openDialog = () => {
 const closeDialog = () => {
     dialogFormVisible.value = false
     formData.value = {
-        merchantName: '',
-        merchantType: '',
-        contactPerson: '',
-        contactPhone: '',
-        address: '',
-        status: 0,
+        merchantId: 0,
+        businessType: '',
+        amount: 0,
+        recordTime: new Date(),
+        remark: '',
         }
 }
 // 弹窗确定
@@ -421,13 +434,13 @@ const enterDialog = async () => {
               let res
               switch (type.value) {
                 case 'create':
-                  res = await createMerchant(formData.value)
+                  res = await createMerchantBusinessRecord(formData.value)
                   break
                 case 'update':
-                  res = await updateMerchant(formData.value)
+                  res = await updateMerchantBusinessRecord(formData.value)
                   break
                 default:
-                  res = await createMerchant(formData.value)
+                  res = await createMerchantBusinessRecord(formData.value)
                   break
               }
               btnLoading.value = false
@@ -457,7 +470,7 @@ const openDetailShow = () => {
 // 打开详情
 const getDetails = async (row) => {
   // 打开弹窗
-  const res = await findMerchant({ ID: row.ID })
+  const res = await findMerchantBusinessRecord({ ID: row.ID })
   if (res.code === 0) {
     detailForm.value = res.data
     openDetailShow()

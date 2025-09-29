@@ -3,23 +3,20 @@
   <div>
     <div class="gva-form-box">
       <el-form :model="formData" ref="elFormRef" label-position="right" :rules="rule" label-width="80px">
-        <el-form-item label="商户名称:" prop="merchantName">
-          <el-input v-model="formData.merchantName" :clearable="true"  placeholder="请输入商户名称" />
+        <el-form-item label="商户ID:" prop="merchantId">
+          <el-input v-model.number="formData.merchantId" :clearable="true" placeholder="请输入" />
        </el-form-item>
-        <el-form-item label="商户类型:" prop="merchantType">
-          <el-input v-model="formData.merchantType" :clearable="true"  placeholder="请输入商户类型" />
+        <el-form-item label="业务类型:" prop="businessType">
+          <el-input v-model="formData.businessType" :clearable="true"  placeholder="请输入业务类型" />
        </el-form-item>
-        <el-form-item label="联系人:" prop="contactPerson">
-          <el-input v-model="formData.contactPerson" :clearable="true"  placeholder="请输入联系人" />
+        <el-form-item label="金额:" prop="amount">
+          <el-input-number v-model="formData.amount" :precision="2" :clearable="true"></el-input-number>
        </el-form-item>
-        <el-form-item label="联系电话:" prop="contactPhone">
-          <el-input v-model="formData.contactPhone" :clearable="true"  placeholder="请输入联系电话" />
+        <el-form-item label="记录时间:" prop="recordTime">
+          <el-date-picker v-model="formData.recordTime" type="date" placeholder="选择日期" :clearable="true"></el-date-picker>
        </el-form-item>
-        <el-form-item label="地址:" prop="address">
-          <el-input v-model="formData.address" :clearable="true"  placeholder="请输入地址" />
-       </el-form-item>
-        <el-form-item label="状态:" prop="status">
-          <el-input v-model.number="formData.status" :clearable="true" placeholder="请输入" />
+        <el-form-item label="备注:" prop="remark">
+          <el-input v-model="formData.remark" :clearable="true"  placeholder="请输入备注" />
        </el-form-item>
         <el-form-item>
           <el-button :loading="btnLoading" type="primary" @click="save">保存</el-button>
@@ -32,13 +29,13 @@
 
 <script setup>
 import {
-  createMerchant,
-  updateMerchant,
-  findMerchant
-} from '@/plugin/merchant/api/merchant'
+  createMerchantBusinessRecord,
+  updateMerchantBusinessRecord,
+  findMerchantBusinessRecord
+} from '@/plugin/merchant/api/merchantBusinessRecord'
 
 defineOptions({
-    name: 'MerchantForm'
+    name: 'MerchantBusinessRecordForm'
 })
 
 // 自动获取字典
@@ -56,16 +53,30 @@ const btnLoading = ref(false)
 
 const type = ref('')
 const formData = ref({
-            merchantName: '',
-            merchantType: '',
-            contactPerson: '',
-            contactPhone: '',
-            address: '',
-            status: 0,
+            merchantId: 0,
+            businessType: '',
+            amount: 0,
+            recordTime: new Date(),
+            remark: '',
         })
 // 验证规则
 const rule = reactive({
-               merchantName : [{
+               merchantId : [{
+                   required: true,
+                   message: '',
+                   trigger: ['input','blur'],
+               }],
+               businessType : [{
+                   required: true,
+                   message: '',
+                   trigger: ['input','blur'],
+               }],
+               amount : [{
+                   required: true,
+                   message: '',
+                   trigger: ['input','blur'],
+               }],
+               recordTime : [{
                    required: true,
                    message: '',
                    trigger: ['input','blur'],
@@ -78,7 +89,7 @@ const elFormRef = ref()
 const init = async () => {
  // 建议通过url传参获取目标数据ID 调用 find方法进行查询数据操作 从而决定本页面是create还是update 以下为id作为url参数示例
     if (route.query.id) {
-      const res = await findMerchant({ ID: route.query.id })
+      const res = await findMerchantBusinessRecord({ ID: route.query.id })
       if (res.code === 0) {
         formData.value = res.data
         type.value = 'update'
@@ -97,13 +108,13 @@ const save = async() => {
             let res
            switch (type.value) {
              case 'create':
-               res = await createMerchant(formData.value)
+               res = await createMerchantBusinessRecord(formData.value)
                break
              case 'update':
-               res = await updateMerchant(formData.value)
+               res = await updateMerchantBusinessRecord(formData.value)
                break
              default:
-               res = await createMerchant(formData.value)
+               res = await createMerchantBusinessRecord(formData.value)
                break
            }
            btnLoading.value = false
