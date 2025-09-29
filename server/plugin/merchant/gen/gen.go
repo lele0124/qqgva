@@ -11,8 +11,6 @@ func main() {
 	g.ApplyBasic(new(model.Merchant), //go:generate go mod tidy
 		//go:generate go mod download
 		//go:generate go run gen.go
-
-		new(model.MerchantBusinessRecord),
 	)
 	g.Execute()
 }
