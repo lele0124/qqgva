@@ -1,1 +1,0 @@
-用户: 如何修复自动总结工具中的trim命令问题？\n助手: 发现脚本中使用了不存在的trim命令，可以使用awk命令来替代trim函数，具体实现为：将'| trim'替换为'| awk '{--command=summarize=--command=summarize};1''，这样就能正确地去除字符串前后的空格了。
