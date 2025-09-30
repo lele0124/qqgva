@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -57,7 +57,7 @@ func handleSaveDialogue(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 读取请求体
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read request body", http.StatusBadRequest)
 		return
@@ -108,7 +108,7 @@ func processDialogue(w http.ResponseWriter, dialogueContent string) {
 	}
 
 	// 保存对话内容到文件
-	err = ioutil.WriteFile(dialogueFilePath, []byte(dialogueContent), 0644)
+	err = os.WriteFile(dialogueFilePath, []byte(dialogueContent), 0644)
 	if err != nil {
 		log.Printf("保存对话文件失败: %v", err)
 		response := DialogueResponse{
@@ -166,7 +166,7 @@ func callSummaryTool(dialogueContent string) (string, error) {
 	defer resp.Body.Close()
 
 	// 读取响应
-	respBody, err := ioutil.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", fmt.Errorf("读取响应失败: %v", err)
 	}

@@ -11,10 +11,10 @@
         </el-form-item>
         <el-form-item label="商户类型:" prop="merchantType">
           <el-select v-model="formData.merchantType" placeholder="请选择商户类型" style="width: 100%">
-            <el-option label="线上电商" value="线上电商" />
-            <el-option label="线下实体店" value="线下实体店" />
-            <el-option label="平台服务商" value="平台服务商" />
-            <el-option label="其他" value="其他" />
+            <el-option label="线上电商" :value="1" />
+            <el-option label="线下实体店" :value="2" />
+            <el-option label="平台服务商" :value="3" />
+            <el-option label="其他" :value="4" />
           </el-select>
         </el-form-item>
         <el-form-item label="父商户ID:" prop="parentID">
@@ -71,7 +71,7 @@ const formData = ref({
   ID: '',
   merchantName: '',
   merchantIcon: '',
-  merchantType: '',
+  merchantType: null,
   parentID: null,
   businessLicense: '',
   legalPerson: '',
@@ -80,7 +80,7 @@ const formData = ref({
   isEnabled: 1,
   validStartTime: null,
   validEndTime: null,
-  merchantLevel: '',
+  merchantLevel: null,
 })
 
 // 验证规则
@@ -138,16 +138,41 @@ const save = async() => {
   btnLoading.value = true
   elFormRef.value?.validate(async (valid) => {
     if (!valid) return btnLoading.value = false
+    
+    // 创建提交数据的副本，进行类型转换
+    const submitData = { ...formData.value }
+    
+    // 对merchantType进行严格的类型转换
+    if (submitData.merchantType !== undefined && submitData.merchantType !== null && submitData.merchantType !== '') {
+      submitData.merchantType = parseInt(submitData.merchantType)
+    } else {
+      // 确保有一个有效的整数值
+      submitData.merchantType = 0
+    }
+    
+    // 对merchantLevel进行严格的类型转换
+    if (submitData.merchantLevel !== undefined && submitData.merchantLevel !== null && submitData.merchantLevel !== '') {
+      submitData.merchantLevel = parseInt(submitData.merchantLevel)
+    } else {
+      // 确保有一个有效的整数值
+      submitData.merchantLevel = 0
+    }
+    
+    // 对isEnabled进行类型转换
+    if (typeof submitData.isEnabled === 'string') {
+      submitData.isEnabled = submitData.isEnabled === '1' ? true : false
+    }
+    
     let res
     switch (type.value) {
       case 'create':
-        res = await createMerchant(formData.value)
+        res = await createMerchant(submitData)
         break
       case 'update':
-        res = await updateMerchant(formData.value)
+        res = await updateMerchant(submitData)
         break
       default:
-        res = await createMerchant(formData.value)
+        res = await createMerchant(submitData)
         break
     }
     btnLoading.value = false

@@ -12,18 +12,57 @@ import (
 	"unicode"
 )
 
-const (
-	dialogueDir      = "/Users/menqqq/code/cloned/gin-vue-admin/Dialogue"
-	projectRecordFile = "/Users/menqqq/code/cloned/gin-vue-admin/项目提示词记录.md"
-	checkInterval     = 60 * time.Second // 每分钟检查一次
+var (
+	dialogueDir      string
+	projectRecordFile string
 )
+
+const (
+	checkInterval = 60 * time.Second // 每分钟检查一次
+)
+
+// 获取项目根目录
+func getProjectRoot() string {
+	// 获取当前工作目录
+	dir, err := os.Getwd()
+	if err != nil {
+		// 如果无法获取当前目录，则使用默认路径
+		return "."
+	}
+	
+	// 向上查找包含 Dialogue 目录的根目录
+	for {
+		if _, err := os.Stat(filepath.Join(dir, "Dialogue")); err == nil {
+			return dir
+		}
+		
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			// 到达根目录仍未找到，返回当前目录
+			return dir
+		}
+		dir = parent
+	}
+}
 
 func main() {
 	// 解析命令行参数
 	createExample := flag.Bool("create-example", false, "创建一个示例对话文件用于测试")
+	flag.StringVar(&dialogueDir, "dialogue-dir", "", "对话目录路径")
+	flag.StringVar(&projectRecordFile, "record-file", "", "项目记录文件路径")
 	flag.Parse()
 
+	// 设置默认路径
+	if dialogueDir == "" {
+		dialogueDir = filepath.Join(getProjectRoot(), "Dialogue")
+	}
+	if projectRecordFile == "" {
+		projectRecordFile = filepath.Join(getProjectRoot(), "项目提示词记录.md")
+	}
+
 	fmt.Println("对话总结工具启动，开始监控Dialogue目录...")
+	fmt.Printf("监控目录: %s\n", dialogueDir)
+	fmt.Printf("记录文件: %s\n", projectRecordFile)
 	fmt.Println("按Ctrl+C退出")
 
 	// 如果指定了创建示例文件，则创建一个示例对话文件

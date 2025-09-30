@@ -592,10 +592,35 @@ const enterDialog = async () => {
     await elFormRef.value.validate()
     btnLoading.value = true
     let res
-    if (type.value === 'create') {
-      res = await createMerchant(formData)
+    
+    // 创建提交数据的副本，进行类型转换
+    const submitData = { ...formData }
+    
+    // 对merchantType进行严格的类型转换
+    if (submitData.merchantType !== undefined && submitData.merchantType !== null && submitData.merchantType !== '') {
+      submitData.merchantType = parseInt(submitData.merchantType)
     } else {
-      res = await updateMerchant(formData)
+      // 确保有一个有效的整数值
+      submitData.merchantType = 0
+    }
+    
+    // 对merchantLevel进行严格的类型转换
+    if (submitData.merchantLevel !== undefined && submitData.merchantLevel !== null && submitData.merchantLevel !== '') {
+      submitData.merchantLevel = parseInt(submitData.merchantLevel)
+    } else {
+      // 确保有一个有效的整数值
+      submitData.merchantLevel = 0
+    }
+    
+    // 对isEnabled进行类型转换
+    if (typeof submitData.isEnabled === 'string') {
+      submitData.isEnabled = submitData.isEnabled === '1' ? true : false
+    }
+    
+    if (type.value === 'create') {
+      res = await createMerchant(submitData)
+    } else {
+      res = await updateMerchant(submitData)
     }
     if (res.code === 0) {
       ElMessage.success('操作成功')
