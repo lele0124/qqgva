@@ -6,6 +6,7 @@ import (
     "github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
     "github.com/flipped-aurora/gin-vue-admin/server/plugin/merchant/model"
     "github.com/flipped-aurora/gin-vue-admin/server/plugin/merchant/model/request"
+    "github.com/flipped-aurora/gin-vue-admin/server/utils"
     "github.com/gin-gonic/gin"
     "go.uber.org/zap"
 )
@@ -33,6 +34,11 @@ func (a *merchant) CreateMerchant(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
+    
+    // 设置操作人信息
+    info.OperatorId = utils.GetUserID(c)
+    info.OperatorName = utils.GetUserName(c)
+    
 	err = serviceMerchant.CreateMerchant(ctx,&info)
 	if err != nil {
         global.GVA_LOG.Error("创建失败!", zap.Error(err))
@@ -106,6 +112,11 @@ func (a *merchant) UpdateMerchant(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
+    
+    // 设置操作人信息
+    info.OperatorId = utils.GetUserID(c)
+    info.OperatorName = utils.GetUserName(c)
+    
 	err = serviceMerchant.UpdateMerchant(ctx,info)
     if err != nil {
         global.GVA_LOG.Error("更新失败!", zap.Error(err))
