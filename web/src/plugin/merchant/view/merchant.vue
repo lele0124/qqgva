@@ -593,7 +593,7 @@ const closeDialog = () => {
 // 获取详情
 const getDetails = async (row) => {
   try {
-    const res = await findMerchant(row.ID)
+    const res = await findMerchant({ ID: row.ID })
     if (res.code === 0) {
       detailForm.value = res.data
       detailShow.value = true

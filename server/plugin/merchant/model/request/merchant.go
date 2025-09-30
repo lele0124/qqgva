@@ -10,9 +10,9 @@ type MerchantSearch struct {
 	MerchantName   *string     `json:"merchantName" form:"merchantName"`
 	Address        *string     `json:"address" form:"address"`
 	BusinessScope  *string     `json:"businessScope" form:"businessScope"`
-	IsEnabled      *string     `json:"isEnabled" form:"isEnabled"` // 修改为string类型接收前端数据
-	MerchantType   *string     `json:"merchantType" form:"merchantType"` // 修改为string类型接收前端数据
-	MerchantLevel  *string     `json:"merchantLevel" form:"merchantLevel"` // 修改为string类型接收前端数据
+	IsEnabled      *bool       `json:"isEnabled" form:"isEnabled"` // 改为*bool类型，与前端保持一致
+	MerchantType   *uint       `json:"merchantType" form:"merchantType"` // 改为*uint类型，与前端保持一致
+	MerchantLevel  *uint       `json:"merchantLevel" form:"merchantLevel"` // 改为*uint类型，与前端保持一致
 	request.PageInfo
 	Sort  string `json:"sort" form:"sort"`
 	Order string `json:"order" form:"order"`

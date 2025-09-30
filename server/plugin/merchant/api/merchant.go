@@ -39,33 +39,17 @@ func (a *merchant) CreateMerchant(c *gin.Context) {
 	// 创建商户模型
 	info := model.Merchant{}
 	
-	// 复制基本字段
+	// 复制基本字段，不需要类型转换
 	info.MerchantName = &req.MerchantName
 	info.MerchantIcon = &req.MerchantIcon
 	info.ParentID = req.ParentID
-	// 转换MerchantType字符串为*uint类型
-	merchantTypeUint, err := strconv.ParseUint(req.MerchantType, 10, 32)
-	if err != nil {
-		response.FailWithMessage("商户类型格式错误:"+err.Error(), c)
-		return
-	}
-	merchantType := uint(merchantTypeUint)
-	info.MerchantType = &merchantType
+	info.MerchantType = &req.MerchantType
 	info.BusinessLicense = &req.BusinessLicense
 	info.LegalPerson = &req.LegalPerson
 	info.RegisteredAddress = &req.RegisteredAddress
 	info.BusinessScope = &req.BusinessScope
-	// 转换IsEnabled字符串为bool类型
-	isEnabled := req.IsEnabled == "1" || req.IsEnabled == "true"
-	info.IsEnabled = isEnabled
-	// 转换MerchantLevel字符串为*uint类型
-	merchantLevelUint, err := strconv.ParseUint(req.MerchantLevel, 10, 32)
-	if err != nil {
-		response.FailWithMessage("商户等级格式错误:"+err.Error(), c)
-		return
-	}
-	merchantLevel := uint(merchantLevelUint)
-	info.MerchantLevel = &merchantLevel
+	info.IsEnabled = req.IsEnabled
+	info.MerchantLevel = &req.MerchantLevel
 
 	// 处理时间字段，只有非空时才尝试解析
 	if req.ValidStartTime != "" {
@@ -158,18 +142,75 @@ func (a *merchant) DeleteMerchantByIds(c *gin.Context) {
 // @Security ApiKeyAuth
 // @Accept application/json
 // @Produce application/json
-// @Param data body model.Merchant true "更新商户信息"
+// @Param data body request.UpdateMerchantRequest true "更新商户信息"
 // @Success 200 {object} response.Response{msg=string} "更新成功"
 // @Router /merchant/updateMerchant [put]
 func (a *merchant) UpdateMerchant(c *gin.Context) {
 	// 创建业务用Context
 	ctx := c.Request.Context()
 
-	var info model.Merchant
-	err := c.ShouldBindJSON(&info)
+	var req request.UpdateMerchantRequest
+	err := c.ShouldBindJSON(&req)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
+	}
+
+	// 将请求模型转换为数据模型
+	modelData, err := req.ToMerchantModel()
+	if err != nil {
+		response.FailWithMessage("数据转换错误:"+err.Error(), c)
+		return
+	}
+
+	// 获取原始商户数据
+	originalMerchant, err := serviceMerchant.GetMerchant(ctx, strconv.Itoa(int(req.ID)))
+	if err != nil {
+		response.FailWithMessage("获取商户信息失败:"+err.Error(), c)
+		return
+	}
+
+	// 创建更新的商户模型
+	info := originalMerchant
+
+	// 复制请求中的字段到模型
+	if dataMap, ok := modelData.(map[string]interface{}); ok {
+		if merchantType, ok := dataMap["MerchantType"].(uint); ok {
+			info.MerchantType = &merchantType
+		}
+		if merchantName, ok := dataMap["MerchantName"].(string); ok {
+			info.MerchantName = &merchantName
+		}
+		if merchantIcon, ok := dataMap["MerchantIcon"].(string); ok {
+			info.MerchantIcon = &merchantIcon
+		}
+		if parentID, ok := dataMap["ParentID"].(*uint); ok {
+			info.ParentID = parentID
+		}
+		if businessLicense, ok := dataMap["BusinessLicense"].(string); ok {
+			info.BusinessLicense = &businessLicense
+		}
+		if legalPerson, ok := dataMap["LegalPerson"].(string); ok {
+			info.LegalPerson = &legalPerson
+		}
+		if registeredAddress, ok := dataMap["RegisteredAddress"].(string); ok {
+			info.RegisteredAddress = &registeredAddress
+		}
+		if businessScope, ok := dataMap["BusinessScope"].(string); ok {
+			info.BusinessScope = &businessScope
+		}
+		if isEnabled, ok := dataMap["IsEnabled"].(bool); ok {
+			info.IsEnabled = isEnabled
+		}
+		if merchantLevel, ok := dataMap["MerchantLevel"].(uint); ok {
+			info.MerchantLevel = &merchantLevel
+		}
+		if validStartTime, ok := dataMap["ValidStartTime"].(*time.Time); ok {
+			info.ValidStartTime = validStartTime
+		}
+		if validEndTime, ok := dataMap["ValidEndTime"].(*time.Time); ok {
+			info.ValidEndTime = validEndTime
+		}
 	}
 
 	// 设置操作人信息

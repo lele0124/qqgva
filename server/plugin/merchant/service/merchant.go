@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"strconv"
 
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/merchant/model"
@@ -114,24 +113,17 @@ func (s *merchant) GetMerchantInfoList(ctx context.Context, info request.Merchan
 		db = db.Where("business_scope LIKE ?", "%"+*info.BusinessScope+"%")
 	}
 	// 只有当IsEnabled不为nil且不为空字符串时才应用过滤条件
-	// 添加字符串到布尔类型的转换逻辑
-	if info.IsEnabled != nil && *info.IsEnabled != "" {
-		isEnabled := *info.IsEnabled == "1"
-		db = db.Where("is_enabled = ?", isEnabled)
+	// 直接使用布尔类型进行过滤
+	if info.IsEnabled != nil {
+		db = db.Where("is_enabled = ?", *info.IsEnabled)
 	}
 
-	// 添加商户类型和等级的搜索条件，需要进行字符串到数字的转换
-	if info.MerchantType != nil && *info.MerchantType != "" {
-		merchantTypeUint, err := strconv.ParseUint(*info.MerchantType, 10, 32)
-		if err == nil {
-			db = db.Where("merchant_type = ?", merchantTypeUint)
-		}
+	// 直接使用uint类型进行过滤，不需要类型转换
+	if info.MerchantType != nil {
+		db = db.Where("merchant_type = ?", *info.MerchantType)
 	}
-	if info.MerchantLevel != nil && *info.MerchantLevel != "" {
-		merchantLevelUint, err := strconv.ParseUint(*info.MerchantLevel, 10, 32)
-		if err == nil {
-			db = db.Where("merchant_level = ?", merchantLevelUint)
-		}
+	if info.MerchantLevel != nil {
+		db = db.Where("merchant_level = ?", *info.MerchantLevel)
 	}
 	err = db.Count(&total).Error
 	if err != nil {
