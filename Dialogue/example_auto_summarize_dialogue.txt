@@ -1,0 +1,17 @@
+用户: 如何实现自动总结对话功能？
+助手: 要实现自动总结对话功能，可以按照以下步骤进行：
+
+1. 首先，创建一个可以监听特定指令的服务
+2. 当用户发送"自动总结"或类似指令时，收集当前对话的完整内容
+3. 对对话内容进行解析，提取关键信息（问题、解决方案、涉及的文件等）
+4. 按照统一的格式生成总结内容
+5. 将总结内容写入到项目提示词记录文档中
+
+涉及的核心文件包括：
+- /Users/menqqq/code/cloned/gin-vue-admin/Dialogue/dialogue_auto_summarizer.go
+- /Users/menqqq/code/cloned/gin-vue-admin/Dialogue/dialogue_auto_summarizer.sh
+- /Users/menqqq/code/cloned/gin-vue-admin/Dialogue/dialogue_auto_summarizer_README.md
+
+使用方法非常简单，可以通过服务器模式或命令行模式来运行工具。服务器模式提供API接口，命令行模式则直接处理对话内容。
+
+自动总结

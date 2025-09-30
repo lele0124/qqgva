@@ -262,12 +262,85 @@ func (a *merchant) GetMerchantList(c *gin.Context) {
 	// 创建业务用Context
 	ctx := c.Request.Context()
 
-	var pageInfo request.MerchantSearch
-	err := c.ShouldBindJSON(&pageInfo)
+	// 先使用map接收JSON数据，处理可能的类型转换问题
+	var rawData map[string]interface{}
+	err := c.ShouldBindJSON(&rawData)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
+
+	// 初始化pageInfo
+	var pageInfo request.MerchantSearch
+
+	// 手动提取并转换字段，确保类型正确
+	if page, ok := rawData["page"].(float64); ok {
+		pageInfo.Page = int(page)
+	}
+	if pageSize, ok := rawData["pageSize"].(float64); ok {
+		pageInfo.PageSize = int(pageSize)
+	}
+	if sort, ok := rawData["sort"].(string); ok {
+		pageInfo.Sort = sort
+	}
+	if order, ok := rawData["order"].(string); ok {
+		pageInfo.Order = order
+	}
+
+	// 处理merchantType字段，进行类型转换
+	if merchantTypeValue, ok := rawData["merchantType"]; ok && merchantTypeValue != nil {
+		var merchantType uint
+		switch v := merchantTypeValue.(type) {
+		case string:
+			// 如果是字符串，尝试转换为uint
+			var temp int64
+			if temp, err = strconv.ParseInt(v, 10, 64); err == nil {
+				merchantType = uint(temp)
+				pageInfo.MerchantType = &merchantType
+			}
+		case float64:
+			// 如果是数字类型(float64是JSON数字的默认类型)
+			merchantType = uint(v)
+			pageInfo.MerchantType = &merchantType
+		}
+	}
+
+	// 处理其他可选的指针类型字段
+	if merchantName, ok := rawData["merchantName"].(string); ok && merchantName != "" {
+		pageInfo.MerchantName = &merchantName
+	}
+	if address, ok := rawData["address"].(string); ok && address != "" {
+		pageInfo.Address = &address
+	}
+	if businessScope, ok := rawData["businessScope"].(string); ok && businessScope != "" {
+		pageInfo.BusinessScope = &businessScope
+	}
+	if isEnabled, ok := rawData["isEnabled"].(bool); ok {
+		pageInfo.IsEnabled = &isEnabled
+	}
+	if merchantLevel, ok := rawData["merchantLevel"].(float64); ok {
+		level := uint(merchantLevel)
+		pageInfo.MerchantLevel = &level
+	}
+
+	// 处理时间范围
+	if createdAtRange, ok := rawData["createdAtRange"].([]interface{}); ok && len(createdAtRange) == 2 {
+		pageInfo.CreatedAtRange = make([]time.Time, 2)
+		// 解析开始时间
+		if startTimeStr, ok := createdAtRange[0].(string); ok && startTimeStr != "" {
+			if startTime, err := time.Parse("2006-01-02 15:04:05", startTimeStr); err == nil {
+				pageInfo.CreatedAtRange[0] = startTime
+			}
+		}
+		// 解析结束时间
+		if endTimeStr, ok := createdAtRange[1].(string); ok && endTimeStr != "" {
+			if endTime, err := time.Parse("2006-01-02 15:04:05", endTimeStr); err == nil {
+				pageInfo.CreatedAtRange[1] = endTime
+			}
+		}
+	}
+
+	// 调用服务层获取数据
 	list, total, err := serviceMerchant.GetMerchantInfoList(ctx, pageInfo)
 	if err != nil {
 		global.GVA_LOG.Error("获取失败!", zap.Error(err))

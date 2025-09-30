@@ -31,7 +31,10 @@
         </el-form-item>
         
         <el-form-item label="商户类型" prop="merchantType">
-          <el-input v-model="searchInfo.merchantType" placeholder="搜索条件" />
+          <el-select v-model="searchInfo.merchantType" placeholder="搜索条件">
+            <el-option label="企业" value="1" />
+            <el-option label="个体" value="2" />
+          </el-select>
         </el-form-item>
         
         <el-form-item label="父商户ID" prop="parentID">
@@ -448,12 +451,37 @@ const rule = {
 // 获取表格数据
 const getTableData = async () => {
   try {
-    const data = {
+    // 创建提交数据的副本，进行类型转换
+    const submitData = {
       page: page.value,
       pageSize: pageSize.value,
       ...searchInfo
     }
-    const res = await getMerchantList(data)
+    
+    // 对merchantType进行类型转换
+    if (submitData.merchantType !== '') {
+      submitData.merchantType = parseInt(submitData.merchantType)
+    } else {
+      // 如果为空字符串，设置为undefined，避免传递空字符串
+      delete submitData.merchantType
+    }
+    
+    // 对parentID进行类型转换（如果有值）
+    if (submitData.parentID !== '') {
+      submitData.parentID = parseInt(submitData.parentID)
+    }
+    
+    // 对merchantLevel进行类型转换（如果有值）
+    if (submitData.merchantLevel !== '') {
+      submitData.merchantLevel = parseInt(submitData.merchantLevel)
+    }
+    
+    // 对isEnabled进行类型转换（如果有值）
+    if (submitData.isEnabled !== '') {
+      submitData.isEnabled = submitData.isEnabled === '1' ? true : false
+    }
+    
+    const res = await getMerchantList(submitData)
     if (res.code === 0) {
       tableData.value = res.data.list || []
       total.value = res.data.total || 0
