@@ -68,6 +68,7 @@ import { ref, reactive } from 'vue'
 
 // 表单数据
 const formData = ref({
+  ID: '',
   merchantName: '',
   merchantIcon: '',
   merchantType: '',

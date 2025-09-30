@@ -389,6 +389,7 @@ const dialogFormVisible = ref(false)
 const detailShow = ref(false)
 const type = ref('create')
 const formData = reactive({
+  ID: '',
   merchantName: '',
   merchantIcon: '',
   merchantType: '',
