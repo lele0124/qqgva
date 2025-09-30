@@ -7,10 +7,10 @@ export LANG="zh_CN.UTF-8"
 export LC_ALL="zh_CN.UTF-8"
 
 # 项目根目录
-PROJECT_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. && pwd )"
+PROJECT_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd ../.. && pwd )"
 
 # 脚本路径
-SCRIPT_PATH="$PROJECT_ROOT/Dialogue/summary_tool.go"
+SCRIPT_PATH="$PROJECT_ROOT/Dialogue/cmd/summary_tool.go"
 
 # 检查Go环境
 if ! command -v go &> /dev/null
@@ -62,9 +62,9 @@ echo ""
 if [ "$1" = "--create-example" ] || [ "$1" = "-c" ]
 then
     echo "将创建示例对话文件进行测试..."
-    go run summary_tool.go --create-example
+    go run cmd/summary_tool.go --create-example
 else
-    go run summary_tool.go
+    go run cmd/summary_tool.go
 fi
 
 # 如果脚本异常退出，显示错误信息

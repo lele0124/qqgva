@@ -2,9 +2,7 @@ package dialogue
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -63,22 +61,30 @@ func (d *DialogueAutoSummarizer) New() mcp.Tool {
 
 // Handle 处理MCP工具调用
 func (d *DialogueAutoSummarizer) Handle(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	var req DialogueSummaryMCPRequest
-
 	// 解析请求参数
-	paramsJSON, err := json.Marshal(request.Parameters)
-	if err != nil {
-		return createErrorResult("参数解析失败: " + err.Error()), nil
+	args := request.GetArguments()
+    
+	// 获取命令类型
+	command := ""
+	if val, ok := args["command"].(string); ok {
+		command = val
 	}
-
-	if err := json.Unmarshal(paramsJSON, &req); err != nil {
-		return createErrorResult("请求参数格式无效: " + err.Error()), nil
+    
+	// 获取对话内容
+	content := ""
+	if val, ok := args["content"].(string); ok {
+		content = val
 	}
-
+    
 	// 获取当前目录
 	currentDir, err := os.Getwd()
 	if err != nil {
-		return createErrorResult("获取当前目录失败: " + err.Error()), nil
+		errorMsg := fmt.Sprintf(`{"success": false, "message": "获取当前目录失败: %s"}`, err.Error())
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{
+				mcp.NewTextContent(errorMsg),
+			},
+		}, nil
 	}
 
 	// 设置对话目录路径
@@ -88,18 +94,28 @@ func (d *DialogueAutoSummarizer) Handle(ctx context.Context, request mcp.CallToo
 	}
 
 	// 根据命令执行不同操作
-	switch strings.ToLower(req.Command) {
+	switch strings.ToLower(command) {
 	case "create_example":
 		// 创建示例对话文件
 		return d.createExampleDialogue(dialogueDir)
 	case "summarize", "":
 		// 默认执行总结操作
-		if req.Content == "" {
-			return createErrorResult("总结操作需要提供对话内容"), nil
+		if content == "" {
+			errorMsg := `{"success": false, "message": "总结操作需要提供对话内容"}`
+			return &mcp.CallToolResult{
+				Content: []mcp.Content{
+					mcp.NewTextContent(errorMsg),
+				},
+			}, nil
 		}
-		return d.summarizeDialogue(dialogueDir, req.Content)
+		return d.summarizeDialogue(dialogueDir, content)
 	default:
-		return createErrorResult("不支持的命令: " + req.Command), nil
+		errorMsg := fmt.Sprintf(`{"success": false, "message": "不支持的命令: %s"}`, command)
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{
+				mcp.NewTextContent(errorMsg),
+			},
+		}, nil
 	}
 }
 
@@ -107,7 +123,12 @@ func (d *DialogueAutoSummarizer) Handle(ctx context.Context, request mcp.CallToo
 func (d *DialogueAutoSummarizer) createExampleDialogue(dialogueDir string) (*mcp.CallToolResult, error) {
 	// 确保对话目录存在
 	if err := os.MkdirAll(dialogueDir, 0755); err != nil {
-		return createErrorResult("创建对话目录失败: " + err.Error()), nil
+		errorMsg := fmt.Sprintf(`{"success": false, "message": "创建对话目录失败: %s"}`, err.Error())
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{
+				mcp.NewTextContent(errorMsg),
+			},
+		}, nil
 	}
 
 	// 创建示例对话文件
@@ -129,24 +150,35 @@ func (d *DialogueAutoSummarizer) createExampleDialogue(dialogueDir string) (*mcp
 用户: 我找到了问题！连接字符串中的端口号写错了。谢谢！
 助手: 很高兴能帮到您！如果您还有其他问题，请随时提问。`
 
-	if err := ioutil.WriteFile(exampleFilePath, []byte(exampleContent), 0644); err != nil {
-		return createErrorResult("创建示例文件失败: " + err.Error()), nil
+	if err := os.WriteFile(exampleFilePath, []byte(exampleContent), 0644); err != nil {
+		errorMsg := fmt.Sprintf(`{"success": false, "message": "创建示例文件失败: %s"}`, err.Error())
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{
+				mcp.NewTextContent(errorMsg),
+			},
+		}, nil
 	}
 
-	response := DialogueSummaryMCPResponse{
-		Success: true,
-		Message: "示例对话文件创建成功",
-		Files:   []string{exampleFilePath},
-	}
+	// 构建成功响应
+	successResponse := fmt.Sprintf(`{"success": true, "message": "示例对话文件创建成功", "files": ["%s"]}`, exampleFilePath)
 
-	return createSuccessResult(response), nil
+	return &mcp.CallToolResult{
+		Content: []mcp.Content{
+			mcp.NewTextContent(successResponse),
+		},
+	}, nil
 }
 
 // summarizeDialogue 总结对话内容
 func (d *DialogueAutoSummarizer) summarizeDialogue(dialogueDir string, content string) (*mcp.CallToolResult, error) {
 	// 确保对话目录存在
 	if err := os.MkdirAll(dialogueDir, 0755); err != nil {
-		return createErrorResult("创建对话目录失败: " + err.Error()), nil
+		errorMsg := fmt.Sprintf(`{"success": false, "message": "创建对话目录失败: %s"}`, err.Error())
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{
+				mcp.NewTextContent(errorMsg),
+			},
+		}, nil
 	}
 
 	// 创建临时对话文件
@@ -154,8 +186,13 @@ func (d *DialogueAutoSummarizer) summarizeDialogue(dialogueDir string, content s
 	tempFilePath := filepath.Join(dialogueDir, tempFileName)
 
 	var err error
-	if err = ioutil.WriteFile(tempFilePath, []byte(content), 0644); err != nil {
-		return createErrorResult("创建临时对话文件失败: " + err.Error()), nil
+	if err = os.WriteFile(tempFilePath, []byte(content), 0644); err != nil {
+		errorMsg := fmt.Sprintf(`{"success": false, "message": "创建临时对话文件失败: %s"}`, err.Error())
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{
+				mcp.NewTextContent(errorMsg),
+			},
+		}, nil
 	}
 
 	// 这里应该调用实际的总结逻辑
@@ -166,8 +203,13 @@ func (d *DialogueAutoSummarizer) summarizeDialogue(dialogueDir string, content s
 	summaryFileName := fmt.Sprintf("summary_%s.md", time.Now().Format("20060102_150405"))
 	summaryFilePath := filepath.Join(dialogueDir, summaryFileName)
 
-	if err = ioutil.WriteFile(summaryFilePath, []byte(summary), 0644); err != nil {
-		return createErrorResult("创建总结文件失败: " + err.Error()), nil
+	if err = os.WriteFile(summaryFilePath, []byte(summary), 0644); err != nil {
+		errorMsg := fmt.Sprintf(`{"success": false, "message": "创建总结文件失败: %s"}`, err.Error())
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{
+				mcp.NewTextContent(errorMsg),
+			},
+		}, nil
 	}
 
 	// 更新项目记录
@@ -181,44 +223,28 @@ func (d *DialogueAutoSummarizer) summarizeDialogue(dialogueDir string, content s
 	// 读取现有记录或创建新文件
 	existingContent := ""
 	if _, err := os.Stat(projectRecordPath); err == nil {
-		if existingContent, err = ioutil.ReadFile(projectRecordPath); err != nil {
+		fileContent, err := os.ReadFile(projectRecordPath)
+		if err != nil {
 			log.Printf("警告: 读取项目记录文件失败: %v\n", err)
+		} else {
+			existingContent = string(fileContent)
 		}
 	}
 
 	// 写入更新后的记录
-	if err = ioutil.WriteFile(projectRecordPath, []byte(recordContent+string(existingContent)), 0644); err != nil {
+	if err = os.WriteFile(projectRecordPath, []byte(recordContent+string(existingContent)), 0644); err != nil {
 		log.Printf("警告: 更新项目记录文件失败: %v\n", err)
 	}
 
-	response := DialogueSummaryMCPResponse{
-		Success: true,
-		Message: "对话总结完成",
-		Data:    summary,
-		Files:   []string{tempFilePath, summaryFilePath, projectRecordPath},
-	}
+	// 构建成功响应
+	successResponse := fmt.Sprintf(`{"success": true, "message": "对话总结完成", "data": %q, "files": ["%s", "%s", "%s"]}`, 
+		summary, tempFilePath, summaryFilePath, projectRecordPath)
 
-	return createSuccessResult(response), nil
-}
-
-// createSuccessResult 创建成功的MCP工具调用结果
-func createSuccessResult(response DialogueSummaryMCPResponse) *mcp.CallToolResult {
-	resultJSON, _ := json.Marshal(response)
 	return &mcp.CallToolResult{
-		Status: mcp.Success,
-		Result: string(resultJSON),
-	}
+		Content: []mcp.Content{
+			mcp.NewTextContent(successResponse),
+		},
+	}, nil
 }
 
-// createErrorResult 创建失败的MCP工具调用结果
-func createErrorResult(message string) *mcp.CallToolResult {
-	errorResponse := DialogueSummaryMCPResponse{
-		Success: false,
-		Message: message,
-	}
-	errorJSON, _ := json.Marshal(errorResponse)
-	return &mcp.CallToolResult{
-		Status: mcp.Failure,
-		Result: string(errorJSON),
-	}
-}
+// 移除不再使用的辅助函数，因为我们现在直接在调用处构建CallToolResult
