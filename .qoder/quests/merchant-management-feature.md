@@ -510,7 +510,7 @@ VALUES ('财务人员', 2, 3);
 | LegalPerson | string | 否 | 无 | 法人代表 | 李四 |
 | RegisteredAddress | string | 否 | 无 | 注册地址 | 北京市朝阳区XX路XX号 |
 | BusinessScope | string | 否 | 无 | 经营范围 | 技术开发、技术服务 |
-| IsEnabled | int | 是 | 普通索引 | 商户开关状态：1-正常 0-关闭 | 1 |
+| IsEnabled | uint | 是 | 普通索引 | 商户开关状态：1-正常 0-关闭 | 1 |
 | ValidStartTime | time.Time | 否 | 无 | 有效开始时间（仅记录用途） | 2024-01-01 00:00:00 |
 | ValidEndTime | time.Time | 否 | 无 | 有效结束时间（仅记录用途） | 2024-12-31 23:59:59 |
 | MerchantLevel | uint | 是 | 无 | 商户等级 | 1-普通商户 2-高级商户 3-VIP商户 |

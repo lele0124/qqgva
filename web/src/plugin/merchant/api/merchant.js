@@ -84,14 +84,14 @@ export const findMerchant = (params) => {
 // @Security ApiKeyAuth
 // @Accept application/json
 // @Produce application/json
-// @Param data query request.PageInfo true "分页获取商户信息列表"
+// @Param data body request.PageInfo true "分页获取商户信息列表"
 // @Success 200 {string} string "{"success":true,"data":{},"msg":"获取成功"}"
-// @Router /merchant/getMerchantList [get]
-export const getMerchantList = (params) => {
+// @Router /merchant/getMerchantList [post]
+export const getMerchantList = (data) => {
   return service({
     url: '/merchant/getMerchantList',
-    method: 'get',
-    params
+    method: 'post',
+    data
   })
 }
 // @Tags Merchant

@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"errors"
+	"strconv"
 
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/merchant/model"
@@ -16,6 +18,23 @@ type merchant struct{}
 // CreateMerchant 创建商户信息记录
 // Author [yourname](https://github.com/yourname)
 func (s *merchant) CreateMerchant(ctx context.Context, merchant *model.Merchant) (err error) {
+	// 验证商户名称不能为空
+	if merchant.MerchantName == nil || *merchant.MerchantName == "" {
+		return errors.New("商户名称不能为空")
+	}
+
+	// 验证商户类型不能为空
+	if merchant.MerchantType == nil || *merchant.MerchantType == 0 {
+		return errors.New("商户类型不能为空")
+	}
+
+	// IsEnabled已经是普通bool类型，不需要再检查nil值
+
+	// 验证商户等级不能为空
+	if merchant.MerchantLevel == nil || *merchant.MerchantLevel == 0 || *merchant.MerchantLevel > 3 {
+		return errors.New("商户等级必须为1(普通)、2(高级)或3(VIP)")
+	}
+
 	// 生成UUID
 	merchant.UUID = uuid.New()
 	err = global.GVA_DB.Create(merchant).Error
@@ -43,6 +62,24 @@ func (s *merchant) UpdateMerchant(ctx context.Context, merchant model.Merchant) 
 	if merchant.UUID == uuid.Nil || merchant.UUID.String() == "00000000-0000-0000-0000-000000000000" {
 		merchant.UUID = uuid.New()
 	}
+
+	// 验证商户名称不能为空
+	if merchant.MerchantName == nil || *merchant.MerchantName == "" {
+		return errors.New("商户名称不能为空")
+	}
+
+	// 验证商户类型不能为空
+	if merchant.MerchantType == nil || *merchant.MerchantType == 0 {
+		return errors.New("商户类型不能为空")
+	}
+
+	// IsEnabled已经是普通bool类型，不需要再检查nil值
+
+	// 验证商户等级不能为空
+	if merchant.MerchantLevel == nil || *merchant.MerchantLevel == 0 || *merchant.MerchantLevel > 3 {
+		return errors.New("商户等级必须为1(普通)、2(高级)或3(VIP)")
+	}
+
 	err = global.GVA_DB.Model(&model.Merchant{}).Where("id = ?", merchant.ID).Updates(&merchant).Error
 	return err
 }
@@ -76,8 +113,25 @@ func (s *merchant) GetMerchantInfoList(ctx context.Context, info request.Merchan
 	if info.BusinessScope != nil && *info.BusinessScope != "" {
 		db = db.Where("business_scope LIKE ?", "%"+*info.BusinessScope+"%")
 	}
-	if info.IsEnabled != nil {
-		db = db.Where("is_enabled = ?", *info.IsEnabled)
+	// 只有当IsEnabled不为nil且不为空字符串时才应用过滤条件
+	// 添加字符串到布尔类型的转换逻辑
+	if info.IsEnabled != nil && *info.IsEnabled != "" {
+		isEnabled := *info.IsEnabled == "1"
+		db = db.Where("is_enabled = ?", isEnabled)
+	}
+
+	// 添加商户类型和等级的搜索条件，需要进行字符串到数字的转换
+	if info.MerchantType != nil && *info.MerchantType != "" {
+		merchantTypeUint, err := strconv.ParseUint(*info.MerchantType, 10, 32)
+		if err == nil {
+			db = db.Where("merchant_type = ?", merchantTypeUint)
+		}
+	}
+	if info.MerchantLevel != nil && *info.MerchantLevel != "" {
+		merchantLevelUint, err := strconv.ParseUint(*info.MerchantLevel, 10, 32)
+		if err == nil {
+			db = db.Where("merchant_level = ?", merchantLevelUint)
+		}
 	}
 	err = db.Count(&total).Error
 	if err != nil {
@@ -87,12 +141,19 @@ func (s *merchant) GetMerchantInfoList(ctx context.Context, info request.Merchan
 	orderMap := make(map[string]bool)
 	orderMap["id"] = true
 	orderMap["created_at"] = true
+	orderMap["updated_at"] = true
 	orderMap["merchant_name"] = true
-	if orderMap[info.Sort] {
+	// 默认按更新时间倒序排序
+	if info.Sort == "" {
+		OrderStr = "updated_at desc"
+	} else if orderMap[info.Sort] {
 		OrderStr = info.Sort
-		if info.Order == "descending" {
+		if info.Order == "descending" || info.Order == "desc" {
 			OrderStr = OrderStr + " desc"
 		}
+	}
+
+	if OrderStr != "" {
 		db = db.Order(OrderStr)
 	}
 
