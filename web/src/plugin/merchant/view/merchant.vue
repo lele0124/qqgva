@@ -170,17 +170,16 @@
           </template>
         </el-table-column>
 
-        <el-table-column align="left" label="有效开始时间" prop="validStartTime" width="180">
-          <template #default="scope">{{ formatDate(scope.row.validStartTime) }}</template>
-        </el-table-column>
-
-        <el-table-column align="left" label="有效结束时间" prop="validEndTime" width="180">
-          <template #default="scope">{{ formatDate(scope.row.validEndTime) }}</template>
+        <el-table-column align="left" label="有效时间" width="200">
+          <template #default="scope">
+            <div>
+              <div>开始: {{ formatDate(scope.row.validStartTime) }}</div>
+              <div>结束: {{ formatDate(scope.row.validEndTime) }}</div>
+            </div>
+          </template>
         </el-table-column>
 
         <el-table-column align="left" label="地址" prop="address" width="120" />
-
-
 
         <el-table-column sortable align="left" label="更新时间" prop="updatedAt" width="180">
           <template #default="scope">{{ formatDate(scope.row.updatedAt) }}</template>
