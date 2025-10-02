@@ -604,6 +604,11 @@ const enterDialog = async () => {
       submitData.merchantType = 0
     }
     
+    // 对parentID进行类型转换（如果有值）
+    if (submitData.parentID !== undefined && submitData.parentID !== null && submitData.parentID !== '') {
+      submitData.parentID = parseInt(submitData.parentID)
+    }
+    
     // 对merchantLevel进行严格的类型转换
     if (submitData.merchantLevel !== undefined && submitData.merchantLevel !== null && submitData.merchantLevel !== '') {
       submitData.merchantLevel = parseInt(submitData.merchantLevel)

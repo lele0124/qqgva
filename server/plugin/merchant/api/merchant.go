@@ -3,6 +3,7 @@ package api
 import (
 	"strconv"
 	"time"
+
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/merchant/model"
@@ -29,16 +30,116 @@ func (a *merchant) CreateMerchant(c *gin.Context) {
 	// 创建业务用Context
 	ctx := c.Request.Context()
 
-	var req request.CreateMerchantRequest
-	err := c.ShouldBindJSON(&req)
+	// 先使用map接收JSON数据，处理可能的类型转换问题
+	var rawData map[string]interface{}
+	err := c.ShouldBindJSON(&rawData)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
 
+	// 初始化请求模型
+	var req request.CreateMerchantRequest
+
+	// 手动提取并转换字段，确保类型正确
+	if merchantName, ok := rawData["merchantName"].(string); ok {
+		req.MerchantName = merchantName
+	}
+	if merchantIcon, ok := rawData["merchantIcon"].(string); ok {
+		req.MerchantIcon = merchantIcon
+	}
+	if businessLicense, ok := rawData["businessLicense"].(string); ok {
+		req.BusinessLicense = businessLicense
+	}
+	if legalPerson, ok := rawData["legalPerson"].(string); ok {
+		req.LegalPerson = legalPerson
+	}
+	if registeredAddress, ok := rawData["registeredAddress"].(string); ok {
+		req.RegisteredAddress = registeredAddress
+	}
+	if businessScope, ok := rawData["businessScope"].(string); ok {
+		req.BusinessScope = businessScope
+	}
+	if validStartTime, ok := rawData["validStartTime"].(string); ok {
+		req.ValidStartTime = validStartTime
+	}
+	if validEndTime, ok := rawData["validEndTime"].(string); ok {
+		req.ValidEndTime = validEndTime
+	}
+
+	// 处理merchantType字段，进行类型转换
+	if merchantTypeValue, ok := rawData["merchantType"]; ok && merchantTypeValue != nil {
+		switch v := merchantTypeValue.(type) {
+		case string:
+			// 如果是字符串，尝试转换为uint
+			if temp, err := strconv.ParseUint(v, 10, 64); err == nil {
+				req.MerchantType = uint(temp)
+			}
+		case float64:
+			// 如果是数字类型(float64是JSON数字的默认类型)
+			req.MerchantType = uint(v)
+		case uint:
+			req.MerchantType = v
+		}
+	}
+
+	// 处理merchantLevel字段，进行类型转换
+	if merchantLevelValue, ok := rawData["merchantLevel"]; ok && merchantLevelValue != nil {
+		switch v := merchantLevelValue.(type) {
+		case string:
+			// 如果是字符串，尝试转换为uint
+			if temp, err := strconv.ParseUint(v, 10, 64); err == nil {
+				req.MerchantLevel = uint(temp)
+			}
+		case float64:
+			// 如果是数字类型(float64是JSON数字的默认类型)
+			req.MerchantLevel = uint(v)
+		case uint:
+			req.MerchantLevel = v
+		}
+	}
+
+	// 处理parentID字段，进行类型转换
+	if parentIDValue, ok := rawData["parentID"]; ok && parentIDValue != nil && parentIDValue != "" {
+		var parentID uint
+		switch v := parentIDValue.(type) {
+		case string:
+			// 如果是字符串，尝试转换为uint
+			if temp, err := strconv.ParseUint(v, 10, 64); err == nil {
+				parentID = uint(temp)
+				req.ParentID = &parentID
+			}
+		case float64:
+			// 如果是数字类型(float64是JSON数字的默认类型)
+			parentID = uint(v)
+			req.ParentID = &parentID
+		case uint:
+			parentID = v
+			req.ParentID = &parentID
+		}
+	}
+
+	// 处理isEnabled字段，进行类型转换
+	if isEnabledValue, ok := rawData["isEnabled"]; ok && isEnabledValue != nil {
+		switch v := isEnabledValue.(type) {
+		case string:
+			// 如果是字符串，尝试转换为bool
+			if v == "1" || v == "true" {
+				req.IsEnabled = true
+			} else {
+				req.IsEnabled = false
+			}
+		case bool:
+			req.IsEnabled = v
+		case float64:
+			// 如果是数字类型，非0为true
+			req.IsEnabled = v != 0
+		}
+	}
+
 	// 创建商户模型
 	info := model.Merchant{}
-	
+
 	// 复制基本字段，不需要类型转换
 	info.MerchantName = &req.MerchantName
 	info.MerchantIcon = &req.MerchantIcon
