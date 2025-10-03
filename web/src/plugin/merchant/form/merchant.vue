@@ -11,10 +11,8 @@
         </el-form-item>
         <el-form-item label="商户类型:" prop="merchantType">
           <el-select v-model="formData.merchantType" placeholder="请选择商户类型" style="width: 100%">
-            <el-option label="线上电商" :value="1" />
-            <el-option label="线下实体店" :value="2" />
-            <el-option label="平台服务商" :value="3" />
-            <el-option label="其他" :value="4" />
+            <el-option label="企业" :value="1" />
+            <el-option label="个体" :value="2" />
           </el-select>
         </el-form-item>
         <el-form-item label="父商户ID:" prop="parentID">
@@ -34,15 +32,15 @@
         </el-form-item>
         <el-form-item label="开关状态:" prop="isEnabled">
           <el-select v-model="formData.isEnabled" placeholder="请选择开关状态" style="width: 100%">
-            <el-option label="启用" value="1" />
-            <el-option label="禁用" value="0" />
+            <el-option label="启用" :value="true" />
+            <el-option label="禁用" :value="false" />
           </el-select>
         </el-form-item>
         <el-form-item label="商户等级:" prop="merchantLevel">
           <el-select v-model="formData.merchantLevel" placeholder="请选择商户等级" style="width: 100%">
-            <el-option label="一级商户" value="1" />
-            <el-option label="二级商户" value="2" />
-            <el-option label="三级商户" value="3" />
+            <el-option label="普通商户" :value="1" />
+            <el-option label="高级商户" :value="2" />
+            <el-option label="VIP商户" :value="3" />
           </el-select>
         </el-form-item>
         <el-form-item label="有效期开始:" prop="validStartTime">
@@ -52,7 +50,7 @@
           <el-date-picker v-model="formData.validEndTime" type="datetime" placeholder="选择有效期结束时间" style="width: 100%" />
         </el-form-item>
         <el-form-item>
-          <el-button :loading="btnLoading" type="primary" @click="save">保存</el-button>
+          <el-button :loading="btnLoading" type="primary" @click="save">{{ type === 'create' ? '创建' : '更新' }}</el-button>
           <el-button type="default" @click="back">返回</el-button>
         </el-form-item>
       </el-form>
@@ -63,8 +61,9 @@
 <script setup>
 import { createMerchant, updateMerchant, findMerchant } from '@/plugin/merchant/api/merchant'
 import { useRoute, useRouter } from "vue-router"
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { ref, reactive } from 'vue'
+import { useMerchantStore } from '@/plugin/merchant/store/merchant'
 
 // 表单数据
 const formData = ref({
@@ -77,7 +76,7 @@ const formData = ref({
   legalPerson: '',
   registeredAddress: '',
   businessScope: '',
-  isEnabled: 1,
+  isEnabled: true,
   validStartTime: null,
   validEndTime: null,
   merchantLevel: null,
@@ -87,7 +86,8 @@ const formData = ref({
 const rule = reactive({
   merchantName: [
     { required: true, message: '请输入商户名称', trigger: ['input', 'blur'] },
-    { whitespace: true, message: '不能只输入空格', trigger: ['input', 'blur'] }
+    { whitespace: true, message: '不能只输入空格', trigger: ['input', 'blur'] },
+    { min: 2, max: 100, message: '商户名称长度应在2-100个字符之间', trigger: ['input', 'blur'] }
   ],
   merchantType: [
     { required: true, message: '请选择商户类型', trigger: ['change'] }
@@ -99,16 +99,49 @@ const rule = reactive({
     { required: true, message: '请选择商户等级', trigger: ['change'] }
   ],
   businessLicense: [
-    { required: true, message: '请输入营业执照编号', trigger: ['input', 'blur'] }
+    { required: true, message: '请输入营业执照编号', trigger: ['input', 'blur'] },
+    { pattern: /^[A-Z0-9]{15,20}$/, message: '营业执照编号格式不正确', trigger: ['input', 'blur'] }
   ],
   legalPerson: [
-    { required: true, message: '请输入法人姓名', trigger: ['input', 'blur'] }
+    { required: true, message: '请输入法人姓名', trigger: ['input', 'blur'] },
+    { min: 2, max: 50, message: '法人姓名长度应在2-50个字符之间', trigger: ['input', 'blur'] }
   ],
   registeredAddress: [
-    { required: true, message: '请输入注册地址', trigger: ['input', 'blur'] }
+    { required: true, message: '请输入注册地址', trigger: ['input', 'blur'] },
+    { min: 5, max: 255, message: '注册地址长度应在5-255个字符之间', trigger: ['input', 'blur'] }
   ],
   businessScope: [
-    { required: true, message: '请输入经营范围', trigger: ['input', 'blur'] }
+    { required: true, message: '请输入经营范围', trigger: ['input', 'blur'] },
+    { min: 5, max: 255, message: '经营范围长度应在5-255个字符之间', trigger: ['input', 'blur'] }
+  ],
+  parentID: [
+    { type: 'number', message: '父商户ID必须是数字', trigger: ['input', 'blur'] }
+  ],
+  validStartTime: [
+    { type: 'date', message: '请选择有效的开始时间', trigger: ['change'] },
+    {
+      validator: (rule, value, callback) => {
+        if (value && formData.value.validEndTime && value > formData.value.validEndTime) {
+          callback(new Error('开始时间不能晚于结束时间'))
+        } else {
+          callback()
+        }
+      },
+      trigger: ['change']
+    }
+  ],
+  validEndTime: [
+    { type: 'date', message: '请选择有效的结束时间', trigger: ['change'] },
+    {
+      validator: (rule, value, callback) => {
+        if (value && formData.value.validStartTime && value < formData.value.validStartTime) {
+          callback(new Error('结束时间不能早于开始时间'))
+        } else {
+          callback()
+        }
+      },
+      trigger: ['change']
+    }
   ]
 })
 
@@ -117,14 +150,27 @@ const router = useRouter()
 const btnLoading = ref(false)
 const type = ref('')
 const elFormRef = ref()
+const merchantStore = useMerchantStore()
 
 // 初始化方法
 const init = async () => {
   if (route.query.id) {
-    const res = await findMerchant({ ID: route.query.id })
-    if (res.code === 0) {
-      formData.value = res.data
-      type.value = 'update'
+    try {
+      const res = await findMerchant({ ID: route.query.id })
+      if (res.code === 0) {
+        // 处理日期时间格式
+        if (res.data.validStartTime) {
+          res.data.validStartTime = new Date(res.data.validStartTime)
+        }
+        if (res.data.validEndTime) {
+          res.data.validEndTime = new Date(res.data.validEndTime)
+        }
+        formData.value = res.data
+        type.value = 'update'
+      }
+    } catch (error) {
+      ElMessage.error('获取商户数据失败，请稍后重试')
+      console.error('Failed to get merchant data:', error)
     }
   } else {
     type.value = 'create'
@@ -137,47 +183,66 @@ init()
 const save = async() => {
   btnLoading.value = true
   elFormRef.value?.validate(async (valid) => {
-    if (!valid) return btnLoading.value = false
-    
-    // 创建提交数据的副本，进行类型转换
-    const submitData = { ...formData.value }
-    
-    // 对merchantType进行严格的类型转换
-    if (submitData.merchantType !== undefined && submitData.merchantType !== null && submitData.merchantType !== '') {
-      submitData.merchantType = parseInt(submitData.merchantType)
-    } else {
-      // 确保有一个有效的整数值
-      submitData.merchantType = 0
+    if (!valid) {
+      btnLoading.value = false
+      return
     }
     
-    // 对merchantLevel进行严格的类型转换
-    if (submitData.merchantLevel !== undefined && submitData.merchantLevel !== null && submitData.merchantLevel !== '') {
-      submitData.merchantLevel = parseInt(submitData.merchantLevel)
-    } else {
-      // 确保有一个有效的整数值
-      submitData.merchantLevel = 0
-    }
-    
-    // 对isEnabled进行类型转换
-    if (typeof submitData.isEnabled === 'string') {
-      submitData.isEnabled = submitData.isEnabled === '1' ? true : false
-    }
-    
-    let res
-    switch (type.value) {
-      case 'create':
-        res = await createMerchant(submitData)
-        break
-      case 'update':
-        res = await updateMerchant(submitData)
-        break
-      default:
-        res = await createMerchant(submitData)
-        break
-    }
-    btnLoading.value = false
-    if (res.code === 0) {
-      ElMessage({ type: 'success', message: '创建/更改成功' })
+    try {
+      // 创建提交数据的副本，进行类型转换
+      const submitData = { ...formData.value }
+      
+      // 对数字类型字段进行严格的类型转换
+      if (submitData.parentID !== undefined && submitData.parentID !== null && submitData.parentID !== '') {
+        submitData.parentID = parseInt(submitData.parentID)
+      }
+      
+      // 确保必须的整数字段有有效值
+      if (submitData.merchantType !== undefined && submitData.merchantType !== null) {
+        submitData.merchantType = parseInt(submitData.merchantType)
+      }
+      
+      if (submitData.merchantLevel !== undefined && submitData.merchantLevel !== null) {
+        submitData.merchantLevel = parseInt(submitData.merchantLevel)
+      }
+      
+      // 对布尔类型进行处理
+      if (typeof submitData.isEnabled === 'string') {
+        submitData.isEnabled = submitData.isEnabled === 'true' || submitData.isEnabled === '1'
+      }
+      
+      let res
+      switch (type.value) {
+        case 'create':
+          res = await createMerchant(submitData)
+          break
+        case 'update':
+          res = await updateMerchant(submitData)
+          break
+        default:
+          res = await createMerchant(submitData)
+          break
+      }
+      
+      btnLoading.value = false
+      
+      if (res.code === 0) {
+        // 更新成功后，通知状态管理刷新列表数据
+        merchantStore.getMerchantList()
+        
+        ElMessage({ type: 'success', message: type.value === 'create' ? '创建成功' : '更新成功' })
+        
+        // 显示成功消息后延迟返回，确保用户能看到消息
+        setTimeout(() => {
+          back()
+        }, 1500)
+      } else {
+        ElMessage.error(res.msg || (type.value === 'create' ? '创建失败' : '更新失败'))
+      }
+    } catch (error) {
+      btnLoading.value = false
+      ElMessage.error('操作失败：' + error.message || '未知错误')
+      console.error('Save operation failed:', error)
     }
   })
 }
@@ -188,5 +253,11 @@ const back = () => {
 }
 </script>
 
-<style>
+<style scoped>
+.gva-form-box {
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
 </style>

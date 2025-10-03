@@ -186,12 +186,12 @@
         </el-table-column>
         
         <el-table-column align="left" label="操作" fixed="right" min-width="240">
-          <template #default="scope">
-            <el-button v-auth="btnAuth.info" type="primary" link class="table-button" @click="getDetails(scope.row)"><el-icon style="margin-right: 5px"><InfoFilled /></el-icon>查看</el-button>
-            <el-button v-auth="btnAuth.edit" type="primary" link icon="edit" class="table-button" @click="updateMerchantFunc(scope.row)">编辑</el-button>
-            <el-button v-auth="btnAuth.delete" type="primary" link icon="delete" @click="deleteRow(scope.row)">删除</el-button>
-          </template>
-        </el-table-column>
+      <template #default="scope">
+        <el-button v-auth="btnAuth.info" type="primary" link class="table-button" @click="goToDetail(scope.row)"><el-icon style="margin-right: 5px"><InfoFilled /></el-icon>查看</el-button>
+        <el-button v-auth="btnAuth.edit" type="primary" link icon="edit" class="table-button" @click="updateMerchantFunc(scope.row)">编辑</el-button>
+        <el-button v-auth="btnAuth.delete" type="primary" link icon="delete" @click="deleteRow(scope.row)">删除</el-button>
+      </template>
+    </el-table-column>
       </el-table>
       
       <div class="gva-pagination">
@@ -278,51 +278,7 @@
       </el-form>
     </el-drawer>
 
-    <el-drawer destroy-on-close size="800" v-model="detailShow" :show-close="true" :before-close="closeDetailShow" title="查看">
-      <el-descriptions :column="1" border>
-        <el-descriptions-item label="商户名称">
-          {{ detailForm.merchantName }}
-        </el-descriptions-item>
-        <el-descriptions-item label="商户图标">
-          <img v-if="detailForm.merchantIcon" :src="detailForm.merchantIcon" style="width: 80px; height: 80px; object-fit: cover;" />
-          <span v-else>无</span>
-        </el-descriptions-item>
-        <el-descriptions-item label="商户类型">
-          {{ detailForm.merchantType === 1 ? '企业' : detailForm.merchantType === 2 ? '个体' : '未知' }}
-        </el-descriptions-item>
-        <el-descriptions-item label="父商户ID">
-          {{ detailForm.parentID || '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item label="营业执照号">
-          {{ detailForm.businessLicense || '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item label="法人代表">
-          {{ detailForm.legalPerson || '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item label="注册地址">
-          {{ detailForm.registeredAddress || '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item label="经营范围">
-          {{ detailForm.businessScope || '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item label="商户开关状态">
-          <el-tag :type="detailForm.isEnabled === 1 ? 'success' : 'danger'">
-            {{ detailForm.isEnabled === 1 ? '正常' : '关闭' }}
-          </el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item label="有效开始时间">
-          {{ formatDate(detailForm.validStartTime) || '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item label="有效结束时间">
-          {{ formatDate(detailForm.validEndTime) || '-' }}
-        </el-descriptions-item>
-        <el-descriptions-item label="商户等级">
-          <el-tag :type="detailForm.merchantLevel === 3 ? 'primary' : detailForm.merchantLevel === 2 ? 'success' : 'info'">
-            {{ detailForm.merchantLevel === 1 ? '普通商户' : detailForm.merchantLevel === 2 ? '高级商户' : detailForm.merchantLevel === 3 ? 'VIP商户' : '未知' }}
-          </el-tag>
-        </el-descriptions-item>
-      </el-descriptions>
-    </el-drawer>
+    <!-- 详情页面已独立到专门的详情路由 -->
   </div>
 </template>
 
@@ -342,6 +298,8 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { ref, reactive } from 'vue'
 // 引入按钮权限标识
 import { useBtnAuth } from '@/utils/btnAuth'
+// 引入路由
+import { useRouter } from 'vue-router'
 
 // 导出组件
 import ExportExcel from '@/components/exportExcel/exportExcel.vue'
@@ -648,25 +606,13 @@ const closeDialog = () => {
   }
 }
 
-// 获取详情
-const getDetails = async (row) => {
-  try {
-    const res = await findMerchant({ ID: row.ID })
-    if (res.code === 0) {
-      detailForm.value = res.data
-      detailShow.value = true
-    } else {
-      ElMessage.error(res.msg || '获取详情失败')
-    }
-  } catch (error) {
-    ElMessage.error('获取详情失败')
-  }
-}
+// 初始化路由
+const router = useRouter()
 
-// 关闭详情弹窗
-const closeDetailShow = () => {
-  detailShow.value = false
-  detailForm.value = {}
+// 跳转到详情页面
+const goToDetail = (row) => {
+  // 跳转到详情页面
+  router.push({ path: `/layout/merchant/detail/${row.ID}` })
 }
 
 // 删除单条数据

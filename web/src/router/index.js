@@ -24,6 +24,16 @@ const routes = [
     },
     component: () => import('@/view/example/upload/scanUpload.vue')
   },
+  // 静态添加商户详情页面路由
+  {
+    path: '/layout/merchant/detail/:id',
+    name: 'MerchantDetail',
+    component: () => import('@/plugin/merchant/view/detail.vue'),
+    meta: {
+      title: '商户详情',
+      permissions: ['merchant:view']
+    }
+  },
   {
     path: '/:catchAll(.*)',
     meta: {
