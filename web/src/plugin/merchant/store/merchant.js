@@ -1,6 +1,44 @@
 import { defineStore } from 'pinia'
 import { getMerchantList, findMerchant, createMerchant, updateMerchant, deleteMerchant, deleteMerchantByIds } from '../api/merchant'
 import { ElMessage } from 'element-plus'
+import { processSearchData, processMerchantFormData } from '../utils/dataProcessor'
+
+// 默认搜索条件
+const DEFAULT_SEARCH_INFO = {
+  merchantName: '',
+  merchantIcon: '',
+  merchantType: '',
+  parentID: '',
+  businessLicense: '',
+  legalPerson: '',
+  registeredAddress: '',
+  businessScope: '',
+  isEnabled: '',
+  validStartTime: '',
+  validEndTime: '',
+  merchantLevel: '',
+  address: '',
+  status: '',
+  updatedAtRange: []
+}
+
+// 默认表单数据
+const DEFAULT_FORM_DATA = {
+  ID: '',
+  merchantName: '',
+  merchantIcon: '',
+  merchantType: '',
+  parentID: '',
+  businessLicense: '',
+  legalPerson: '',
+  registeredAddress: '',
+  businessScope: '',
+  isEnabled: true,
+  validStartTime: '',
+  validEndTime: '',
+  merchantLevel: '',
+  address: ''
+}
 
 // 定义商户管理的Store
 export const useMerchantStore = defineStore('merchant', {
@@ -12,42 +50,11 @@ export const useMerchantStore = defineStore('merchant', {
     pageSize: 10,
     total: 0,
     // 搜索条件
-    searchInfo: {
-      merchantName: '',
-      merchantIcon: '',
-      merchantType: '',
-      parentID: '',
-      businessLicense: '',
-      legalPerson: '',
-      registeredAddress: '',
-      businessScope: '',
-      isEnabled: '',
-      validStartTime: '',
-      validEndTime: '',
-      merchantLevel: '',
-      address: '',
-      status: '',
-      updatedAtRange: []
-    },
+    searchInfo: { ...DEFAULT_SEARCH_INFO },
     // 选中的数据
     selectedData: [],
     // 表单数据
-    formData: {
-      ID: '',
-      merchantName: '',
-      merchantIcon: '',
-      merchantType: '',
-      parentID: '',
-      businessLicense: '',
-      legalPerson: '',
-      registeredAddress: '',
-      businessScope: '',
-      isEnabled: '1',
-      validStartTime: '',
-      validEndTime: '',
-      merchantLevel: '1',
-      address: ''
-    },
+    formData: { ...DEFAULT_FORM_DATA },
     // 详情数据
     detailForm: {},
     // 加载状态
@@ -73,44 +80,13 @@ export const useMerchantStore = defineStore('merchant', {
   actions: {
     // 重置搜索条件
     resetSearchInfo() {
-      this.searchInfo = {
-        merchantName: '',
-        merchantIcon: '',
-        merchantType: '',
-        parentID: '',
-        businessLicense: '',
-        legalPerson: '',
-        registeredAddress: '',
-        businessScope: '',
-        isEnabled: '',
-        validStartTime: '',
-        validEndTime: '',
-        merchantLevel: '',
-        address: '',
-        status: '',
-        updatedAtRange: []
-      }
+      this.searchInfo = { ...DEFAULT_SEARCH_INFO }
       this.page = 1
     },
 
     // 重置表单数据
     resetFormData() {
-      this.formData = {
-        ID: '',
-        merchantName: '',
-        merchantIcon: '',
-        merchantType: '',
-        parentID: '',
-        businessLicense: '',
-        legalPerson: '',
-        registeredAddress: '',
-        businessScope: '',
-        isEnabled: '1',
-        validStartTime: '',
-        validEndTime: '',
-        merchantLevel: '1',
-        address: ''
-      }
+      this.formData = { ...DEFAULT_FORM_DATA }
     },
 
     // 获取商户列表
@@ -125,30 +101,10 @@ export const useMerchantStore = defineStore('merchant', {
           ...this.searchInfo
         }
         
-        // 对merchantType进行类型转换
-        if (submitData.merchantType !== '') {
-          submitData.merchantType = parseInt(submitData.merchantType)
-        } else {
-          // 如果为空字符串，设置为undefined，避免传递空字符串
-          delete submitData.merchantType
-        }
+        // 使用统一的处理函数处理搜索数据
+        const processedData = processSearchData(submitData)
         
-        // 对parentID进行类型转换（如果有值）
-        if (submitData.parentID !== '') {
-          submitData.parentID = parseInt(submitData.parentID)
-        }
-        
-        // 对merchantLevel进行类型转换（如果有值）
-        if (submitData.merchantLevel !== '') {
-          submitData.merchantLevel = parseInt(submitData.merchantLevel)
-        }
-        
-        // 对isEnabled进行类型转换（如果有值）
-        if (submitData.isEnabled !== '') {
-          submitData.isEnabled = submitData.isEnabled === '1' ? true : false
-        }
-        
-        const res = await getMerchantList(submitData)
+        const res = await getMerchantList(processedData)
         if (res.code === 0) {
           this.tableData = res.data.list || []
           this.total = res.data.total || 0
@@ -330,34 +286,8 @@ export const useMerchantStore = defineStore('merchant', {
 
     // 提交表单
     async submitForm() {
-      // 创建提交数据的副本，进行类型转换
-      const submitData = { ...this.formData }
-      
-      // 对merchantType进行严格的类型转换
-      if (submitData.merchantType !== undefined && submitData.merchantType !== null && submitData.merchantType !== '') {
-        submitData.merchantType = parseInt(submitData.merchantType)
-      } else {
-        // 确保有一个有效的整数值
-        submitData.merchantType = 0
-      }
-      
-      // 对parentID进行类型转换（如果有值）
-      if (submitData.parentID !== undefined && submitData.parentID !== null && submitData.parentID !== '') {
-        submitData.parentID = parseInt(submitData.parentID)
-      }
-      
-      // 对merchantLevel进行严格的类型转换
-      if (submitData.merchantLevel !== undefined && submitData.merchantLevel !== null && submitData.merchantLevel !== '') {
-        submitData.merchantLevel = parseInt(submitData.merchantLevel)
-      } else {
-        // 确保有一个有效的整数值
-        submitData.merchantLevel = 0
-      }
-      
-      // 对isEnabled进行类型转换
-      if (typeof submitData.isEnabled === 'string') {
-        submitData.isEnabled = submitData.isEnabled === '1' ? true : false
-      }
+      // 使用统一的处理函数处理表单数据
+      const submitData = processMerchantFormData({ ...this.formData })
       
       let success
       if (this.formType === 'create') {

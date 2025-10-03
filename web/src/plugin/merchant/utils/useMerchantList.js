@@ -124,9 +124,15 @@ export default function useMerchantList() {
   // 启用/禁用商户
   const toggleMerchantStatus = async (id, isEnabled) => {
     try {
-      await merchantStore.updateMerchantStatus(id, isEnabled ? 1 : 0)
-      ElMessage.success(`${isEnabled ? '启用' : '禁用'}成功`)
-      getMerchantList()
+      // 直接调用updateMerchant方法更新状态
+      const success = await merchantStore.updateMerchant({ 
+        ID: id, 
+        isEnabled: isEnabled 
+      })
+      if (success) {
+        ElMessage.success(`${isEnabled ? '启用' : '禁用'}成功`)
+        getMerchantList()
+      }
     } catch (error) {
       ElMessage.error(`${isEnabled ? '启用' : '禁用'}失败`)
     }

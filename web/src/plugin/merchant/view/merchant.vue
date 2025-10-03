@@ -57,52 +57,56 @@
           <el-input v-model="searchInfo.businessScope" placeholder="搜索条件" />
         </el-form-item>
         
-        <el-form-item label="状态" prop="isEnabled">
-          <el-select v-model="searchInfo.isEnabled" placeholder="搜索条件">
-            <el-option label="正常" value="1" />
-            <el-option label="关闭" value="0" />
+        <el-form-item label="商户状态" prop="isEnabled">
+          <el-select v-model="searchInfo.isEnabled" placeholder="搜索条件" clearable>
+            <el-option label="启用" value="1" />
+            <el-option label="禁用" value="0" />
           </el-select>
         </el-form-item>
         
         <el-form-item label="商户等级" prop="merchantLevel">
-          <el-select v-model="searchInfo.merchantLevel" placeholder="搜索条件">
+          <el-select v-model="searchInfo.merchantLevel" placeholder="搜索条件" clearable>
             <el-option label="普通商户" value="1" />
             <el-option label="高级商户" value="2" />
             <el-option label="VIP商户" value="3" />
           </el-select>
         </el-form-item>
         
-        <el-form-item label="有效开始时间" prop="validStartTime">
-          <el-date-picker
-            v-model="searchInfo.validStartTime"
-            type="datetime"
-            placeholder="开始时间"
-            class="!w-280px"
-          />
-        </el-form-item>
-        
-        <el-form-item label="有效结束时间" prop="validEndTime">
-          <el-date-picker
-            v-model="searchInfo.validEndTime"
-            type="datetime"
-            placeholder="结束时间"
-            class="!w-280px"
-          />
-        </el-form-item>
-        
-        <el-form-item label="地址" prop="address">
-          <el-input v-model="searchInfo.address" placeholder="搜索条件" />
-        </el-form-item>
-        
         <template v-if="showAllQuery">
-          <!-- 将需要控制显示状态的查询条件添加到此范围内 -->
+          <el-form-item label="有效开始时间" prop="validStartTime">
+            <el-date-picker
+              v-model="searchInfo.validStartTime"
+              type="datetime"
+              placeholder="开始时间"
+              class="!w-280px"
+            />
+          </el-form-item>
+          
+          <el-form-item label="有效结束时间" prop="validEndTime">
+            <el-date-picker
+              v-model="searchInfo.validEndTime"
+              type="datetime"
+              placeholder="结束时间"
+              class="!w-280px"
+            />
+          </el-form-item>
+          
+          <el-form-item label="地址" prop="address">
+            <el-input v-model="searchInfo.address" placeholder="搜索条件" />
+          </el-form-item>
+          
+          <el-form-item label="状态" prop="status">
+            <el-input v-model="searchInfo.status" placeholder="搜索条件" />
+          </el-form-item>
         </template>
-
+        
         <el-form-item>
           <el-button type="primary" icon="search" @click="onSubmit">查询</el-button>
           <el-button icon="refresh" @click="onReset">重置</el-button>
-          <el-button link type="primary" icon="arrow-down" @click="showAllQuery=true" v-if="!showAllQuery">展开</el-button>
-          <el-button link type="primary" icon="arrow-up" @click="showAllQuery=false" v-else>收起</el-button>
+          <el-button link type="primary" @click="showAllQuery = !showAllQuery">
+            {{ showAllQuery ? '收起' : '展开' }}
+            <el-icon>{{ showAllQuery ? 'arrow-up' : 'arrow-down' }}</el-icon>
+          </el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -157,7 +161,7 @@
         <el-table-column sortable align="left" label="状态" prop="isEnabled" width="120">
           <template #default="scope">
             <el-tag :type="scope.row.isEnabled ? 'success' : 'danger'">
-              {{ scope.row.isEnabled ? '正常' : '关闭' }}
+              {{ scope.row.isEnabled ? '启用' : '禁用' }}
             </el-tag>
           </template>
         </el-table-column>
@@ -170,7 +174,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column align="left" label="有效时间" width="200">
+        <el-table-column align="left" label="有效时间" width="200" v-if="showAllQuery">
           <template #default="scope">
             <div>
               <div>开始: {{ formatDate(scope.row.validStartTime) }}</div>
@@ -355,7 +359,7 @@ const formData = reactive({
   legalPerson: '',
   registeredAddress: '',
   businessScope: '',
-  isEnabled: '1',
+  isEnabled: true,
   validStartTime: '',
   validEndTime: '',
   merchantLevel: '1',
@@ -416,28 +420,25 @@ const getTableData = async () => {
       ...searchInfo
     }
     
-    // 对merchantType进行类型转换
-    if (submitData.merchantType !== '') {
-      submitData.merchantType = parseInt(submitData.merchantType)
-    } else {
-      // 如果为空字符串，设置为undefined，避免传递空字符串
-      delete submitData.merchantType
+    // 统一处理数值类型转换
+    const processValue = (value, type) => {
+      if (value === '' || value === null || value === undefined) return undefined
+      
+      switch (type) {
+        case 'int':
+          return parseInt(value)
+        case 'bool':
+          return value === '1'
+        default:
+          return value
+      }
     }
     
-    // 对parentID进行类型转换（如果有值）
-    if (submitData.parentID !== '') {
-      submitData.parentID = parseInt(submitData.parentID)
-    }
-    
-    // 对merchantLevel进行类型转换（如果有值）
-    if (submitData.merchantLevel !== '') {
-      submitData.merchantLevel = parseInt(submitData.merchantLevel)
-    }
-    
-    // 对isEnabled进行类型转换（如果有值）
-    if (submitData.isEnabled !== '') {
-      submitData.isEnabled = submitData.isEnabled === '1' ? true : false
-    }
+    // 转换数值类型
+    submitData.merchantType = processValue(searchInfo.merchantType, 'int')
+    submitData.parentID = processValue(searchInfo.parentID, 'int')
+    submitData.merchantLevel = processValue(searchInfo.merchantLevel, 'int')
+    submitData.isEnabled = processValue(searchInfo.isEnabled, 'bool')
     
     const res = await getMerchantList(submitData)
     if (res.code === 0) {
@@ -507,17 +508,17 @@ const handleSelectionChange = (val) => {
 const openDialog = () => {
   type.value = 'create'
   // 重置表单
-  Object.keys(formData).forEach(key => {
-    if (key === 'isEnabled') {
-      formData[key] = '1'
-    } else if (key === 'merchantLevel') {
-      formData[key] = '1'
-    } else if (key === 'status') {
-      formData[key] = 1
-    } else {
-      formData[key] = ''
-    }
-  })
+    Object.keys(formData).forEach(key => {
+      if (key === 'isEnabled') {
+        formData[key] = true
+      } else if (key === 'merchantLevel') {
+        formData[key] = '1'
+      } else if (key === 'status') {
+        formData[key] = 1
+      } else {
+        formData[key] = ''
+      }
+    })
   dialogFormVisible.value = true
 }
 
@@ -553,31 +554,34 @@ const enterDialog = async () => {
     // 创建提交数据的副本，进行类型转换
     const submitData = { ...formData }
     
-    // 对merchantType进行严格的类型转换
-    if (submitData.merchantType !== undefined && submitData.merchantType !== null && submitData.merchantType !== '') {
-      submitData.merchantType = parseInt(submitData.merchantType)
-    } else {
-      // 确保有一个有效的整数值
-      submitData.merchantType = 0
+    // 统一处理数值类型转换
+    const processValue = (value, type) => {
+      if (value === '' || value === null || value === undefined) {
+        switch (type) {
+          case 'int':
+            return 0
+          case 'bool':
+            return false
+          default:
+            return ''
+        }
+      }
+      
+      switch (type) {
+        case 'int':
+          return parseInt(value)
+        case 'bool':
+          return value === '1' || value === true
+        default:
+          return value
+      }
     }
     
-    // 对parentID进行类型转换（如果有值）
-    if (submitData.parentID !== undefined && submitData.parentID !== null && submitData.parentID !== '') {
-      submitData.parentID = parseInt(submitData.parentID)
-    }
-    
-    // 对merchantLevel进行严格的类型转换
-    if (submitData.merchantLevel !== undefined && submitData.merchantLevel !== null && submitData.merchantLevel !== '') {
-      submitData.merchantLevel = parseInt(submitData.merchantLevel)
-    } else {
-      // 确保有一个有效的整数值
-      submitData.merchantLevel = 0
-    }
-    
-    // 对isEnabled进行类型转换
-    if (typeof submitData.isEnabled === 'string') {
-      submitData.isEnabled = submitData.isEnabled === '1' ? true : false
-    }
+    // 转换数值类型
+    submitData.merchantType = processValue(formData.merchantType, 'int')
+    submitData.parentID = processValue(formData.parentID, 'int')
+    submitData.merchantLevel = processValue(formData.merchantLevel, 'int')
+    submitData.isEnabled = processValue(formData.isEnabled, 'bool')
     
     if (type.value === 'create') {
       res = await createMerchant(submitData)

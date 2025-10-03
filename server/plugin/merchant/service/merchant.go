@@ -18,19 +18,19 @@ type merchant struct{}
 // Author [yourname](https://github.com/yourname)
 func (s *merchant) CreateMerchant(ctx context.Context, merchant *model.Merchant) (err error) {
 	// 验证商户名称不能为空
-	if merchant.MerchantName == nil || *merchant.MerchantName == "" {
+	if merchant.MerchantName == "" {
 		return errors.New("商户名称不能为空")
 	}
 
 	// 验证商户类型不能为空
-	if merchant.MerchantType == nil || *merchant.MerchantType == 0 {
+	if merchant.MerchantType == 0 {
 		return errors.New("商户类型不能为空")
 	}
 
 	// IsEnabled已经是普通bool类型，不需要再检查nil值
 
 	// 验证商户等级不能为空
-	if merchant.MerchantLevel == nil || *merchant.MerchantLevel == 0 || *merchant.MerchantLevel > 3 {
+	if merchant.MerchantLevel == 0 || merchant.MerchantLevel > 3 {
 		return errors.New("商户等级必须为1(普通)、2(高级)或3(VIP)")
 	}
 
@@ -63,19 +63,19 @@ func (s *merchant) UpdateMerchant(ctx context.Context, merchant model.Merchant) 
 	}
 
 	// 验证商户名称不能为空
-	if merchant.MerchantName == nil || *merchant.MerchantName == "" {
+	if merchant.MerchantName == "" {
 		return errors.New("商户名称不能为空")
 	}
 
 	// 验证商户类型不能为空
-	if merchant.MerchantType == nil || *merchant.MerchantType == 0 {
+	if merchant.MerchantType == 0 {
 		return errors.New("商户类型不能为空")
 	}
 
 	// IsEnabled已经是普通bool类型，不需要再检查nil值
 
 	// 验证商户等级不能为空
-	if merchant.MerchantLevel == nil || *merchant.MerchantLevel == 0 || *merchant.MerchantLevel > 3 {
+	if merchant.MerchantLevel == 0 || merchant.MerchantLevel > 3 {
 		return errors.New("商户等级必须为1(普通)、2(高级)或3(VIP)")
 	}
 

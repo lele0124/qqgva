@@ -2,70 +2,76 @@ package request
 
 import (
 	"time"
+	"github.com/flipped-aurora/gin-vue-admin/server/plugin/merchant/model"
 )
 
 // UpdateMerchantRequest 更新商户的请求模型
-// 该模型使用string类型的时间字段，以避免类型转换错误
+// 该模型使用与数据模型一致的类型定义
 
 type UpdateMerchantRequest struct {
-	ID                uint        `json:"id" form:"id" binding:"required"`
-	MerchantName      string      `json:"merchantName" form:"merchantName" binding:"required"`
-	MerchantIcon      string      `json:"merchantIcon" form:"merchantIcon"`
-	ParentID          uint        `json:"parentID" form:"parentID" binding:"required"`
-	MerchantType      uint        `json:"merchantType" form:"merchantType" binding:"required"` // 与数据模型保持一致
-	BusinessLicense   string      `json:"businessLicense" form:"businessLicense"`
-	LegalPerson       string      `json:"legalPerson" form:"legalPerson"`
-	RegisteredAddress string      `json:"registeredAddress" form:"registeredAddress"`
-	BusinessScope     string      `json:"businessScope" form:"businessScope"`
-	IsEnabled         bool        `json:"isEnabled" form:"isEnabled"` // 与数据模型保持一致
-	ValidStartTime    string      `json:"validStartTime" form:"validStartTime"` // 使用string类型接收时间
-	ValidEndTime      string      `json:"validEndTime" form:"validEndTime"`     // 使用string类型接收时间
-	MerchantLevel     uint        `json:"merchantLevel" form:"merchantLevel" binding:"required"` // 与数据模型保持一致
-	Address           string      `json:"address" form:"address"`
+	ID                uint                 `json:"id" form:"id" binding:"required"`
+	MerchantName      *string              `json:"merchantName" form:"merchantName"`
+	MerchantIcon      *string              `json:"merchantIcon" form:"merchantIcon"`
+	ParentID          *uint                `json:"parentID" form:"parentID"`
+	MerchantType      *model.MerchantType  `json:"merchantType" form:"merchantType"`          // 与数据模型保持一致
+	BusinessLicense   *string              `json:"businessLicense" form:"businessLicense"`
+	LegalPerson       *string              `json:"legalPerson" form:"legalPerson"`
+	RegisteredAddress *string              `json:"registeredAddress" form:"registeredAddress"`
+	BusinessScope     *string              `json:"businessScope" form:"businessScope"`
+	IsEnabled         *bool                `json:"isEnabled" form:"isEnabled"`               // 与数据模型保持一致
+	ValidStartTime    *time.Time           `json:"validStartTime" form:"validStartTime"`      // 使用*time.Time类型接收时间
+	ValidEndTime      *time.Time           `json:"validEndTime" form:"validEndTime"`          // 使用*time.Time类型接收时间
+	MerchantLevel     *model.MerchantLevel `json:"merchantLevel" form:"merchantLevel"`        // 与数据模型保持一致
+	Address           *string              `json:"address" form:"address"`
 }
 
 // ToMerchantModel 将请求模型转换为数据模型
-func (req *UpdateMerchantRequest) ToMerchantModel() (interface{}, error) {
-	// 创建返回的map
-	result := map[string]interface{}{
-		"ID":                req.ID,
-		"MerchantName":      req.MerchantName,
-		"MerchantIcon":      req.MerchantIcon,
-		"ParentID":          req.ParentID,
-		"MerchantType":      req.MerchantType,
-		"BusinessLicense":   req.BusinessLicense,
-		"LegalPerson":       req.LegalPerson,
-		"RegisteredAddress": req.RegisteredAddress,
-		"BusinessScope":     req.BusinessScope,
-		"IsEnabled":         req.IsEnabled,
-		"MerchantLevel":     req.MerchantLevel,
-		"Address":           req.Address,
+func (req *UpdateMerchantRequest) ToMerchantModel() (model.Merchant, error) {
+	// 构造Merchant模型
+	merchant := model.Merchant{
+		// ID将在GORM更新时使用
 	}
 
-	// 处理时间字段，只有非空时才尝试解析
-	if req.ValidStartTime != "" {
-		startTime, timeErr := time.Parse(time.RFC3339, req.ValidStartTime)
-		if timeErr != nil {
-			// 尝试其他常见的时间格式
-			startTime, timeErr = time.Parse("2006-01-02 15:04:05", req.ValidStartTime)
-			if timeErr != nil {
-				return nil, timeErr
-			}
-		}
-		result["ValidStartTime"] = &startTime
+	// 处理可选字段
+	if req.MerchantName != nil {
+		merchant.MerchantName = *req.MerchantName
+	}
+	if req.MerchantIcon != nil {
+		merchant.MerchantIcon = req.MerchantIcon
+	}
+	if req.ParentID != nil {
+		merchant.ParentID = *req.ParentID
+	}
+	if req.MerchantType != nil {
+		merchant.MerchantType = *req.MerchantType
+	}
+	if req.BusinessLicense != nil {
+		merchant.BusinessLicense = req.BusinessLicense
+	}
+	if req.LegalPerson != nil {
+		merchant.LegalPerson = req.LegalPerson
+	}
+	if req.RegisteredAddress != nil {
+		merchant.RegisteredAddress = req.RegisteredAddress
+	}
+	if req.BusinessScope != nil {
+		merchant.BusinessScope = req.BusinessScope
+	}
+	if req.IsEnabled != nil {
+		merchant.IsEnabled = *req.IsEnabled
+	}
+	if req.ValidStartTime != nil {
+		merchant.ValidStartTime = req.ValidStartTime
+	}
+	if req.ValidEndTime != nil {
+		merchant.ValidEndTime = req.ValidEndTime
+	}
+	if req.MerchantLevel != nil {
+		merchant.MerchantLevel = *req.MerchantLevel
+	}
+	if req.Address != nil {
+		merchant.Address = req.Address
 	}
 
-	if req.ValidEndTime != "" {
-		endTime, timeErr := time.Parse(time.RFC3339, req.ValidEndTime)
-		if timeErr != nil {
-			// 尝试其他常见的时间格式
-			endTime, timeErr = time.Parse("2006-01-02 15:04:05", req.ValidEndTime)
-			if timeErr != nil {
-				return nil, timeErr
-			}
-		}
-		result["ValidEndTime"] = &endTime
-	}
-
-	return result, nil
+	return merchant, nil
 }

@@ -169,9 +169,9 @@
 import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getMerchantList, findMerchant } from '@/plugin/merchant/api/merchant.js'
-import { formatDate, formatAmount, formatMerchantStatus } from '@/plugin/merchant/utils/utils.js'
+import { formatDate, formatAmount, formatStatus } from '@/plugin/merchant/utils/utils.js'
 import { createMerchantValidationRules } from '@/plugin/merchant/utils/validationRules.js'
-import { useMerchantDialog } from '@/plugin/merchant/utils/useMerchantDialog.js'
+import useMerchantDialog from '@/plugin/merchant/utils/useMerchantDialog.js'
 
 // API测试相关
 const activeApiTab = ref('getMerchantList')

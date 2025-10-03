@@ -1,4 +1,3 @@
-
 <template>
   <div>
     <div class="gva-form-box">
@@ -62,8 +61,24 @@
 import { createMerchant, updateMerchant, findMerchant } from '@/plugin/merchant/api/merchant'
 import { useRoute, useRouter } from "vue-router"
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { useMerchantStore } from '@/plugin/merchant/store/merchant'
+import { processMerchantFormData, processDateFields } from '@/plugin/merchant/utils/dataProcessor'
+
+// 定义组件属性
+const props = defineProps({
+  type: {
+    type: String,
+    default: 'create'
+  },
+  data: {
+    type: Object,
+    default: () => ({})
+  }
+})
+
+// 定义事件
+const emit = defineEmits(['submit', 'cancel'])
 
 // 表单数据
 const formData = ref({
@@ -100,7 +115,7 @@ const rule = reactive({
   ],
   businessLicense: [
     { required: true, message: '请输入营业执照编号', trigger: ['input', 'blur'] },
-    { pattern: /^[A-Z0-9]{15,20}$/, message: '营业执照编号格式不正确', trigger: ['input', 'blur'] }
+    { pattern: /^[A-Z0-9]{10,30}$/, message: '营业执照编号格式不正确', trigger: ['input', 'blur'] }
   ],
   legalPerson: [
     { required: true, message: '请输入法人姓名', trigger: ['input', 'blur'] },
@@ -148,9 +163,18 @@ const rule = reactive({
 const route = useRoute()
 const router = useRouter()
 const btnLoading = ref(false)
-const type = ref('')
 const elFormRef = ref()
 const merchantStore = useMerchantStore()
+
+// 计算属性
+const isUpdate = computed(() => props.type === 'edit')
+
+// 监听数据变化
+watch(() => props.data, (newVal) => {
+  if (newVal && Object.keys(newVal).length > 0) {
+    formData.value = { ...newVal }
+  }
+}, { immediate: true })
 
 // 初始化方法
 const init = async () => {
@@ -158,26 +182,21 @@ const init = async () => {
     try {
       const res = await findMerchant({ ID: route.query.id })
       if (res.code === 0) {
-        // 处理日期时间格式
-        if (res.data.validStartTime) {
-          res.data.validStartTime = new Date(res.data.validStartTime)
-        }
-        if (res.data.validEndTime) {
-          res.data.validEndTime = new Date(res.data.validEndTime)
-        }
-        formData.value = res.data
-        type.value = 'update'
+        // 使用统一的日期处理函数
+        const processedData = processDateFields(res.data, ['validStartTime', 'validEndTime'])
+        formData.value = processedData
       }
     } catch (error) {
       ElMessage.error('获取商户数据失败，请稍后重试')
       console.error('Failed to get merchant data:', error)
     }
-  } else {
-    type.value = 'create'
   }
 }
 
-init()
+// 如果是通过路由访问而不是作为组件使用，则执行初始化
+if (!props.data || Object.keys(props.data).length === 0) {
+  init()
+}
 
 // 保存按钮
 const save = async() => {
@@ -189,34 +208,15 @@ const save = async() => {
     }
     
     try {
-      // 创建提交数据的副本，进行类型转换
-      const submitData = { ...formData.value }
-      
-      // 对数字类型字段进行严格的类型转换
-      if (submitData.parentID !== undefined && submitData.parentID !== null && submitData.parentID !== '') {
-        submitData.parentID = parseInt(submitData.parentID)
-      }
-      
-      // 确保必须的整数字段有有效值
-      if (submitData.merchantType !== undefined && submitData.merchantType !== null) {
-        submitData.merchantType = parseInt(submitData.merchantType)
-      }
-      
-      if (submitData.merchantLevel !== undefined && submitData.merchantLevel !== null) {
-        submitData.merchantLevel = parseInt(submitData.merchantLevel)
-      }
-      
-      // 对布尔类型进行处理
-      if (typeof submitData.isEnabled === 'string') {
-        submitData.isEnabled = submitData.isEnabled === 'true' || submitData.isEnabled === '1'
-      }
+      // 使用统一的数据处理函数
+      const submitData = processMerchantFormData({ ...formData.value })
       
       let res
-      switch (type.value) {
+      switch (props.type) {
         case 'create':
           res = await createMerchant(submitData)
           break
-        case 'update':
+        case 'edit':
           res = await updateMerchant(submitData)
           break
         default:
@@ -230,14 +230,12 @@ const save = async() => {
         // 更新成功后，通知状态管理刷新列表数据
         merchantStore.getMerchantList()
         
-        ElMessage({ type: 'success', message: type.value === 'create' ? '创建成功' : '更新成功' })
+        ElMessage({ type: 'success', message: props.type === 'create' ? '创建成功' : '更新成功' })
         
-        // 显示成功消息后延迟返回，确保用户能看到消息
-        setTimeout(() => {
-          back()
-        }, 1500)
+        // 触发提交事件
+        emit('submit')
       } else {
-        ElMessage.error(res.msg || (type.value === 'create' ? '创建失败' : '更新失败'))
+        ElMessage.error(res.msg || (props.type === 'create' ? '创建失败' : '更新失败'))
       }
     } catch (error) {
       btnLoading.value = false
@@ -249,6 +247,7 @@ const save = async() => {
 
 // 返回按钮
 const back = () => {
+  emit('cancel')
   router.go(-1)
 }
 </script>
