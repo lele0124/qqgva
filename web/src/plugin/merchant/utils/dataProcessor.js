@@ -12,6 +12,9 @@ export const processMerchantFormData = (data) => {
   numericFields.forEach(field => {
     if (processedData[field] !== undefined && processedData[field] !== null && processedData[field] !== '') {
       processedData[field] = parseInt(processedData[field])
+    } else {
+      // 删除空值字段
+      delete processedData[field]
     }
   })
 
@@ -69,4 +72,26 @@ export const processDateFields = (data, dateFields) => {
   })
   
   return processedData
+}
+
+// 验证营业执照编号格式
+export const validateBusinessLicense = (rule, value, callback) => {
+  if (!value) {
+    callback(new Error('请输入营业执照编号'))
+  } else if (!/^[A-Z0-9]{10,30}$/.test(value)) {
+    callback(new Error('营业执照编号格式不正确，应为10-30位大写字母或数字'))
+  } else {
+    callback()
+  }
+}
+
+// 清理空值字段
+export const cleanEmptyFields = (data) => {
+  const cleanedData = { ...data }
+  Object.keys(cleanedData).forEach(key => {
+    if (cleanedData[key] === '' || cleanedData[key] === null || cleanedData[key] === undefined) {
+      delete cleanedData[key]
+    }
+  })
+  return cleanedData
 }

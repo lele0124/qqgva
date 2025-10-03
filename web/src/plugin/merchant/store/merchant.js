@@ -90,12 +90,12 @@ export const useMerchantStore = defineStore('merchant', {
     },
 
     // 获取商户列表
-    async fetchMerchantList() {
+    async fetchMerchantList(customParams = null) {
       try {
         this.loading.table = true
         
         // 创建提交数据的副本，进行类型转换
-        const submitData = {
+        const submitData = customParams || {
           page: this.page,
           pageSize: this.pageSize,
           ...this.searchInfo
@@ -108,11 +108,14 @@ export const useMerchantStore = defineStore('merchant', {
         if (res.code === 0) {
           this.tableData = res.data.list || []
           this.total = res.data.total || 0
+          return res
         } else {
           ElMessage.error(res.msg || '获取数据失败')
+          return res
         }
       } catch (error) {
-        ElMessage.error('获取数据失败')
+        ElMessage.error('获取数据失败: ' + error.message)
+        return { code: -1, msg: '获取数据失败: ' + error.message }
       } finally {
         this.loading.table = false
       }
@@ -131,7 +134,7 @@ export const useMerchantStore = defineStore('merchant', {
           return null
         }
       } catch (error) {
-        ElMessage.error('获取详情失败')
+        ElMessage.error('获取详情失败: ' + error.message)
         return null
       } finally {
         this.loading.detail = false
@@ -151,7 +154,7 @@ export const useMerchantStore = defineStore('merchant', {
           return false
         }
       } catch (error) {
-        ElMessage.error('创建失败')
+        ElMessage.error('创建失败: ' + error.message)
         return false
       } finally {
         this.loading.submit = false
@@ -171,7 +174,7 @@ export const useMerchantStore = defineStore('merchant', {
           return false
         }
       } catch (error) {
-        ElMessage.error('更新失败')
+        ElMessage.error('更新失败: ' + error.message)
         return false
       } finally {
         this.loading.submit = false
@@ -191,7 +194,7 @@ export const useMerchantStore = defineStore('merchant', {
           return false
         }
       } catch (error) {
-        ElMessage.error('删除失败')
+        ElMessage.error('删除失败: ' + error.message)
         return false
       } finally {
         this.loading.submit = false
@@ -211,7 +214,7 @@ export const useMerchantStore = defineStore('merchant', {
           return false
         }
       } catch (error) {
-        ElMessage.error('删除失败')
+        ElMessage.error('删除失败: ' + error.message)
         return false
       } finally {
         this.loading.submit = false

@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="gva-form-box">
-      <el-form :model="formData" ref="elFormRef" label-position="right" :rules="rule" label-width="120px">
+      <el-form :model="formData" ref="elFormRef" label-position="right" :rules="rules" label-width="120px">
         <el-form-item label="商户名称:" prop="merchantName">
           <el-input v-model="formData.merchantName" :clearable="true" placeholder="请输入商户名称" />
         </el-form-item>
@@ -61,9 +61,10 @@
 import { createMerchant, updateMerchant, findMerchant } from '@/plugin/merchant/api/merchant'
 import { useRoute, useRouter } from "vue-router"
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useMerchantStore } from '@/plugin/merchant/store/merchant'
 import { processMerchantFormData, processDateFields } from '@/plugin/merchant/utils/dataProcessor'
+import validationRules from '@/plugin/merchant/utils/validationRules'
 
 // 定义组件属性
 const props = defineProps({
@@ -98,67 +99,19 @@ const formData = ref({
 })
 
 // 验证规则
-const rule = reactive({
-  merchantName: [
-    { required: true, message: '请输入商户名称', trigger: ['input', 'blur'] },
-    { whitespace: true, message: '不能只输入空格', trigger: ['input', 'blur'] },
-    { min: 2, max: 100, message: '商户名称长度应在2-100个字符之间', trigger: ['input', 'blur'] }
-  ],
-  merchantType: [
-    { required: true, message: '请选择商户类型', trigger: ['change'] }
-  ],
-  isEnabled: [
-    { required: true, message: '请选择商户开关状态', trigger: ['change'] }
-  ],
-  merchantLevel: [
-    { required: true, message: '请选择商户等级', trigger: ['change'] }
-  ],
-  businessLicense: [
-    { required: true, message: '请输入营业执照编号', trigger: ['input', 'blur'] },
-    { pattern: /^[A-Z0-9]{10,30}$/, message: '营业执照编号格式不正确', trigger: ['input', 'blur'] }
-  ],
-  legalPerson: [
-    { required: true, message: '请输入法人姓名', trigger: ['input', 'blur'] },
-    { min: 2, max: 50, message: '法人姓名长度应在2-50个字符之间', trigger: ['input', 'blur'] }
-  ],
-  registeredAddress: [
-    { required: true, message: '请输入注册地址', trigger: ['input', 'blur'] },
-    { min: 5, max: 255, message: '注册地址长度应在5-255个字符之间', trigger: ['input', 'blur'] }
-  ],
-  businessScope: [
-    { required: true, message: '请输入经营范围', trigger: ['input', 'blur'] },
-    { min: 5, max: 255, message: '经营范围长度应在5-255个字符之间', trigger: ['input', 'blur'] }
-  ],
-  parentID: [
-    { type: 'number', message: '父商户ID必须是数字', trigger: ['input', 'blur'] }
-  ],
-  validStartTime: [
-    { type: 'date', message: '请选择有效的开始时间', trigger: ['change'] },
-    {
-      validator: (rule, value, callback) => {
-        if (value && formData.value.validEndTime && value > formData.value.validEndTime) {
-          callback(new Error('开始时间不能晚于结束时间'))
-        } else {
-          callback()
-        }
-      },
-      trigger: ['change']
-    }
-  ],
-  validEndTime: [
-    { type: 'date', message: '请选择有效的结束时间', trigger: ['change'] },
-    {
-      validator: (rule, value, callback) => {
-        if (value && formData.value.validStartTime && value < formData.value.validStartTime) {
-          callback(new Error('结束时间不能早于开始时间'))
-        } else {
-          callback()
-        }
-      },
-      trigger: ['change']
-    }
-  ]
-})
+const rules = computed(() => ({
+  merchantName: validationRules.merchantNameRules,
+  merchantType: validationRules.merchantTypeRules,
+  isEnabled: validationRules.isEnabledRules,
+  merchantLevel: validationRules.merchantLevelRules,
+  businessLicense: validationRules.businessLicenseRules,
+  legalPerson: validationRules.legalPersonRules,
+  registeredAddress: validationRules.registeredAddressRules,
+  businessScope: validationRules.businessScopeRules,
+  parentID: validationRules.parentIDRules,
+  validStartTime: validationRules.validStartTimeRules(formData),
+  validEndTime: validationRules.validEndTimeRules(formData)
+}))
 
 const route = useRoute()
 const router = useRouter()
@@ -228,7 +181,7 @@ const save = async() => {
       
       if (res.code === 0) {
         // 更新成功后，通知状态管理刷新列表数据
-        merchantStore.getMerchantList()
+        merchantStore.fetchMerchantList()
         
         ElMessage({ type: 'success', message: props.type === 'create' ? '创建成功' : '更新成功' })
         
