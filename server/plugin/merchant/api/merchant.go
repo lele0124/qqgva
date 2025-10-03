@@ -10,6 +10,7 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/merchant/model/request"
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -42,6 +43,9 @@ func (a *merchant) CreateMerchant(c *gin.Context) {
 	var req request.CreateMerchantRequest
 
 	// 手动提取并转换字段，确保类型正确
+	if uuidVal, ok := rawData["uuid"].(string); ok {
+		req.UUID = uuidVal
+	}
 	if merchantName, ok := rawData["merchantName"].(string); ok {
 		req.MerchantName = merchantName
 	}
@@ -151,6 +155,16 @@ func (a *merchant) CreateMerchant(c *gin.Context) {
 	info.BusinessScope = &req.BusinessScope
 	info.IsEnabled = req.IsEnabled
 	info.MerchantLevel = &req.MerchantLevel
+
+	// 如果请求中提供了UUID，解析并设置
+	if req.UUID != "" {
+		uuidObj, uuidErr := uuid.Parse(req.UUID)
+		if uuidErr != nil {
+			response.FailWithMessage("UUID格式错误:"+uuidErr.Error(), c)
+			return
+		}
+		info.UUID = uuidObj
+	}
 
 	// 处理时间字段，只有非空时才尝试解析
 	if req.ValidStartTime != "" {

@@ -5,7 +5,7 @@ import service from '@/utils/request'
 // @Security ApiKeyAuth
 // @accept application/json
 // @Produce application/json
-// @Param data body {MerchantName:"string", MerchantType:1, BusinessLicense:"string", LegalPerson:"string", RegisteredAddress:"string", BusinessScope:"string", IsEnabled:true, ValidStartTime:"string", ValidEndTime:"string", MerchantLevel:1} true "创建商户信息"
+// @Param data body {uuid:"string", MerchantName:"string", MerchantType:1, BusinessLicense:"string", LegalPerson:"string", RegisteredAddress:"string", BusinessScope:"string", IsEnabled:true, ValidStartTime:"string", ValidEndTime:"string", MerchantLevel:1} true "创建商户信息"
 // @Success 200 {string} json "{"success":true,"data":{},"msg":"创建成功"}"
 // @Router /merchant/createMerchant [post]
 export const createMerchant = (data) => {
@@ -53,7 +53,7 @@ export const deleteMerchantByIds = (data) => {
 // @Security ApiKeyAuth
 // @accept application/json
 // @Produce application/json
-// @Param data body {ID:"string", MerchantName:"string", MerchantType:1, BusinessLicense:"string", LegalPerson:"string", RegisteredAddress:"string", BusinessScope:"string", IsEnabled:true, ValidStartTime:"string", ValidEndTime:"string", MerchantLevel:1} true "更新商户信息"
+// @Param data body {ID:"string", uuid:"string", MerchantName:"string", MerchantType:1, BusinessLicense:"string", LegalPerson:"string", RegisteredAddress:"string", BusinessScope:"string", IsEnabled:true, ValidStartTime:"string", ValidEndTime:"string", MerchantLevel:1} true "更新商户信息"
 // @Success 200 {string} json "{"success":true,"data":{},"msg":"更新成功"}"
 // @Router /merchant/updateMerchant [put]
 export const updateMerchant = (data) => {

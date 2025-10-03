@@ -2,6 +2,8 @@ package request
 
 import (
 	"time"
+
+	"github.com/google/uuid"
 )
 
 
@@ -11,6 +13,7 @@ import (
 
 type UpdateMerchantRequest struct {
 	ID                uint        `json:"id" form:"id" binding:"required"`
+	UUID              string      `json:"uuid" form:"uuid"` // 可选的UUID字段
 	MerchantName      string      `json:"merchantName" form:"merchantName" binding:"required"`
 	MerchantIcon      string      `json:"merchantIcon" form:"merchantIcon"`
 	ParentID          *uint       `json:"parentID" form:"parentID"`
@@ -40,6 +43,15 @@ func (req *UpdateMerchantRequest) ToMerchantModel() (interface{}, error) {
 		"BusinessScope":     req.BusinessScope,
 		"IsEnabled":         req.IsEnabled,
 		"MerchantLevel":     req.MerchantLevel,
+	}
+
+	// 如果提供了UUID，添加到结果中
+	if req.UUID != "" {
+		uuidObj, uuidErr := uuid.Parse(req.UUID)
+		if uuidErr != nil {
+			return nil, uuidErr
+		}
+		result["UUID"] = uuidObj
 	}
 
 	// 处理时间字段，只有非空时才尝试解析

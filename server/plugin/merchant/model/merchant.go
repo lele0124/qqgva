@@ -2,14 +2,12 @@ package model
 
 import (
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
-	"github.com/google/uuid"
 	"time"
 )
 
 // Merchant 商户信息 结构体
 type Merchant struct {
 	global.GVA_MODEL
-	UUID              uuid.UUID  `json:"uuid" form:"uuid" gorm:"comment:唯一标识;column:uuid;type:uuid;"`                                                 //唯一标识
 	MerchantName      *string    `json:"merchantName" form:"merchantName" gorm:"comment:商户名称;column:merchant_name;size:100;index" binding:"required"` //商户名称
 	MerchantIcon      *string    `json:"merchantIcon" form:"merchantIcon" gorm:"comment:商户图标URL;column:merchant_icon;size:255;"`                      //商户图标URL
 	ParentID          *uint      `json:"parentID" form:"parentID" gorm:"comment:父商户ID;column:parent_id;index"`                                        //父商户ID

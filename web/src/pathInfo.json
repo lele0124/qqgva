@@ -79,5 +79,7 @@
   "/src/plugin/announcement/view/info.vue": "Info",
   "/src/plugin/email/view/index.vue": "Email",
   "/src/plugin/merchant/form/merchant.vue": "Merchant",
+  "/src/plugin/merchant/test/merchantTest.vue": "MerchantTest",
+  "/src/plugin/merchant/view/detail.vue": "Detail",
   "/src/plugin/merchant/view/merchant.vue": "Merchant"
 }
