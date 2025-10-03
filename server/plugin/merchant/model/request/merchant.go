@@ -5,15 +5,16 @@ import (
 	"time"
 )
 
+// MerchantSearch 商户搜索请求模型
 type MerchantSearch struct {
-	CreatedAtRange []time.Time `json:"createdAtRange" form:"createdAtRange[]"`
-	MerchantName   *string     `json:"merchantName" form:"merchantName"`
-	Address        *string     `json:"address" form:"address"`
-	BusinessScope  *string     `json:"businessScope" form:"businessScope"`
-	IsEnabled      *bool       `json:"isEnabled" form:"isEnabled"` // 改为*bool类型，与前端保持一致
-	MerchantType   *uint       `json:"merchantType" form:"merchantType"` // 改为*uint类型，与前端保持一致
-	MerchantLevel  *uint       `json:"merchantLevel" form:"merchantLevel"` // 改为*uint类型，与前端保持一致
-	request.PageInfo
-	Sort  string `json:"sort" form:"sort"`
-	Order string `json:"order" form:"order"`
+	CreatedAtRange []time.Time `json:"createdAtRange" form:"createdAtRange[]"` // 创建时间范围
+	MerchantName   *string     `json:"merchantName" form:"merchantName"`      // 商户名称（模糊搜索）
+	Address        *string     `json:"address" form:"address"`               // 地址（模糊搜索）
+	BusinessScope  *string     `json:"businessScope" form:"businessScope"`   // 经营范围（模糊搜索）
+	IsEnabled      *bool       `json:"isEnabled" form:"isEnabled"`           // 商户开关状态
+	MerchantType   *uint       `json:"merchantType" form:"merchantType"`     // 商户类型（枚举值）
+	MerchantLevel  *uint       `json:"merchantLevel" form:"merchantLevel"`   // 商户等级（枚举值）
+	request.PageInfo                                                           // 分页信息
+	Sort  string `json:"sort" form:"sort"`                                  // 排序字段
+	Order string `json:"order" form:"order"`                                // 排序方式（asc/desc）
 }

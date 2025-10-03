@@ -1,7 +1,11 @@
 package service
 
-var Service = new(service)
+var Service = new(Services)
 
-type service struct {
-	Merchant merchant
+type Services struct {
+	Merchant *merchant
+}
+
+func init() {
+	Service.Merchant = Merchant
 }

@@ -2,27 +2,25 @@ package request
 
 import (
 	"time"
-
-	"github.com/google/uuid"
 )
 
 // CreateMerchantRequest 创建商户的请求模型
-// 该模型使用string类型的时间字段和类型字段，以避免类型转换错误
+// 该模型使用string类型的时间字段，以避免类型转换错误
 
 type CreateMerchantRequest struct {
-	UUID              string `json:"uuid" form:"uuid"` // 可选的UUID字段
 	MerchantName      string `json:"merchantName" form:"merchantName" binding:"required"`
 	MerchantIcon      string `json:"merchantIcon" form:"merchantIcon"`
-	ParentID          *uint  `json:"parentID" form:"parentID"`
-	MerchantType      uint   `json:"merchantType" form:"merchantType" binding:"required"` // 改为uint类型，与数据模型保持一致
+	ParentID          uint   `json:"parentID" form:"parentID" binding:"required"`
+	MerchantType      uint   `json:"merchantType" form:"merchantType" binding:"required"` // 与数据模型保持一致
 	BusinessLicense   string `json:"businessLicense" form:"businessLicense"`
 	LegalPerson       string `json:"legalPerson" form:"legalPerson"`
 	RegisteredAddress string `json:"registeredAddress" form:"registeredAddress"`
 	BusinessScope     string `json:"businessScope" form:"businessScope"`
-	IsEnabled         bool   `json:"isEnabled" form:"isEnabled"` // 改为bool类型，与数据模型保持一致
+	IsEnabled         bool   `json:"isEnabled" form:"isEnabled"` // 与数据模型保持一致
 	ValidStartTime    string `json:"validStartTime" form:"validStartTime"` // 使用string类型接收时间
 	ValidEndTime      string `json:"validEndTime" form:"validEndTime"`     // 使用string类型接收时间
-	MerchantLevel     uint   `json:"merchantLevel" form:"merchantLevel" binding:"required"` // 改为uint类型，与数据模型保持一致
+	MerchantLevel     uint   `json:"merchantLevel" form:"merchantLevel" binding:"required"` // 与数据模型保持一致
+	Address           string `json:"address" form:"address"`
 }
 
 // ToMerchantModel 将请求模型转换为数据模型
@@ -39,15 +37,7 @@ func (req *CreateMerchantRequest) ToMerchantModel() (model interface{}, err erro
 		"BusinessScope":     req.BusinessScope,
 		"IsEnabled":         req.IsEnabled,
 		"MerchantLevel":     req.MerchantLevel,
-	}
-
-	// 如果提供了UUID，添加到结果中
-	if req.UUID != "" {
-		uuidObj, uuidErr := uuid.Parse(req.UUID)
-		if uuidErr != nil {
-			return nil, uuidErr
-		}
-		result["UUID"] = uuidObj
+		"Address":           req.Address,
 	}
 
 	// 处理时间字段，只有非空时才尝试解析

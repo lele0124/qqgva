@@ -7,14 +7,13 @@ import (
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common/response"
 	"github.com/flipped-aurora/gin-vue-admin/server/plugin/merchant/model"
-	"github.com/flipped-aurora/gin-vue-admin/server/plugin/merchant/model/request"
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
 var Merchant = new(merchant)
+var serviceMerchant = service.Service.Merchant
 
 type merchant struct{}
 
@@ -24,185 +23,137 @@ type merchant struct{}
 // @Security ApiKeyAuth
 // @Accept application/json
 // @Produce application/json
-// @Param data body request.CreateMerchantRequest true "创建商户信息"
+// @Param data body model.Merchant true "创建商户信息"
 // @Success 200 {object} response.Response{msg=string} "创建成功"
 // @Router /merchant/createMerchant [post]
 func (a *merchant) CreateMerchant(c *gin.Context) {
 	// 创建业务用Context
 	ctx := c.Request.Context()
 
-	// 先使用map接收JSON数据，处理可能的类型转换问题
-	var rawData map[string]interface{}
-	err := c.ShouldBindJSON(&rawData)
-	if err != nil {
-		response.FailWithMessage(err.Error(), c)
-		return
-	}
-
-	// 初始化请求模型
-	var req request.CreateMerchantRequest
-
-	// 手动提取并转换字段，确保类型正确
-	if uuidVal, ok := rawData["uuid"].(string); ok {
-		req.UUID = uuidVal
-	}
-	if merchantName, ok := rawData["merchantName"].(string); ok {
-		req.MerchantName = merchantName
-	}
-	if merchantIcon, ok := rawData["merchantIcon"].(string); ok {
-		req.MerchantIcon = merchantIcon
-	}
-	if businessLicense, ok := rawData["businessLicense"].(string); ok {
-		req.BusinessLicense = businessLicense
-	}
-	if legalPerson, ok := rawData["legalPerson"].(string); ok {
-		req.LegalPerson = legalPerson
-	}
-	if registeredAddress, ok := rawData["registeredAddress"].(string); ok {
-		req.RegisteredAddress = registeredAddress
-	}
-	if businessScope, ok := rawData["businessScope"].(string); ok {
-		req.BusinessScope = businessScope
-	}
-	if validStartTime, ok := rawData["validStartTime"].(string); ok {
-		req.ValidStartTime = validStartTime
-	}
-	if validEndTime, ok := rawData["validEndTime"].(string); ok {
-		req.ValidEndTime = validEndTime
-	}
-
-	// 处理merchantType字段，进行类型转换
-	if merchantTypeValue, ok := rawData["merchantType"]; ok && merchantTypeValue != nil {
-		switch v := merchantTypeValue.(type) {
-		case string:
-			// 如果是字符串，尝试转换为uint
-			if temp, err := strconv.ParseUint(v, 10, 64); err == nil {
-				req.MerchantType = uint(temp)
-			}
-		case float64:
-			// 如果是数字类型(float64是JSON数字的默认类型)
-			req.MerchantType = uint(v)
-		case uint:
-			req.MerchantType = v
-		}
-	}
-
-	// 处理merchantLevel字段，进行类型转换
-	if merchantLevelValue, ok := rawData["merchantLevel"]; ok && merchantLevelValue != nil {
-		switch v := merchantLevelValue.(type) {
-		case string:
-			// 如果是字符串，尝试转换为uint
-			if temp, err := strconv.ParseUint(v, 10, 64); err == nil {
-				req.MerchantLevel = uint(temp)
-			}
-		case float64:
-			// 如果是数字类型(float64是JSON数字的默认类型)
-			req.MerchantLevel = uint(v)
-		case uint:
-			req.MerchantLevel = v
-		}
-	}
-
-	// 处理parentID字段，进行类型转换
-	if parentIDValue, ok := rawData["parentID"]; ok && parentIDValue != nil && parentIDValue != "" {
-		var parentID uint
-		switch v := parentIDValue.(type) {
-		case string:
-			// 如果是字符串，尝试转换为uint
-			if temp, err := strconv.ParseUint(v, 10, 64); err == nil {
-				parentID = uint(temp)
-				req.ParentID = &parentID
-			}
-		case float64:
-			// 如果是数字类型(float64是JSON数字的默认类型)
-			parentID = uint(v)
-			req.ParentID = &parentID
-		case uint:
-			parentID = v
-			req.ParentID = &parentID
-		}
-	}
-
-	// 处理isEnabled字段，进行类型转换
-	if isEnabledValue, ok := rawData["isEnabled"]; ok && isEnabledValue != nil {
-		switch v := isEnabledValue.(type) {
-		case string:
-			// 如果是字符串，尝试转换为bool
-			if v == "1" || v == "true" {
-				req.IsEnabled = true
-			} else {
-				req.IsEnabled = false
-			}
-		case bool:
-			req.IsEnabled = v
-		case float64:
-			// 如果是数字类型，非0为true
-			req.IsEnabled = v != 0
-		}
-	}
-
-	// 创建商户模型
-	info := model.Merchant{}
-
-	// 复制基本字段，不需要类型转换
-	info.MerchantName = &req.MerchantName
-	info.MerchantIcon = &req.MerchantIcon
-	info.ParentID = req.ParentID
-	info.MerchantType = &req.MerchantType
-	info.BusinessLicense = &req.BusinessLicense
-	info.LegalPerson = &req.LegalPerson
-	info.RegisteredAddress = &req.RegisteredAddress
-	info.BusinessScope = &req.BusinessScope
-	info.IsEnabled = req.IsEnabled
-	info.MerchantLevel = &req.MerchantLevel
-
-	// 如果请求中提供了UUID，解析并设置
-	if req.UUID != "" {
-		uuidObj, uuidErr := uuid.Parse(req.UUID)
-		if uuidErr != nil {
-			response.FailWithMessage("UUID格式错误:"+uuidErr.Error(), c)
+	// 初始化商户模型
+	var info model.Merchant
+	if err := c.ShouldBindJSON(&info); err != nil {
+		// 如果绑定失败，尝试手动处理类型转换
+		var rawData map[string]interface{}
+		if err := c.ShouldBindJSON(&rawData); err != nil {
+			response.FailWithMessage(err.Error(), c)
 			return
 		}
-		info.UUID = uuidObj
-	}
 
-	// 处理时间字段，只有非空时才尝试解析
-	if req.ValidStartTime != "" {
-		startTime, timeErr := time.Parse(time.RFC3339, req.ValidStartTime)
-		if timeErr != nil {
-			// 尝试其他常见的时间格式
-			startTime, timeErr = time.Parse("2006-01-02 15:04:05", req.ValidStartTime)
-			if timeErr != nil {
-				response.FailWithMessage("开始时间格式错误:"+timeErr.Error(), c)
-				return
+		// 手动提取并转换字段
+		if merchantName, ok := rawData["merchantName"].(string); ok {
+			info.MerchantName = merchantName
+		}
+		if merchantIcon, ok := rawData["merchantIcon"].(string); ok {
+			info.MerchantIcon = &merchantIcon
+		}
+		if businessLicense, ok := rawData["businessLicense"].(string); ok {
+			info.BusinessLicense = &businessLicense
+		}
+		if legalPerson, ok := rawData["legalPerson"].(string); ok {
+			info.LegalPerson = &legalPerson
+		}
+		if registeredAddress, ok := rawData["registeredAddress"].(string); ok {
+			info.RegisteredAddress = &registeredAddress
+		}
+		if businessScope, ok := rawData["businessScope"].(string); ok {
+			info.BusinessScope = &businessScope
+		}
+
+		// 处理merchantType字段
+		if merchantTypeValue, ok := rawData["merchantType"]; ok && merchantTypeValue != nil {
+			switch v := merchantTypeValue.(type) {
+			case string:
+				if temp, err := strconv.ParseUint(v, 10, 64); err == nil {
+					info.MerchantType = model.MerchantType(temp)
+				}
+			case float64:
+				info.MerchantType = model.MerchantType(v)
+			case uint:
+				info.MerchantType = model.MerchantType(v)
 			}
 		}
-		info.ValidStartTime = &startTime
-	}
 
-	if req.ValidEndTime != "" {
-		endTime, timeErr := time.Parse(time.RFC3339, req.ValidEndTime)
-		if timeErr != nil {
-			// 尝试其他常见的时间格式
-			endTime, timeErr = time.Parse("2006-01-02 15:04:05", req.ValidEndTime)
-			if timeErr != nil {
-				response.FailWithMessage("结束时间格式错误:"+timeErr.Error(), c)
-				return
+		// 处理merchantLevel字段
+		if merchantLevelValue, ok := rawData["merchantLevel"]; ok && merchantLevelValue != nil {
+			switch v := merchantLevelValue.(type) {
+			case string:
+				if temp, err := strconv.ParseUint(v, 10, 64); err == nil {
+					info.MerchantLevel = model.MerchantLevel(temp)
+				}
+			case float64:
+				info.MerchantLevel = model.MerchantLevel(v)
+			case uint:
+				info.MerchantLevel = model.MerchantLevel(v)
 			}
 		}
-		info.ValidEndTime = &endTime
+
+		// 处理parentID字段
+		if parentIDValue, ok := rawData["parentID"]; ok && parentIDValue != nil && parentIDValue != "" {
+			switch v := parentIDValue.(type) {
+			case string:
+				if temp, err := strconv.ParseUint(v, 10, 64); err == nil {
+					info.ParentID = uint(temp)
+				}
+			case float64:
+				info.ParentID = uint(v)
+			case uint:
+				info.ParentID = v
+			}
+		}
+
+		// 处理isEnabled字段
+		if isEnabledValue, ok := rawData["isEnabled"]; ok && isEnabledValue != nil {
+			switch v := isEnabledValue.(type) {
+			case string:
+				info.IsEnabled = v == "1" || v == "true"
+			case bool:
+				info.IsEnabled = v
+			case float64:
+				info.IsEnabled = v != 0
+			}
+		} else {
+			info.IsEnabled = true
+		}
+
+		// 处理时间字段
+		if validStartTime, ok := rawData["validStartTime"].(string); ok && validStartTime != "" {
+			startTime, timeErr := time.Parse(time.RFC3339, validStartTime)
+			if timeErr != nil {
+				startTime, timeErr = time.Parse("2006-01-02 15:04:05", validStartTime)
+				if timeErr != nil {
+					response.FailWithMessage("开始时间格式错误:"+timeErr.Error(), c)
+					return
+				}
+			}
+			info.ValidStartTime = &startTime
+		}
+
+		if validEndTime, ok := rawData["validEndTime"].(string); ok && validEndTime != "" {
+			endTime, timeErr := time.Parse(time.RFC3339, validEndTime)
+			if timeErr != nil {
+				endTime, timeErr = time.Parse("2006-01-02 15:04:05", validEndTime)
+				if timeErr != nil {
+					response.FailWithMessage("结束时间格式错误:"+timeErr.Error(), c)
+					return
+				}
+			}
+			info.ValidEndTime = &endTime
+		}
 	}
 
 	// 设置操作人信息
 	info.OperatorId = utils.GetUserID(c)
 	info.OperatorName = utils.GetUserName(c)
 
-	err = serviceMerchant.CreateMerchant(ctx, &info)
+	// 调用服务层创建商户
+	err := serviceMerchant.CreateMerchant(ctx, &info)
 	if err != nil {
-		global.GVA_LOG.Error("创建失败!", zap.Error(err))
-		response.FailWithMessage("创建失败:"+err.Error(), c)
+		global.GVA_LOG.Error("创建失败！", zap.Error(err))
+		response.FailWithMessage("创建失败: "+err.Error(), c)
 		return
 	}
+
 	response.OkWithMessage("创建成功", c)
 }
 
@@ -271,13 +222,6 @@ func (a *merchant) UpdateMerchant(c *gin.Context) {
 		return
 	}
 
-	// 将请求模型转换为数据模型
-	modelData, err := req.ToMerchantModel()
-	if err != nil {
-		response.FailWithMessage("数据转换错误:"+err.Error(), c)
-		return
-	}
-
 	// 获取原始商户数据
 	originalMerchant, err := serviceMerchant.GetMerchant(ctx, strconv.Itoa(int(req.ID)))
 	if err != nil {
@@ -288,44 +232,82 @@ func (a *merchant) UpdateMerchant(c *gin.Context) {
 	// 创建更新的商户模型
 	info := originalMerchant
 
-	// 复制请求中的字段到模型
-	if dataMap, ok := modelData.(map[string]interface{}); ok {
-		if merchantType, ok := dataMap["MerchantType"].(uint); ok {
-			info.MerchantType = &merchantType
+	// 处理商户类型
+	if req.MerchantType != nil {
+		info.MerchantType = req.MerchantType
+	}
+
+	// 处理商户名称
+	if req.MerchantName != nil && *req.MerchantName != "" {
+		info.MerchantName = req.MerchantName
+	}
+
+	// 处理商户图标
+	if req.MerchantIcon != nil && *req.MerchantIcon != "" {
+		info.MerchantIcon = req.MerchantIcon
+	}
+
+	// 处理父ID
+	if req.ParentID != nil {
+		info.ParentID = req.ParentID
+	}
+
+	// 处理营业执照
+	if req.BusinessLicense != nil && *req.BusinessLicense != "" {
+		info.BusinessLicense = req.BusinessLicense
+	}
+
+	// 处理法人
+	if req.LegalPerson != nil && *req.LegalPerson != "" {
+		info.LegalPerson = req.LegalPerson
+	}
+
+	// 处理注册地址
+	if req.RegisteredAddress != nil && *req.RegisteredAddress != "" {
+		info.RegisteredAddress = req.RegisteredAddress
+	}
+
+	// 处理经营范围
+	if req.BusinessScope != nil && *req.BusinessScope != "" {
+		info.BusinessScope = req.BusinessScope
+	}
+
+	// 处理启用状态
+	if req.IsEnabled != nil {
+		info.IsEnabled = *req.IsEnabled
+	}
+
+	// 处理商户等级
+	if req.MerchantLevel != nil {
+		info.MerchantLevel = req.MerchantLevel
+	}
+
+	// 处理有效开始时间
+	if req.ValidStartTime != nil && *req.ValidStartTime != "" {
+		startTime, timeErr := time.Parse(time.RFC3339, *req.ValidStartTime)
+		if timeErr != nil {
+			// 尝试其他常见的时间格式
+			startTime, timeErr = time.Parse("2006-01-02 15:04:05", *req.ValidStartTime)
+			if timeErr != nil {
+				response.FailWithMessage("开始时间格式错误:"+timeErr.Error(), c)
+				return
+			}
 		}
-		if merchantName, ok := dataMap["MerchantName"].(string); ok {
-			info.MerchantName = &merchantName
+		info.ValidStartTime = &startTime
+	}
+
+	// 处理有效结束时间
+	if req.ValidEndTime != nil && *req.ValidEndTime != "" {
+		endTime, timeErr := time.Parse(time.RFC3339, *req.ValidEndTime)
+		if timeErr != nil {
+			// 尝试其他常见的时间格式
+			endTime, timeErr = time.Parse("2006-01-02 15:04:05", *req.ValidEndTime)
+			if timeErr != nil {
+				response.FailWithMessage("结束时间格式错误:"+timeErr.Error(), c)
+				return
+			}
 		}
-		if merchantIcon, ok := dataMap["MerchantIcon"].(string); ok {
-			info.MerchantIcon = &merchantIcon
-		}
-		if parentID, ok := dataMap["ParentID"].(*uint); ok {
-			info.ParentID = parentID
-		}
-		if businessLicense, ok := dataMap["BusinessLicense"].(string); ok {
-			info.BusinessLicense = &businessLicense
-		}
-		if legalPerson, ok := dataMap["LegalPerson"].(string); ok {
-			info.LegalPerson = &legalPerson
-		}
-		if registeredAddress, ok := dataMap["RegisteredAddress"].(string); ok {
-			info.RegisteredAddress = &registeredAddress
-		}
-		if businessScope, ok := dataMap["BusinessScope"].(string); ok {
-			info.BusinessScope = &businessScope
-		}
-		if isEnabled, ok := dataMap["IsEnabled"].(bool); ok {
-			info.IsEnabled = isEnabled
-		}
-		if merchantLevel, ok := dataMap["MerchantLevel"].(uint); ok {
-			info.MerchantLevel = &merchantLevel
-		}
-		if validStartTime, ok := dataMap["ValidStartTime"].(*time.Time); ok {
-			info.ValidStartTime = validStartTime
-		}
-		if validEndTime, ok := dataMap["ValidEndTime"].(*time.Time); ok {
-			info.ValidEndTime = validEndTime
-		}
+		info.ValidEndTime = &endTime
 	}
 
 	// 设置操作人信息
