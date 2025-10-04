@@ -207,9 +207,162 @@
       </template>
     </el-dialog>
     
+    <!-- 详情抽屉 -->
+    <el-drawer
+      v-model="detailDialogVisible"
+      :size="appStore.drawerSize || '50%'"
+      :show-close="false"
+      :close-on-press-escape="false"
+      :close-on-click-modal="false"
+    >
+      <template #header>
+        <div class="flex justify-between items-center">
+          <span class="text-lg">用户详情</span>
+          <div>
+            <el-button @click="detailDialogVisible = false">关 闭</el-button>
+          </div>
+        </div>
+      </template>
+
+      <el-form
+        ref="detailForm"
+        label-width="80px"
+        :model="detailData"
+      >
+        <!-- ID和UUID字段 -->
+        <div class="form-row">
+          <div class="flex items-start space-x-4">
+            <el-form-item label="ID" class="id-field-small flex-1">
+              <div class="flex items-center">
+                <el-input v-model="detailData.id" disabled style="margin-right: 8px; min-width: 150px;" />
+                <el-button 
+                  type="text" 
+                  size="small" 
+                  @click="copyToClipboard(detailData.id, 'ID已复制')"
+                  title="复制ID"
+                >
+                  <el-icon><copy-document /></el-icon>
+                </el-button>
+              </div>
+            </el-form-item>
+            <el-form-item label="UUID" class="uuid-field-full flex-1">
+              <div class="flex items-center">
+                <el-input v-model="detailData.uuid" disabled style="margin-right: 8px; min-width: 350px;" />
+                <el-button 
+                  type="text" 
+                  size="small" 
+                  @click="copyToClipboard(detailData.uuid, 'UUID已复制')"
+                  title="复制UUID"
+                >
+                  <el-icon><copy-document /></el-icon>
+                </el-button>
+              </div>
+            </el-form-item>
+          </div>
+        </div>
+        
+        <!-- 用户信息字段 -->
+        <div class="form-row">
+          <el-form-item
+            label="用户名"
+            class="form-half bold-label"
+          >
+            <el-input v-model="detailData.userName" disabled />
+          </el-form-item>
+          <el-form-item label="昵称" class="form-half bold-label">
+            <el-input v-model="detailData.nickName" disabled />
+          </el-form-item>
+        </div>
+        <div class="form-row">
+          <el-form-item label="姓名" class="form-half bold-label">
+            <el-input v-model="detailData.name" disabled />
+          </el-form-item>
+          <el-form-item label="邮箱" class="form-half bold-label">
+            <el-input v-model="detailData.email" disabled />
+          </el-form-item>
+        </div>
+        <div class="form-row">
+          <el-form-item label="手机号" class="form-half bold-label">
+            <el-input v-model="detailData.phone" disabled />
+          </el-form-item>
+          <el-form-item label="状态" class="form-half bold-label">
+            <el-switch
+              v-model="detailData.enable"
+              inline-prompt
+              :active-value="1"
+              :inactive-value="2"
+              disabled
+            />
+          </el-form-item>
+        </div>
+        <el-form-item label="用户角色" class="bold-label">
+          <el-cascader
+            v-model="detailData.authorityIds"
+            style="width: 100%"
+            :options="authOptions"
+            :show-all-levels="false"
+            :props="{
+              multiple: true,
+              checkStrictly: true,
+              label: 'authorityName',
+              value: 'authorityId',
+              disabled: 'disabled',
+              emitPath: false
+            }"
+            :clearable="false"
+            disabled
+          />
+        </el-form-item>
+        <div class="form-row">
+          <el-form-item label="头像" label-width="80px" class="form-half bold-label">
+            <SelectImage v-model="detailData.headerImg" disabled />
+          </el-form-item>
+          <el-form-item label="配置" class="form-half bold-label">
+            <el-input
+              v-model="detailData.originSetting"
+              type="textarea"
+              placeholder="JSON格式的配置信息"
+              :rows="10"
+              disabled
+            />
+          </el-form-item>
+        </div>
+        
+        <!-- 操作者相关信息 -->
+        <div class="form-row">
+          <el-form-item label="操作者" class="form-half bold-label">
+            <el-input v-model="detailData.operatorName" disabled />
+          </el-form-item>
+          <el-form-item label="操作者ID" class="form-half bold-label">
+            <div class="flex items-center">
+              <el-input v-model="detailData.operatorId" disabled style="margin-right: 8px; min-width: 200px;" />
+              <el-button 
+                type="text" 
+                size="small" 
+                @click="copyToClipboard(detailData.operatorId, '操作者ID已复制')"
+                title="复制操作者ID"
+              >
+                <el-icon><copy-document /></el-icon>
+              </el-button>
+            </div>
+          </el-form-item>
+        </div>
+        
+        <!-- 时间相关字段 -->
+        <div class="form-row">
+          <el-form-item label="更新时间" class="form-half bold-label">
+            <el-input :value="formatDate(detailData.updatedAt)" disabled />
+          </el-form-item>
+          <el-form-item label="创建时间" class="form-half bold-label">
+            <el-input :value="formatDate(detailData.createdAt)" disabled />
+          </el-form-item>
+        </div>
+      </el-form>
+    </el-drawer>
+    
     <el-drawer
       v-model="addUserDialog"
-      :size="appStore.drawerSize"
+      :size="appStore.drawerSize || '50%'"
       :show-close="false"
       :close-on-press-escape="false"
       :close-on-click-modal="false"
@@ -298,6 +451,7 @@
               inline-prompt
               :active-value="1"
               :inactive-value="2"
+              :disabled="dialogFlag === 'edit'"
             />
           </el-form-item>
         </div>
@@ -502,6 +656,43 @@
     nickName: '',
     password: ''
   })
+  
+  // 详情抽屉相关
+  const detailDialogVisible = ref(false)
+  const detailForm = ref(null)
+  const detailData = ref({
+    id: '',
+    uuid: '',
+    updatedAt: '',
+    deletedAt: '',
+    userName: '',
+    password: '',
+    nickName: '',
+    name: '',
+    headerImg: '',
+    authorityId: '',
+    authorityIds: [],
+    enable: 1,
+    originSetting: '',
+    operatorName: '',
+    operatorId: '',
+    createdAt: ''
+  })
+  
+  const openDetailDialog = (row) => {
+    // 设置详情数据
+    detailData.value = JSON.parse(JSON.stringify(row))
+    // 处理authorityIds字段
+    if (row.authorities && Array.isArray(row.authorities)) {
+      detailData.value.authorityIds = row.authorities.map(i => i.authorityId)
+    }
+    // 处理originSetting字段,如果是对象则转换为格式化的JSON字符串
+    if (detailData.value.originSetting && typeof detailData.value.originSetting === 'object') {
+      detailData.value.originSetting = JSON.stringify(detailData.value.originSetting, null, 2)
+    }
+    // 显示抽屉
+    detailDialogVisible.value = true
+  }
   
   // 生成随机密码
   const generateRandomPassword = () => {
