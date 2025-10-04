@@ -118,7 +118,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column align="left" label="操作者/时间" min-width="250">
+        <el-table-column align="left" label="操作者/时间" min-width="130">
           <template #default="scope">
             <div>
               <div>{{ scope.row.operatorName || '-' }}</div>
@@ -127,8 +127,24 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="操作" :min-width="appStore.operateMinWith" fixed="right">
+        <el-table-column align="left" label="操作"  fixed="right" min-width="300 ">
           <template #default="scope">
+            
+            <el-button 
+            type="primary" 
+            link 
+            icon="View"
+            @click="openDetailDialog(scope.row)"
+            >查看</el-button
+            >
+              <el-button
+              type="primary"
+              link
+              icon="edit"
+              @click="openEdit(scope.row)"
+              >编辑</el-button
+            >
+
             <el-button
               type="primary"
               link
@@ -136,19 +152,13 @@
               @click="deleteUserFunc(scope.row)"
               >删除</el-button
             >
-            <el-button
-              type="primary"
-              link
-              icon="edit"
-              @click="openEdit(scope.row)"
-              >编辑</el-button
-            >
+
             <el-button
               type="primary"
               link
               icon="magic-stick"
               @click="resetPasswordFunc(scope.row)"
-              >重置密码</el-button
+              >密码</el-button
             >
           </template>
         </el-table-column>
