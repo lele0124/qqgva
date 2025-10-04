@@ -39,9 +39,9 @@
         :default-sort="{prop: 'ID', order: 'descending'}"
       >
         <el-table-column align="left" type="selection" width="40" />
-        <el-table-column align="left" label="操作ID" prop="ID" width="100" sortable />
-        <el-table-column align="left" label="创建时间" prop="CreatedAt" width="180" sortable>
-          <template #default="scope">{{ formatDate(scope.row.CreatedAt) }}</template>
+        <el-table-column align="left" label="操作ID" prop="id" width="100" sortable />
+        <el-table-column align="left" label="创建时间" prop="createdAt" width="180" sortable>
+          <template #default="scope">{{ formatDate(scope.row.createdAt) }}</template>
         </el-table-column>
         <el-table-column align="left" label="更新时间" prop="updatedAt" width="180" sortable>
           <template #default="scope">{{ formatDate(scope.row.updatedAt) }}</template>

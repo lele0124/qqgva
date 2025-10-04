@@ -43,7 +43,7 @@
           <template #default="scope">
             <div>
               <div><strong>{{ scope.row.name }}</strong></div>
-              <div class="text-xs text-gray-400">ID: {{ scope.row.ID }}</div>
+              <div class="text-xs text-gray-400">ID: {{ scope.row.id }}</div>
             </div>
           </template>
         </el-table-column>
@@ -237,11 +237,11 @@
           <div class="flex items-start space-x-4">
             <el-form-item label="ID" class="id-field-small flex-1">
               <div class="flex items-center">
-                <el-input v-model="userInfo.ID" disabled style="margin-right: 8px; min-width: 150px;" />
+                <el-input v-model="userInfo.id" disabled style="margin-right: 8px; min-width: 150px;" />
                 <el-button 
                   type="text" 
                   size="small" 
-                  @click="copyToClipboard(userInfo.ID, 'ID已复制')"
+                  @click="copyToClipboard(userInfo.id, 'ID已复制')"
                   title="复制ID"
                 >
                   <el-icon><copy-document /></el-icon>
@@ -357,8 +357,8 @@
           <el-form-item label="更新时间" prop="updatedAt" class="form-half bold-label">
             <el-input :value="formatDate(userInfo.updatedAt)" disabled />
           </el-form-item>
-          <el-form-item label="创建时间" prop="CreatedAt" class="form-half bold-label">
-            <el-input :value="formatDate(userInfo.CreatedAt)" disabled />
+          <el-form-item label="创建时间" prop="createdAt" class="form-half bold-label">
+            <el-input :value="formatDate(userInfo.createdAt)" disabled />
           </el-form-item>
         </div>
       </el-form>
@@ -610,7 +610,7 @@
 
   // 弹窗相关
   const userInfo = ref({
-    ID: '',
+    id: '',
     uuid: '',
     updatedAt: '',
     deletedAt: '',
@@ -621,7 +621,7 @@
     headerImg: '',
     authorityId: '',
     authorityIds: [],
-    enable: 1,
+    enable: 1, // 默认启用
     originSetting: '',
     operatorName: '',
     operatorId: '' // 修改为小写id,与后端保持一致

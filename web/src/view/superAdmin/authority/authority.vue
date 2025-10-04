@@ -15,12 +15,7 @@
       >
         <el-table-column label="角色ID" min-width="180" prop="authorityId" />
         <el-table-column label="父角色ID" min-width="120" prop="parentId" />
-        <el-table-column
-          align="left"
-          label="角色名称"
-          min-width="180"
-          prop="authorityName"
-        />
+        <el-table-column label="创建时间" min-width="220" prop="createdAt" />
         <el-table-column label="更新时间" min-width="220" prop="updatedAt">
           <template #default="scope">
             {{ formatDate(scope.row.updatedAt) }}

@@ -269,7 +269,7 @@ func (userService *UserService) DeleteUser(id int, operatorId uint, operatorName
 		updateErr := tx.Model(&system.SysUser{}).
 			Where("id = ?", id).
 			Updates(map[string]interface{}{
-				"operator_id":   operatorId,
+				"operatorId":   operatorId,
 				"operator_name": operatorName,
 			}).Error
 		if updateErr != nil {
@@ -327,7 +327,7 @@ func (userService *UserService) SetUserInfo(req system.SysUser, operatorId uint,
 
 		// 执行更新操作
 		return tx.Model(&system.SysUser{}).
-			Select("updated_at", "username", "nick_name", "name", "header_img", "phone", "email", "enable", "operator_id", "operator_name").
+			Select("updated_at", "username", "nick_name", "name", "header_img", "phone", "email", "enable", "operatorId", "operator_name").
 			Where("id=?", req.ID).
 			Updates(map[string]interface{}{
 				"updated_at":    time.Now(),
@@ -338,7 +338,7 @@ func (userService *UserService) SetUserInfo(req system.SysUser, operatorId uint,
 				"phone":         req.Phone,
 				"email":         req.Email,
 				"enable":        req.Enable,
-				"operator_id":   operatorId,
+				"operatorId":   operatorId,
 				"operator_name": operatorName,
 			}).Error
 	})
