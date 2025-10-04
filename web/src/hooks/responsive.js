@@ -25,8 +25,6 @@ export default function useResponsive(immediate) {
   const debounceFn = useDebounceFn(resizeHandler, 100)
   onMounted(() => {
     if (immediate) debounceFn()
-  })
-  onBeforeMount(() => {
     addEventListen(window, 'resize', debounceFn)
   })
   onBeforeUnmount(() => {
