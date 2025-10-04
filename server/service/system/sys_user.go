@@ -327,7 +327,7 @@ func (userService *UserService) SetUserInfo(req system.SysUser, operatorId uint,
 
 		// 执行更新操作
 		return tx.Model(&system.SysUser{}).
-			Select("updated_at", "username", "nick_name", "name", "header_img", "phone", "email", "enable", "operatorId", "operator_name").
+			Select("updated_at", "username", "nick_name", "name", "header_img", "phone", "email", "enable", "operator_id", "operator_name").
 			Where("id=?", req.ID).
 			Updates(map[string]interface{}{
 				"updated_at":    time.Now(),
@@ -338,7 +338,7 @@ func (userService *UserService) SetUserInfo(req system.SysUser, operatorId uint,
 				"phone":         req.Phone,
 				"email":         req.Email,
 				"enable":        req.Enable,
-				"operatorId":   operatorId,
+				"operator_id":   operatorId,
 				"operator_name": operatorName,
 			}).Error
 	})

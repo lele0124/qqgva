@@ -43,7 +43,7 @@
           <template #default="scope">
             <div>
               <div><strong>{{ scope.row.name }}</strong></div>
-              <div class="text-xs text-gray-400">ID: {{ scope.row.id }}</div>
+              <div class="text-xs text-gray-400">ID: {{ scope.row.ID }}</div>
             </div>
           </template>
         </el-table-column>
@@ -73,32 +73,9 @@
         </el-table-column>
         <el-table-column align="left" label="用户角色" min-width="200">
           <template #default="scope">
-            <el-cascader
-              v-model="scope.row.authorityIds"
-              :options="authOptions"
-              :show-all-levels="false"
-              collapse-tags
-              :props="{
-                multiple: true,
-                checkStrictly: true,
-                label: 'authorityName',
-                value: 'authorityId',
-                disabled: 'disabled',
-                emitPath: false
-              }"
-              :clearable="false"
-              :disabled="true"
-              @visible-change="
-                (flag) => {
-                  changeAuthority(scope.row, flag, 0)
-                }
-              "
-              @remove-tag="
-                (removeAuth) => {
-                  changeAuthority(scope.row, false, removeAuth)
-                }
-              "
-            />
+            <div>
+              {{ scope.row.authorities?.map(auth => auth.authorityName).join(', ') || '无' }}
+            </div>
           </template>
         </el-table-column>
         <el-table-column align="left" label="状态" width="70">
@@ -625,7 +602,21 @@
       ...searchInfo.value
     })
     if (table.code === 0) {
-      tableData.value = table.data.list
+      tableData.value = table.data.list.map(user => {
+        // 将 authority 字段转换为 authorities 数组
+        if (user.authority && user.authority.authorityName) {
+          return {
+            ...user,
+            authorities: [
+              {
+                authorityId: user.authority.authorityId,
+                authorityName: user.authority.authorityName
+              }
+            ]
+          }
+        }
+        return user
+      })
       total.value = table.data.total
       page.value = table.data.page
       pageSize.value = table.data.pageSize
