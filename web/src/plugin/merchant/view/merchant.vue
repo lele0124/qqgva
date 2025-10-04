@@ -115,7 +115,7 @@
           </template>
         </el-table-column>
         
-        <el-table-column align="left" label="商户名称" width="300">
+        <el-table-column align="left" label="商户名称" min-width="300">
           <template #default="scope">
             <div>
               <div>{{ scope.row.merchantName }}</div>
@@ -124,7 +124,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column align="left" label="商户类型" prop="merchantType" width="80">
+        <el-table-column align="left" label="商户类型" prop="merchantType" min-width="80">
           <template #default="scope">
             <el-tag :type="scope.row.merchantType === 1 ? 'primary' : 'success'">
               {{ formatMerchantType(scope.row.merchantType) }}
@@ -132,7 +132,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column align="left" label="商户等级" prop="merchantLevel" width="100">
+        <el-table-column align="left" label="商户等级" prop="merchantLevel" min-width="100">
           <template #default="scope">
             <el-tag :type="formatMerchantLevelType(scope.row.merchantLevel)">
               {{ formatMerchantLevel(scope.row.merchantLevel) }}
@@ -140,7 +140,7 @@
           </template>
         </el-table-column>
         
-        <el-table-column align="left" label="状态" prop="isEnabled" width="80">
+        <el-table-column align="left" label="状态" prop="isEnabled" min-width="80">
           <template #default="scope">
             <el-tag :type="scope.row.isEnabled ? 'success' : 'danger'">
               {{ scope.row.isEnabled ? '启用' : '禁用' }}
@@ -148,14 +148,14 @@
           </template>
         </el-table-column>
         
-        <el-table-column align="left" label="更新信息" width="180">
+        <el-table-column align="left" label="更新信息" width="200">
           <template #default="scope">
-            <div>{{ scope.row.operatorName }} <span class="text-xs text-gray-400">{{ scope.row.operatorId }}</span></div>
+            <div>{{ scope.row.operatorName|| '-' }} <span class="text-xs text-gray-400">ID:{{ scope.row.operatorId }}</span></div>
             <div class="text-xs text-gray-400">{{ formatTimeToStr(scope.row.updatedAt) }}</div>
           </template>
         </el-table-column>
         
-        <el-table-column align="left" label="操作" :min-width="appStore.operateMinWith" fixed="right">
+        <el-table-column align="left" label="操作" fixed="right" min-width="300">
           <template #default="scope">
             <el-button 
             type="primary" 

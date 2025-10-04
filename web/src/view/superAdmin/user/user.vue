@@ -29,9 +29,9 @@
         >
       </div>
       <el-table :data="tableData" row-key="ID">
-        <el-table-column align="center" label="头像" min-width="75">
+        <el-table-column align="center" label="头像" width="70">
           <template #default="scope">
-            <CustomPic style="margin-top: 8px" :pic-src="scope.row.headerImg" />
+            <CustomPic style="display: flex; align-items: center; justify-content: center; " :pic-src="scope.row.headerImg" :size="40" />
           </template>
         </el-table-column>
 
@@ -42,7 +42,7 @@
         >
           <template #default="scope">
             <div>
-              <div>{{ scope.row.name }}</div>
+              <div><strong>{{ scope.row.name }}</strong></div>
               <div class="text-xs text-gray-400">ID: {{ scope.row.ID }}</div>
             </div>
           </template>
@@ -101,7 +101,7 @@
             />
           </template>
         </el-table-column>
-        <el-table-column align="left" label="状态" min-width="100">
+        <el-table-column align="left" label="状态" width="70">
           <template #default="scope">
             <el-switch
               v-model="scope.row.enable"
@@ -118,16 +118,16 @@
           </template>
         </el-table-column>
 
-        <el-table-column align="left" label="操作者/时间" min-width="130">
+        <el-table-column align="left" label="操作者/时间" min-width="190">
           <template #default="scope">
             <div>
-              <div>{{ scope.row.operatorName || '-' }}</div>
+              <div>{{ scope.row.operatorName || '-' }} <span class="text-xs text-gray-400">ID:{{ scope.row.operatorId }}</span></div>
               <div class="text-xs text-gray-400">{{ formatDate(scope.row.updatedAt) }}</div>
             </div>
           </template>
         </el-table-column>
 
-        <el-table-column align="left" label="操作"  fixed="right" min-width="300 ">
+        <el-table-column align="left" label="操作"  fixed="right" width="280 ">
           <template #default="scope">
             
             <el-button 

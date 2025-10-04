@@ -1,8 +1,8 @@
 <template>
   <span class="headerAvatar">
     <template v-if="picType === 'avatar'">
-      <el-avatar v-if="userStore.userInfo.headerImg" :size="30" :src="avatar" />
-      <el-avatar v-else :size="30" :src="noAvatar" />
+      <el-avatar v-if="userStore.userInfo.headerImg" :size="size" :src="avatar" />
+      <el-avatar v-else :size="size" :src="noAvatar" />
     </template>
     <template v-if="picType === 'img'">
       <img v-if="userStore.userInfo.headerImg" :src="avatar" class="avatar" />
@@ -42,6 +42,10 @@
     preview: {
       type: Boolean,
       default: false
+    },
+    size: {
+      type: Number,
+      default: 30
     }
   })
 
