@@ -159,7 +159,7 @@ func (b *BaseApi) Register(c *gin.Context) {
 	if enable == 0 {
 		enable = 1
 	}
-	user := &system.SysUser{Username: r.Username, NickName: r.NickName, Name: r.Name, Password: r.Password, HeaderImg: r.HeaderImg, AuthorityId: r.AuthorityId, Authorities: authorities, Enable: enable, Phone: r.Phone, Email: r.Email}
+	user := &system.SysUser{Username: r.Username, NickName: r.NickName, Name: r.Name, Password: r.Password, HeaderImg: r.HeaderImg, AuthorityId: r.AuthorityId, Authorities: authorities, Enable: enable, Phone: r.Phone, Email: r.Email, MerchantID: r.MerchantID, MerchantName: r.MerchantName}
 	// 获取当前登录用户的ID和姓名作为操作人
 	operatorId := utils.GetUserID(c)
 	operatorName := utils.GetUserName(c)
@@ -388,13 +388,15 @@ func (b *BaseApi) SetUserInfo(c *gin.Context) {
 		GVA_MODEL: global.GVA_MODEL{
 			ID: user.ID,
 		},
-		NickName:  user.NickName,
-		Name:      user.Name,
-		Username:  user.UserName,
-		HeaderImg: user.HeaderImg,
-		Phone:     user.Phone,
-		Email:     user.Email,
-		Enable:    user.Enable,
+		NickName:     user.NickName,
+		Name:         user.Name,
+		Username:     user.UserName,
+		HeaderImg:    user.HeaderImg,
+		Phone:        user.Phone,
+		Email:        user.Email,
+		Enable:       user.Enable,
+		MerchantID:   user.MerchantID,
+		MerchantName: user.MerchantName,
 	}, operatorId, operatorName)
 	if err != nil {
 		global.GVA_LOG.Error("设置失败!", zap.Error(err))
@@ -431,12 +433,14 @@ func (b *BaseApi) SetSelfInfo(c *gin.Context) {
 		GVA_MODEL: global.GVA_MODEL{
 			ID: user.ID,
 		},
-		NickName:  user.NickName,
-		Name:      user.Name,
-		HeaderImg: user.HeaderImg,
-		Phone:     user.Phone,
-		Email:     user.Email,
-		Enable:    user.Enable,
+		NickName:     user.NickName,
+		Name:         user.Name,
+		HeaderImg:    user.HeaderImg,
+		Phone:        user.Phone,
+		Email:        user.Email,
+		Enable:       user.Enable,
+		MerchantID:   user.MerchantID,
+		MerchantName: user.MerchantName,
 	})
 	if err != nil {
 		global.GVA_LOG.Error("设置失败!", zap.Error(err))

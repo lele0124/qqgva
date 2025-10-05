@@ -17,6 +17,8 @@ type Register struct {
 	AuthorityIds []uint `json:"authorityIds" swaggertype:"string" example:"[]uint 角色id"`
 	Phone        string `json:"phone" example:"电话号码"`
 	Email        string `json:"email" example:"电子邮箱"`
+	MerchantID   uint   `json:"merchantId" example:"商户ID" binding:"required"`
+	MerchantName string `json:"merchantName" example:"商户名称" binding:"required"`
 }
 
 // Login User login structure
@@ -61,6 +63,8 @@ type ChangeUserInfo struct {
 	HeaderImg    string                `json:"headerImg" gorm:"default:https://qmplusimg.henrongyi.top/gva_header.jpg;comment:用户头像"` // 用户头像
 	Enable       int                   `json:"enable" gorm:"comment:冻结用户"`                                                           //冻结用户
 	Authorities  []system.SysAuthority `json:"-" gorm:"many2many:sys_user_authority;"`
+	MerchantID   uint                  `json:"merchantId" gorm:"not null;comment:商户ID"`                                              // 商户ID
+	MerchantName string                `json:"merchantName" gorm:"not null;comment:商户名称"`                                          // 商户名称
 }
 
 type GetUserList struct {
