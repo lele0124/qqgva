@@ -62,7 +62,7 @@
         <el-table-column
           align="left"
           label="昵称/邮箱"
-          min-width="200"
+          width="160"
         >
           <template #default="scope">
             <div>
@@ -75,6 +75,14 @@
           <template #default="scope">
             <div>
               {{ scope.row.authorities?.map(auth => auth.authorityName).join(', ') || '无' }}
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column align="left" label="商户名称" min-width="150">
+          <template #default="scope">
+            <div>
+            <div>{{ scope.row.merchantName || '-' }}</div>
+            <div class="text-xs text-gray-400">ID:{{ scope.row.merchantId }}</div>
             </div>
           </template>
         </el-table-column>
@@ -251,6 +259,14 @@
           </el-form-item>
         </div>
         <div class="form-row">
+          <el-form-item label="商户ID" class="form-half bold-label">
+            <el-input v-model="detailData.merchantId" disabled />
+          </el-form-item>
+          <el-form-item label="商户名称" class="form-half bold-label">
+            <el-input v-model="detailData.merchantName" disabled />
+          </el-form-item>
+        </div>
+        <div class="form-row">
           <el-form-item label="姓名" class="form-half bold-label">
             <el-input v-model="detailData.name" disabled />
           </el-form-item>
@@ -405,6 +421,14 @@
           </el-form-item>
           <el-form-item label="昵称" prop="nickName" class="form-half bold-label">
             <el-input v-model="userInfo.nickName" />
+          </el-form-item>
+        </div>
+        <div class="form-row">
+          <el-form-item label="商户ID" class="form-half bold-label">
+            <el-input v-model="userInfo.merchantId" disabled />
+          </el-form-item>
+          <el-form-item label="商户名称" class="form-half bold-label">
+            <el-input v-model="userInfo.merchantName" disabled />
           </el-form-item>
         </div>
         <el-form-item v-if="dialogFlag === 'add'" label="密码" prop="password" class="form-row bold-label">
@@ -667,7 +691,9 @@
     originSetting: '',
     operatorName: '',
     operatorId: '',
-    createdAt: ''
+    createdAt: '',
+    merchantId: '',
+    merchantName: ''
   })
   
   const openDetailDialog = (row) => {
@@ -806,7 +832,9 @@
     enable: 1, // 默认启用
     originSetting: '',
     operatorName: '',
-    operatorId: '' // 修改为小写id,与后端保持一致
+    operatorId: '', // 修改为小写id,与后端保持一致
+    merchantId: '',
+    merchantName: ''
   })
 
   const rules = ref({
@@ -895,7 +923,9 @@
       enable: 1, // 默认启用
       originSetting: '',
       operatorName: '',
-      operatorId: '' // 修改为小写id,与后端保持一致
+      operatorId: '', // 修改为小写id,与后端保持一致
+      merchantId: '',
+      merchantName: ''
     }
     addUserDialog.value = true
   }
@@ -968,10 +998,10 @@
     @apply w-[30%] !important;
   }
   .uuid-field-full {
-    @apply mb-4;
-    width: calc(100% + 150px);
-    flex: none;
-  }
+      @apply mb-4;
+      width: calc(100% + 150px);
+      flex: none;
+    }
   .bold-label .el-form-item__label {
     font-weight: bold;
   }
