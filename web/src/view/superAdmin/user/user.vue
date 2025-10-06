@@ -223,7 +223,7 @@
                 <el-button 
                   type="text" 
                   size="small" 
-                  @click="copyToClipboard(detailData.id, 'ID已复制')"
+                  @click="copyToClipboard(detailData.ID, 'ID已复制')"
                   title="复制ID"
                 >
                   <el-icon><copy-document /></el-icon>
@@ -383,7 +383,7 @@
                 <el-button 
                   type="text" 
                   size="small" 
-                  @click="copyToClipboard(userInfo.id, 'ID已复制')"
+                  @click="copyToClipboard(userInfo.ID, 'ID已复制')"
                   title="复制ID"
                 >
                   <el-icon><copy-document /></el-icon>
