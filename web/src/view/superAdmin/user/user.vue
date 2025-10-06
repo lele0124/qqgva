@@ -246,7 +246,7 @@
           </div>
         </div>
         <div class="form-row">
-          <el-form-item label="商户名称" class="form-half bold-label">
+          <el-form-item label="商户名称" prop="merchantName" class="form-half bold-label">
             <el-input v-model="detailData.merchantName" disabled />
           </el-form-item>
           <el-form-item label="商户ID" class="form-half bold-label">
@@ -406,7 +406,7 @@
           </div>
         </div>
         <div class="form-row">
-          <el-form-item label="商户名称" class="form-half bold-label">
+          <el-form-item label="商户名称" prop="merchantName" class="form-half bold-label">
             <el-select 
               v-model="userInfo.merchantId"
               placeholder="请选择商户"
