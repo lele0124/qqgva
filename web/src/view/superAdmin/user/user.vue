@@ -526,23 +526,64 @@
 </template>
 
 <script setup>
+  // Vue相关导入
+  import { nextTick, ref, watch, onMounted } from 'vue'
+  import { ElMessage, ElMessageBox } from 'element-plus'
+  import { useAppStore } from "@/pinia";
+  
+  // API相关导入
   import {
     getUserList,
     setUserAuthorities,
     register,
-    deleteUser
+    deleteUser,
+    setUserInfo,
+    resetPassword 
   } from '@/api/user'
-
   import { getAuthorityList } from '@/api/authority'
+  import { getMerchantList } from '@/api/merchant.js'
+  
+  // 组件相关导入
   import CustomPic from '@/components/customPic/index.vue'
   import WarningBar from '@/components/warningBar/warningBar.vue'
-  import { setUserInfo, resetPassword } from '@/api/user.js'
-  import { getMerchantList } from '@/api/merchant.js'
-
-  import { nextTick, ref, watch, onMounted } from 'vue'
-  import { ElMessage, ElMessageBox } from 'element-plus'
   import SelectImage from '@/components/selectImage/selectImage.vue'
-  import { useAppStore } from "@/pinia";
+  
+  // 工具函数
+  // 高效的深拷贝函数
+  const deepClone = (obj) => {
+    // 处理基本类型和null
+    if (obj === null || typeof obj !== 'object') {
+      return obj;
+    }
+    
+    // 处理日期对象
+    if (obj instanceof Date) {
+      return new Date(obj.getTime());
+    }
+    
+    // 处理正则对象
+    if (obj instanceof RegExp) {
+      return new RegExp(obj.source, obj.flags);
+    }
+    
+    // 处理数组
+    if (Array.isArray(obj)) {
+      const result = [];
+      for (let i = 0; i < obj.length; i++) {
+        result[i] = deepClone(obj[i]);
+      }
+      return result;
+    }
+    
+    // 处理普通对象
+    const result = {};
+    for (const key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        result[key] = deepClone(obj[key]);
+      }
+    }
+    return result;
+  }
   
   // 日期格式化函数
   const formatDate = (dateString) => {
@@ -706,11 +747,11 @@
   })
   
   const openDetailDialog = (row) => {
-    // 设置详情数据
-    detailData.value = JSON.parse(JSON.stringify(row))
+    // 使用优化的深拷贝函数
+    detailData.value = deepClone(row)
     // 处理authorityIds字段
-    if (row.authorities && Array.isArray(row.authorities)) {
-      detailData.value.authorityIds = row.authorities.map(i => i.authorityId)
+    if (detailData.value.authorities && Array.isArray(detailData.value.authorities)) {
+      detailData.value.authorityIds = detailData.value.authorities.map(i => i.authorityId)
     }
     // 处理originSetting字段,如果是对象则转换为格式化的JSON字符串
     if (detailData.value.originSetting && typeof detailData.value.originSetting === 'object') {
@@ -1104,7 +1145,8 @@
 
   const openEdit = (row) => {
     dialogFlag.value = 'edit'
-    userInfo.value = JSON.parse(JSON.stringify(row))
+    // 使用优化的深拷贝函数
+    userInfo.value = deepClone(row)
     // 处理originSetting字段,如果是对象则转换为格式化的JSON字符串
     if (userInfo.value.originSetting && typeof userInfo.value.originSetting === 'object') {
       userInfo.value.originSetting = JSON.stringify(userInfo.value.originSetting, null, 2)
@@ -1113,7 +1155,8 @@
   }
 
   const switchEnable = async (row) => {
-    userInfo.value = JSON.parse(JSON.stringify(row))
+    // 使用优化的深拷贝函数
+    userInfo.value = deepClone(row)
     await nextTick()
     const req = {
       ...userInfo.value
