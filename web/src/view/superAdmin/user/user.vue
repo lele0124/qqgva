@@ -219,7 +219,7 @@
           <div class="flex items-start space-x-4">
             <el-form-item label="ID" class="id-field-small flex-1">
               <div class="flex items-center">
-                <el-input v-model="detailData.id" disabled style="margin-right: 8px; min-width: 150px;" />
+                <el-input v-model="detailData.ID" disabled style="margin-right: 8px; min-width: 150px;" />
                 <el-button 
                   type="text" 
                   size="small" 
@@ -245,7 +245,14 @@
             </el-form-item>
           </div>
         </div>
-        
+        <div class="form-row">
+          <el-form-item label="商户名称" class="form-half bold-label">
+            <el-input v-model="detailData.merchantName" disabled />
+          </el-form-item>
+          <el-form-item label="商户ID" class="form-half bold-label">
+            <el-input v-model="detailData.merchantId" disabled />
+          </el-form-item>
+        </div>
         <!-- 用户信息字段 -->
         <div class="form-row">
           <el-form-item
@@ -256,14 +263,6 @@
           </el-form-item>
           <el-form-item label="昵称" class="form-half bold-label">
             <el-input v-model="detailData.nickName" disabled />
-          </el-form-item>
-        </div>
-        <div class="form-row">
-          <el-form-item label="商户ID" class="form-half bold-label">
-            <el-input v-model="detailData.merchantId" disabled />
-          </el-form-item>
-          <el-form-item label="商户名称" class="form-half bold-label">
-            <el-input v-model="detailData.merchantName" disabled />
           </el-form-item>
         </div>
         <div class="form-row">
@@ -346,9 +345,6 @@
           <el-form-item label="更新时间" class="form-half bold-label">
             <el-input :value="formatDate(detailData.updatedAt)" disabled />
           </el-form-item>
-          <el-form-item label="创建时间" class="form-half bold-label">
-            <el-input :value="formatDate(detailData.createdAt)" disabled />
-          </el-form-item>
         </div>
       </el-form>
     </el-drawer>
@@ -383,7 +379,7 @@
           <div class="flex items-start space-x-4">
             <el-form-item label="ID" class="id-field-small flex-1">
               <div class="flex items-center">
-                <el-input v-model="userInfo.id" disabled style="margin-right: 8px; min-width: 150px;" />
+                <el-input v-model="userInfo.ID" disabled style="margin-right: 8px; min-width: 150px;" />
                 <el-button 
                   type="text" 
                   size="small" 
@@ -409,24 +405,7 @@
             </el-form-item>
           </div>
         </div>
-        
-        <!-- 可编辑字段 -->
         <div class="form-row">
-          <el-form-item
-            label="用户名"
-            prop="userName"
-            class="form-half bold-label"
-          >
-            <el-input v-model="userInfo.userName" />
-          </el-form-item>
-          <el-form-item label="昵称" prop="nickName" class="form-half bold-label">
-            <el-input v-model="userInfo.nickName" />
-          </el-form-item>
-        </div>
-        <div class="form-row">
-          <el-form-item label="商户ID" class="form-half bold-label">
-            <el-input v-model="userInfo.merchantId" disabled />
-          </el-form-item>
           <el-form-item label="商户名称" class="form-half bold-label">
             <el-select 
               v-model="userInfo.merchantId"
@@ -441,7 +420,24 @@
               />
             </el-select>
           </el-form-item>
+          <el-form-item label="商户ID" class="form-half bold-label">
+            <el-input v-model="userInfo.merchantId" disabled />
+          </el-form-item>
         </div>
+        <!-- 可编辑字段 -->
+        <div class="form-row">
+          <el-form-item
+            label="用户名"
+            prop="userName"
+            class="form-half bold-label"
+          >
+            <el-input v-model="userInfo.userName" />
+          </el-form-item>
+          <el-form-item label="昵称" prop="nickName" class="form-half bold-label">
+            <el-input v-model="userInfo.nickName" />
+          </el-form-item>
+        </div>
+        
         <el-form-item v-if="dialogFlag === 'add'" label="密码" prop="password" class="form-row bold-label">
           <el-input v-model="userInfo.password" />
         </el-form-item>
@@ -522,9 +518,6 @@
         <div v-if="dialogFlag === 'edit'" class="form-row">
           <el-form-item label="更新时间" prop="updatedAt" class="form-half bold-label">
             <el-input :value="formatDate(userInfo.updatedAt)" disabled />
-          </el-form-item>
-          <el-form-item label="创建时间" prop="createdAt" class="form-half bold-label">
-            <el-input :value="formatDate(userInfo.createdAt)" disabled />
           </el-form-item>
         </div>
       </el-form>
