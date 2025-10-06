@@ -428,7 +428,18 @@
             <el-input v-model="userInfo.merchantId" disabled />
           </el-form-item>
           <el-form-item label="商户名称" class="form-half bold-label">
-            <el-input v-model="userInfo.merchantName" disabled />
+            <el-select 
+              v-model="userInfo.merchantId"
+              placeholder="请选择商户"
+              @change="handleMerchantChange"
+            >
+              <el-option 
+                v-for="merchant in merchantList" 
+                :key="merchant.value" 
+                :label="merchant.label" 
+                :value="merchant.value" 
+              />
+            </el-select>
           </el-form-item>
         </div>
         <el-form-item v-if="dialogFlag === 'add'" label="密码" prop="password" class="form-row bold-label">
@@ -452,7 +463,7 @@
               inline-prompt
               :active-value="1"
               :inactive-value="2"
-              :disabled="dialogFlag === 'edit'"
+        
             />
           </el-form-item>
         </div>
@@ -533,8 +544,9 @@
   import CustomPic from '@/components/customPic/index.vue'
   import WarningBar from '@/components/warningBar/warningBar.vue'
   import { setUserInfo, resetPassword } from '@/api/user.js'
+  import { getMerchantList } from '@/api/merchant.js'
 
-  import { nextTick, ref, watch } from 'vue'
+  import { nextTick, ref, watch, onMounted } from 'vue'
   import { ElMessage, ElMessageBox } from 'element-plus'
   import SelectImage from '@/components/selectImage/selectImage.vue'
   import { useAppStore } from "@/pinia";
@@ -658,9 +670,13 @@
     getTableData()
     const res = await getAuthorityList()
     setOptions(res.data)
+    // 加载商户列表
+    await fetchMerchantList()
   }
 
-  initPage()
+  onMounted(() => {
+    initPage()
+  })
 
   // 重置密码对话框相关
   const resetPwdDialog = ref(false)
@@ -788,9 +804,43 @@
   }
 
   const authOptions = ref([])
+  const merchantList = ref([])
   const setOptions = (authData) => {
     authOptions.value = []
     setAuthorityOptions(authData, authOptions.value)
+  }
+
+  // 获取商户列表数据
+  const fetchMerchantList = async () => {
+    try {
+      const res = await getMerchantList({ page: 1, pageSize: 1000 })
+      if (res.code === 0 && res.data.list) {
+        merchantList.value = res.data.list.map(merchant => ({
+          label: merchant.merchantName,
+          value: merchant.ID
+        }))
+      }
+    } catch (error) {
+      console.error('获取商户列表失败:', error)
+      ElMessage.error('获取商户列表失败')
+    }
+  }
+
+  // 处理商户选择
+  const handleMerchantChange = (merchantId) => {
+    if (merchantId) {
+      const selectedMerchant = merchantList.value.find(item => item.value === merchantId)
+      if (selectedMerchant) {
+        userInfo.value.merchantName = selectedMerchant.label
+        userInfo.value.merchantId = merchantId
+      } else {
+        userInfo.value.merchantName = ''
+        userInfo.value.merchantId = ''
+      }
+    } else {
+      userInfo.value.merchantName = ''
+      userInfo.value.merchantId = ''
+    }
   }
 
   const deleteUserFunc = async (row) => {
