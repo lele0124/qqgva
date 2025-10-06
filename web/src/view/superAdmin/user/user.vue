@@ -803,19 +803,104 @@
     setAuthorityOptions(authData, authOptions.value)
   }
 
+  // 统一错误处理函数
+  const handleError = (error, defaultMessage = '操作失败') => {
+    console.error('错误详情:', error);
+    
+    // 错误类型判断
+    let errorMessage = defaultMessage;
+    let errorType = '未知错误';
+    let errorDetails = '';
+    
+    if (error instanceof Error) {
+      // 原生JavaScript错误
+      errorType = 'JavaScript错误';
+      errorDetails = error.message;
+    } else if (error?.response) {
+      // 网络请求错误
+      errorType = '网络请求错误';
+      const statusCode = error.response.status;
+      errorDetails = `状态码: ${statusCode}`;
+      
+      // 根据状态码判断错误类型
+      if (statusCode === 401) {
+        errorMessage = '登录已过期，请重新登录';
+      } else if (statusCode === 403) {
+        errorMessage = '没有权限执行此操作';
+      } else if (statusCode === 404) {
+        errorMessage = '请求的资源不存在';
+      } else if (statusCode === 500) {
+        errorMessage = '服务器内部错误';
+      }
+      
+      // 尝试从响应数据中获取更具体的错误信息
+      if (error.response.data?.msg) {
+        errorMessage = error.response.data.msg;
+      } else if (error.response.data?.error) {
+        errorMessage = error.response.data.error;
+      }
+    } else if (error?.code) {
+      // API业务错误
+      errorType = '业务错误';
+      errorDetails = `错误码: ${error.code}`;
+      if (error.msg) {
+        errorMessage = error.msg;
+      }
+    } else if (error?.message) {
+      // 其他带message的错误
+      errorMessage = error.message;
+    }
+    
+    // 显示错误信息
+    ElMessage({ 
+      type: 'error', 
+      message: errorMessage, 
+      duration: 5000 // 延长显示时间以便用户查看
+    });
+    
+    // 可以根据需要记录到错误日志系统
+    console.error(`[${errorType}] ${errorMessage}`, errorDetails);
+  }
+
   // 获取商户列表数据
   const fetchMerchantList = async () => {
     try {
-      const res = await getMerchantList({ page: 1, pageSize: 1000 })
-      if (res.code === 0 && res.data.list) {
+      const res = await getMerchantList({ page: 1, pageSize: 1000 });
+      
+      // 响应数据合法性校验
+      if (!res) {
+        throw new Error('获取商户列表响应为空');
+      }
+      
+      if (res.code === 0) {
+        if (!res.data) {
+          throw new Error('获取商户列表数据为空');
+        }
+        
+        if (!Array.isArray(res.data.list)) {
+          throw new Error('商户列表格式错误');
+        }
+        
         merchantList.value = res.data.list.map(merchant => ({
-          label: merchant.merchantName,
+          label: merchant.merchantName, 
           value: merchant.ID
-        }))
+        })).filter(item => item.value); // 过滤无效数据
+        
+        if (merchantList.value.length === 0) {
+          ElMessage({ 
+            type: 'info', 
+            message: '暂无商户数据' 
+          });
+        }
+      } else {
+        // 非成功状态码的业务错误处理
+        handleError(res, '获取商户列表失败');
       }
     } catch (error) {
-      console.error('获取商户列表失败:', error)
-      ElMessage.error('获取商户列表失败')
+      handleError(error, '获取商户列表失败');
+    } finally {
+      // 可以在这里添加加载状态清除等逻辑
+      // 例如：loading.value = false;
     }
   }
 
