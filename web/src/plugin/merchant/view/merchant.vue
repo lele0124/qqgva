@@ -105,7 +105,7 @@
         row-key="ID"
         @selection-change="handleSelectionChange"
       >
-        <el-table-column type="selection" width="40" />
+        <el-table-column type="selection" width="30" />
         
         <!-- 修复图标列展示 -->
         <el-table-column align="center" label="图标" width="60">
@@ -456,17 +456,17 @@ onMounted(() => {
 
 /* 商户图标样式 */
 .merchant-icon {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   border-radius: 4px;
   object-fit: cover;
 }
 
 /* 图标占位符样式 */
 .merchant-icon-placeholder {
-  width: 32px;
-  height: 32px;
-  line-height: 32px;
+  width: 40px;
+  height: 40px;
+  line-height: 40px;
   text-align: center;
   background-color: #f0f0f0;
   border-radius: 4px;
