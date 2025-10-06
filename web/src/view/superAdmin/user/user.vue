@@ -246,7 +246,7 @@
           </div>
         </div>
         <div class="form-row">
-          <el-form-item label="商户名称" prop="merchantName" class="form-half bold-label">
+          <el-form-item label="商户名称" prop="merchantId" class="form-half bold-label">
             <el-input v-model="detailData.merchantName" disabled />
           </el-form-item>
           <el-form-item label="商户ID" class="form-half bold-label">
@@ -406,7 +406,7 @@
           </div>
         </div>
         <div class="form-row">
-          <el-form-item label="商户名称" prop="merchantName" class="form-half bold-label">
+          <el-form-item label="商户名称" prop="merchantId" class="form-half bold-label">
             <el-select 
               v-model="userInfo.merchantId"
               placeholder="请选择商户"
@@ -842,7 +842,7 @@
       cancelButtonText: '取消',
       type: 'warning'
     }).then(async () => {
-      const res = await deleteUser({ id: row.ID })
+      const res = await deleteUser(prepareSubmitData({ id: row.ID }))
       if (res.code === 0) {
         ElMessage.success('删除成功')
         await getTableData()
@@ -883,15 +883,20 @@
   const rules = ref({
     userName: [
       { required: true, message: '请输入用户名', trigger: 'blur' },
-      { min: 5, message: '最低5位字符', trigger: 'blur' }
+      { min: 5, max: 20, message: '用户名长度应在5-20个字符之间', trigger: 'blur' }
     ],
     password: [
       { required: true, message: '请输入用户密码', trigger: 'blur' },
-      { min: 6, message: '最低6位字符', trigger: 'blur' }
+      { min: 6, max: 32, message: '密码长度应在6-32个字符之间', trigger: 'blur' }
     ],
-    nickName: [{ required: false, message: '请输入用户昵称', trigger: 'blur' }],
-    name: [{ required: true, message: '请输入用户姓名', trigger: 'blur' }],
-    merchantName: [{ required: true, message: '请选择商户名称', trigger: 'blur' }],
+    nickName: [
+      { required: false, message: '请输入用户昵称', trigger: 'blur' },
+      { max: 20, message: '昵称不能超过20个字符', trigger: 'blur' }
+    ],
+    name: [
+      { required: true, message: '请输入用户姓名', trigger: 'blur' },
+      { max: 20, message: '姓名不能超过20个字符', trigger: 'blur' }
+    ],
     merchantId: [{ required: true, message: '请选择商户', trigger: 'change' }],
     phone: [
       { required: true, message: '请输入手机号', trigger: 'blur' },
@@ -902,16 +907,28 @@
       }
     ],
     email: [
+      { required: false, message: '请输入邮箱', trigger: 'blur' },
       {
         pattern: /^([0-9A-Za-z\-_.]+)@([0-9a-z]+\.[a-z]{2,3}(\.[a-z]{2})?)$/g,
-        message: '请输入正确的邮箱',
+        message: '请输入正确的邮箱格式',
         trigger: 'blur'
       }
     ],
     authorityId: [
-      { required: true, message: '请选择用户角色', trigger: 'blur' }
+      { required: true, message: '请选择用户角色', trigger: 'change' }
     ]
   })
+  // 统一使用ID作为主键字段，并在数据提交前完成格式转换与字段规范化
+  const prepareSubmitData = (data) => {
+    const submitData = { ...data };
+    // 确保提交字段名与后端接口定义一致（将id转换为ID）
+    if (submitData.id && !submitData.ID) {
+      submitData.ID = submitData.id;
+      delete submitData.id;
+    }
+    return submitData;
+  }
+
   const userForm = ref(null)
   const enterAddUserDialog = async () => {
     userInfo.value.authorityId = userInfo.value.authorityIds[0]
@@ -921,21 +938,21 @@
           ...userInfo.value
         }
         if (dialogFlag.value === 'add') {
-          const res = await register(req)
-          if (res.code === 0) {
-            ElMessage({ type: 'success', message: '创建成功' })
-            await getTableData()
-            closeAddUserDialog()
+            const res = await register(prepareSubmitData(req))
+            if (res.code === 0) {
+              ElMessage({ type: 'success', message: '创建成功' })
+              await getTableData()
+              closeAddUserDialog()
+            }
           }
-        }
-        if (dialogFlag.value === 'edit') {
-          const res = await setUserInfo(req)
-          if (res.code === 0) {
-            ElMessage({ type: 'success', message: '编辑成功' })
-            await getTableData()
-            closeAddUserDialog()
+          if (dialogFlag.value === 'edit') {
+            const res = await setUserInfo(prepareSubmitData(req))
+            if (res.code === 0) {
+              ElMessage({ type: 'success', message: '编辑成功' })
+              await getTableData()
+              closeAddUserDialog()
+            }
           }
-        }
       }
     })
   }
@@ -1016,7 +1033,7 @@
     const req = {
       ...userInfo.value
     }
-    const res = await setUserInfo(req)
+    const res = await setUserInfo(prepareSubmitData(req))
     if (res.code === 0) {
       ElMessage({
         type: 'success',
